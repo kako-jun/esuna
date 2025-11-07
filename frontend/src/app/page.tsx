@@ -2,14 +2,15 @@
 
 import { useState, useEffect } from 'react'
 import GridSystem from '@/components/GridSystem'
-import ContentReader from '@/components/ContentReader'
+import HatenaEntryReader from '@/components/HatenaEntryReader'
 import HatenaCommentReader from '@/components/HatenaCommentReader'
+import SNSPostReader from '@/components/SNSPostReader'
 import FivechBoardList from '@/components/FivechBoardList'
 import FivechThreadList from '@/components/FivechThreadList'
 import FivechPostReader from '@/components/FivechPostReader'
 import { SpeechManager } from '@/lib/speech'
 import { useAppStore } from '@/lib/store'
-import { loadSettings } from '@/lib/storage'
+import { loadSettings, updateSetting } from '@/lib/storage'
 
 type Page = 'main' | 'news' | 'sns' | 'settings' | 'help' |
             'hatena-comments' | '5ch-boards' | '5ch-threads' | '5ch-posts'
@@ -17,7 +18,7 @@ type Page = 'main' | 'news' | 'sns' | 'settings' | 'help' |
 export default function Home() {
   const [speechManager, setSpeechManager] = useState<SpeechManager | null>(null)
   const [currentPage, setCurrentPage] = useState<Page>('main')
-  const { setPage, setContentType } = useAppStore()
+  const { setPage, setContentType, setAutoNavigation, autoNavigationEnabled } = useAppStore()
 
   useEffect(() => {
     const manager = new SpeechManager()
@@ -27,6 +28,9 @@ export default function Home() {
     if (settings.speech.voice) {
       manager.setVoiceByName(settings.speech.voice)
     }
+
+    // 自動ナビゲーション設定を反映
+    setAutoNavigation(settings.ui.autoNavigation)
 
     setSpeechManager(manager)
 
@@ -131,43 +135,56 @@ export default function Home() {
     {
       label: '速度：遅',
       action: () => {
-        speechManager?.speak('読み上げ速度を遅くしました', { rate: 0.7 })
+        updateSetting('speech', { rate: 0.7 })
+        speechManager?.speak('読み上げ速度を遅くしました。設定を保存しました', { rate: 0.7 })
       },
     },
     {
       label: '速度：標準',
       action: () => {
-        speechManager?.speak('読み上げ速度を標準にしました', { rate: 1.0 })
+        updateSetting('speech', { rate: 1.0 })
+        speechManager?.speak('読み上げ速度を標準にしました。設定を保存しました', { rate: 1.0 })
       },
     },
     {
       label: '速度：速',
       action: () => {
-        speechManager?.speak('読み上げ速度を速くしました', { rate: 1.5 })
+        updateSetting('speech', { rate: 1.5 })
+        speechManager?.speak('読み上げ速度を速くしました。設定を保存しました', { rate: 1.5 })
       },
     },
     {
       label: 'ピッチ：低',
       action: () => {
-        speechManager?.speak('ピッチを低くしました', { pitch: 0.7 })
+        updateSetting('speech', { pitch: 0.7 })
+        speechManager?.speak('ピッチを低くしました。設定を保存しました', { pitch: 0.7 })
       },
     },
     {
       label: 'ピッチ：標準',
       action: () => {
-        speechManager?.speak('ピッチを標準にしました', { pitch: 1.0 })
+        updateSetting('speech', { pitch: 1.0 })
+        speechManager?.speak('ピッチを標準にしました。設定を保存しました', { pitch: 1.0 })
       },
     },
     {
       label: 'ピッチ：高',
       action: () => {
-        speechManager?.speak('ピッチを高くしました', { pitch: 1.5 })
+        updateSetting('speech', { pitch: 1.5 })
+        speechManager?.speak('ピッチを高くしました。設定を保存しました', { pitch: 1.5 })
       },
     },
     {
-      label: '音量調整',
+      label: autoNavigationEnabled ? '自動OFF' : '自動ON',
       action: () => {
-        speechManager?.speak('音量調整機能は今後実装予定です')
+        const newValue = !autoNavigationEnabled
+        setAutoNavigation(newValue)
+        updateSetting('ui', { autoNavigation: newValue })
+        speechManager?.speak(
+          newValue
+            ? '自動ナビゲーションを有効にしました。音声読み上げ後、自動的に次のコンテンツに移動します'
+            : '自動ナビゲーションを無効にしました'
+        )
       },
     },
     {
@@ -225,8 +242,7 @@ export default function Home() {
         speechManager?.speak(
           'タッチ操作を説明します。' +
           '画面をタップ：そのエリアを選択して実行。' +
-          'ダブルタップ：再度実行。' +
-          'スワイプ：エリア間を移動（予定機能）。'
+          'ダブルタップ：再度実行。'
         )
       },
     },
@@ -242,15 +258,19 @@ export default function Home() {
       },
     },
     {
-      label: 'バージョン',
+      label: '自動ナビゲーション',
       action: () => {
-        speechManager?.speak('Esuna バージョン 0.1.0')
+        speechManager?.speak(
+          '自動ナビゲーション機能を説明します。' +
+          '設定で有効にすると、音声読み上げ完了後、自動的に次のコンテンツに移動します。' +
+          'ハンズフリーで連続閲覧ができます。'
+        )
       },
     },
     {
-      label: 'リセット',
+      label: 'バージョン',
       action: () => {
-        speechManager?.speak('設定をリセットしました')
+        speechManager?.speak('Esuna バージョン 0.1.0')
       },
     },
     {
@@ -270,12 +290,15 @@ export default function Home() {
     case 'news':
       return (
         <main>
-          <ContentReader
-            type="news"
-            onSpeak={(text) => speechManager.speak(text)}
+          <HatenaEntryReader
+            type="hot"
+            speech={speechManager}
             onBack={() => {
               navigateTo('main')
               speechManager.speak('メインメニューに戻りました')
+            }}
+            onViewComments={() => {
+              navigateTo('hatena-comments')
             }}
           />
         </main>
@@ -284,9 +307,8 @@ export default function Home() {
     case 'sns':
       return (
         <main>
-          <ContentReader
-            type="sns"
-            onSpeak={(text) => speechManager.speak(text)}
+          <SNSPostReader
+            speech={speechManager}
             onBack={() => {
               navigateTo('main')
               speechManager.speak('メインメニューに戻りました')

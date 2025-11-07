@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useAppStore } from '../lib/store'
 import { fetch5chThreads } from '../lib/api-client'
 import { SpeechManager } from '../lib/speech'
+import { useAutoNavigation } from '../lib/useAutoNavigation'
 import GridSystem from './GridSystem'
 
 interface FivechThreadListProps {
@@ -21,6 +22,7 @@ export default function FivechThreadList({ speech, onBack, onSelectThread }: Fiv
     prevThread,
     getCurrentThread,
     getCurrentBoard,
+    autoNavigationEnabled,
   } = useAppStore()
 
   const [loading, setLoading] = useState(false)
@@ -65,6 +67,21 @@ export default function FivechThreadList({ speech, onBack, onSelectThread }: Fiv
     if (!currentThread) return
     speech.speak(`${currentThread.title} レス数 ${currentThread.response_count}`, { interrupt: true })
   }
+
+  // 自動ナビゲーション
+  useAutoNavigation({
+    enabled: autoNavigationEnabled,
+    speech,
+    onNext: () => {
+      if (currentThreadIndex < fivechThreads.length - 1) {
+        nextThread()
+        setTimeout(speakThread, 100)
+      } else {
+        speech.speak('最後のスレッドです')
+      }
+    },
+    delay: 3000,
+  })
 
   // グリッドアクション
   const actions = [

@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useAppStore } from '../lib/store'
 import { fetch5chBoards } from '../lib/api-client'
 import { SpeechManager } from '../lib/speech'
+import { useAutoNavigation } from '../lib/useAutoNavigation'
 import GridSystem from './GridSystem'
 
 interface FivechBoardListProps {
@@ -20,6 +21,7 @@ export default function FivechBoardList({ speech, onBack, onSelectBoard }: Fivec
     nextBoard,
     prevBoard,
     getCurrentBoard,
+    autoNavigationEnabled,
   } = useAppStore()
 
   const [loading, setLoading] = useState(false)
@@ -57,6 +59,21 @@ export default function FivechBoardList({ speech, onBack, onSelectBoard }: Fivec
     if (!currentBoard) return
     speech.speak(`${currentBoard.category} ${currentBoard.title}`, { interrupt: true })
   }
+
+  // 自動ナビゲーション
+  useAutoNavigation({
+    enabled: autoNavigationEnabled,
+    speech,
+    onNext: () => {
+      if (currentBoardIndex < fivechBoards.length - 1) {
+        nextBoard()
+        setTimeout(speakBoard, 100)
+      } else {
+        speech.speak('最後の板です')
+      }
+    },
+    delay: 3000,
+  })
 
   // グリッドアクション
   const actions = [
