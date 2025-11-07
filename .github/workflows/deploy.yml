@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - claude/*
   workflow_dispatch:
 
 permissions:
@@ -39,6 +40,7 @@ jobs:
           cd frontend
           npm run build
         env:
+          GITHUB_PAGES: true
           NEXT_PUBLIC_API_URL: ${{ secrets.API_URL || 'http://localhost:8000' }}
 
       - name: Upload artifact
