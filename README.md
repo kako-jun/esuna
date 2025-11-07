@@ -138,6 +138,31 @@ npm run dev
 └─────┴──────────────┴─────┘
 ```
 
+## デプロイ
+
+### GitHub Pages
+
+フロントエンドは自動的にGitHub Pagesにデプロイされます。
+
+- デプロイURL: https://kako-jun.github.io/esuna/
+- 自動デプロイ: `main`ブランチへのプッシュで自動実行
+
+#### バックエンドAPI
+
+バックエンドは別途デプロイが必要です（推奨サービス）：
+- Railway
+- Render
+- Vercel (Serverless Functions)
+
+デプロイ後、フロントエンドの環境変数 `NEXT_PUBLIC_API_URL` を設定してください。
+
+GitHub Secretsで設定:
+```
+Settings > Secrets > Actions > New repository secret
+Name: API_URL
+Value: https://your-backend-url.com
+```
+
 ## 開発
 
 ### ブランチ戦略
