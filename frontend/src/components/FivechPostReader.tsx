@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useAppStore } from '../lib/store'
 import { fetch5chPosts } from '../lib/api-client'
 import { SpeechManager } from '../lib/speech'
+import { useAutoNavigation } from '../lib/useAutoNavigation'
 import GridSystem from './GridSystem'
 
 interface FivechPostReaderProps {
@@ -20,6 +21,7 @@ export default function FivechPostReader({ speech, onBack }: FivechPostReaderPro
     prevPost,
     getCurrentPost,
     getCurrentThread,
+    autoNavigationEnabled,
   } = useAppStore()
 
   const [loading, setLoading] = useState(false)
@@ -68,6 +70,21 @@ export default function FivechPostReader({ speech, onBack }: FivechPostReaderPro
       speech.speak(currentPost.text)
     }, 1000)
   }
+
+  // 自動ナビゲーション
+  useAutoNavigation({
+    enabled: autoNavigationEnabled,
+    speech,
+    onNext: () => {
+      if (currentPostIndex < fivechPosts.length - 1) {
+        nextPost()
+        setTimeout(speakPost, 100)
+      } else {
+        speech.speak('最後のレスです')
+      }
+    },
+    delay: 3000,
+  })
 
   // グリッドアクション
   const actions = [

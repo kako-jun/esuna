@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useAppStore } from '../lib/store'
 import { fetchHatenaComments } from '../lib/api-client'
 import { SpeechManager } from '../lib/speech'
+import { useAutoNavigation } from '../lib/useAutoNavigation'
 import GridSystem from './GridSystem'
 
 interface HatenaCommentReaderProps {
@@ -20,6 +21,7 @@ export default function HatenaCommentReader({ speech, onBack }: HatenaCommentRea
     prevComment,
     getCurrentComment,
     getCurrentEntry,
+    autoNavigationEnabled,
   } = useAppStore()
 
   const [loading, setLoading] = useState(false)
@@ -73,6 +75,21 @@ export default function HatenaCommentReader({ speech, onBack }: HatenaCommentRea
       speech.speak(currentComment.text)
     }, 1000)
   }
+
+  // 自動ナビゲーション
+  useAutoNavigation({
+    enabled: autoNavigationEnabled,
+    speech,
+    onNext: () => {
+      if (currentCommentIndex < hatenaComments.length - 1) {
+        nextComment()
+        setTimeout(speakComment, 100)
+      } else {
+        speech.speak('最後のコメントです')
+      }
+    },
+    delay: 3000,
+  })
 
   // グリッドアクション
   const actions = [
