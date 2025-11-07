@@ -88,4 +88,19 @@ export class SpeechManager {
       this.currentVoice = this.voices[voiceIndex]
     }
   }
+
+  setVoiceByName(voiceName: string) {
+    const voice = this.voices.find(v => v.name === voiceName)
+    if (voice) {
+      this.currentVoice = voice
+    }
+  }
+
+  isSpeaking(): boolean {
+    return this.synthesis.speaking
+  }
+
+  isPaused(): boolean {
+    return this.synthesis.paused
+  }
 }
