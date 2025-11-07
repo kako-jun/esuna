@@ -1,34 +1,40 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import { SpeechManager } from '@/lib/speech'
 
-interface GridItem {
-  id: number
+interface GridAction {
   label: string
   action: () => void
-  ariaLabel: string
 }
 
 interface GridSystemProps {
-  items: GridItem[]
-  onSpeak: (text: string) => void
+  actions: GridAction[]
+  speech: SpeechManager
+  onInit?: () => void
 }
 
-export default function GridSystem({ items, onSpeak }: GridSystemProps) {
+export default function GridSystem({ actions, speech, onInit }: GridSystemProps) {
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null)
   const [isKeyboardMode, setIsKeyboardMode] = useState(false)
 
-  const handleItemClick = useCallback((item: GridItem, index: number) => {
+  useEffect(() => {
+    if (onInit) {
+      onInit()
+    }
+  }, [onInit])
+
+  const handleItemClick = useCallback((action: GridAction, index: number) => {
     setSelectedIndex(index)
-    onSpeak(item.ariaLabel)
-    item.action()
-  }, [onSpeak])
+    speech.speak(`${index + 1}番、${action.label}`)
+    action.action()
+  }, [speech])
 
   const handleKeyDown = useCallback((event: React.KeyboardEvent) => {
     if (!isKeyboardMode) {
       setIsKeyboardMode(true)
       setSelectedIndex(0)
-      onSpeak('キーボードモードに切り替えました。矢印キーで移動、Enterで選択、Escapeで音声読み上げ停止')
+      speech.speak('キーボードモードに切り替えました。矢印キーで移動、Enterで選択、Escapeで音声読み上げ停止')
       return
     }
 
@@ -37,12 +43,10 @@ export default function GridSystem({ items, onSpeak }: GridSystemProps) {
     switch (event.key) {
       case 'ArrowRight':
         event.preventDefault()
-        if (currentIndex % 3 < 2) {
+        if (currentIndex % 3 < 2 && currentIndex + 1 < actions.length) {
           const newIndex = currentIndex + 1
           setSelectedIndex(newIndex)
-          if (items[newIndex]) {
-            onSpeak(items[newIndex].ariaLabel)
-          }
+          speech.speak(`${newIndex + 1}番、${actions[newIndex].label}`)
         }
         break
       case 'ArrowLeft':
@@ -50,18 +54,16 @@ export default function GridSystem({ items, onSpeak }: GridSystemProps) {
         if (currentIndex % 3 > 0) {
           const newIndex = currentIndex - 1
           setSelectedIndex(newIndex)
-          if (items[newIndex]) {
-            onSpeak(items[newIndex].ariaLabel)
-          }
+          speech.speak(`${newIndex + 1}番、${actions[newIndex].label}`)
         }
         break
       case 'ArrowDown':
         event.preventDefault()
         if (currentIndex < 6) {
           const newIndex = currentIndex + 3
-          if (newIndex < 9 && items[newIndex]) {
+          if (newIndex < 9 && newIndex < actions.length) {
             setSelectedIndex(newIndex)
-            onSpeak(items[newIndex].ariaLabel)
+            speech.speak(`${newIndex + 1}番、${actions[newIndex].label}`)
           }
         }
         break
@@ -70,21 +72,19 @@ export default function GridSystem({ items, onSpeak }: GridSystemProps) {
         if (currentIndex >= 3) {
           const newIndex = currentIndex - 3
           setSelectedIndex(newIndex)
-          if (items[newIndex]) {
-            onSpeak(items[newIndex].ariaLabel)
-          }
+          speech.speak(`${newIndex + 1}番、${actions[newIndex].label}`)
         }
         break
       case 'Enter':
       case ' ':
         event.preventDefault()
-        if (selectedIndex !== null && items[selectedIndex]) {
-          handleItemClick(items[selectedIndex], selectedIndex)
+        if (selectedIndex !== null && actions[selectedIndex]) {
+          handleItemClick(actions[selectedIndex], selectedIndex)
         }
         break
       case 'Escape':
         event.preventDefault()
-        onSpeak('操作を停止しました')
+        speech.speak('操作を停止しました')
         window.speechSynthesis.cancel()
         break
       case '1':
@@ -98,13 +98,13 @@ export default function GridSystem({ items, onSpeak }: GridSystemProps) {
       case '9':
         event.preventDefault()
         const numIndex = parseInt(event.key) - 1
-        if (items[numIndex]) {
+        if (actions[numIndex]) {
           setSelectedIndex(numIndex)
-          handleItemClick(items[numIndex], numIndex)
+          handleItemClick(actions[numIndex], numIndex)
         }
         break
     }
-  }, [selectedIndex, isKeyboardMode, items, onSpeak, handleItemClick])
+  }, [selectedIndex, isKeyboardMode, actions, speech, handleItemClick])
 
   useEffect(() => {
     const handleTouchStart = () => {
@@ -117,7 +117,7 @@ export default function GridSystem({ items, onSpeak }: GridSystemProps) {
   }, [])
 
   return (
-    <div 
+    <div
       className="grid-container"
       onKeyDown={handleKeyDown}
       tabIndex={0}
@@ -125,24 +125,24 @@ export default function GridSystem({ items, onSpeak }: GridSystemProps) {
       aria-label="9分割グリッド操作パネル"
     >
       {Array.from({ length: 9 }, (_, index) => {
-        const item = items[index]
-        const isEmpty = !item
-        
+        const action = actions[index]
+        const isEmpty = !action
+
         return (
           <div
             key={index}
             className={`grid-item ${selectedIndex === index ? 'active' : ''} ${isEmpty ? 'opacity-50' : ''}`}
             onClick={() => {
-              if (item) {
-                handleItemClick(item, index)
+              if (action) {
+                handleItemClick(action, index)
               }
             }}
             role="button"
             tabIndex={-1}
-            aria-label={item ? item.ariaLabel : `空のセル ${index + 1}`}
+            aria-label={action ? `${index + 1}番、${action.label}` : `空のセル ${index + 1}`}
             aria-disabled={isEmpty}
           >
-            {item ? item.label : ''}
+            {action ? action.label : ''}
             <span className="sr-only">
               {selectedIndex === index ? '選択中' : ''}
             </span>
