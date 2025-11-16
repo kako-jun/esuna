@@ -14,15 +14,22 @@ import PodcastList from '@/components/PodcastList'
 import PodcastPlayer from '@/components/PodcastPlayer'
 import RSSFeedList from '@/components/RSSFeedList'
 import RSSArticleReader from '@/components/RSSArticleReader'
+import FavoritesList from '@/components/FavoritesList'
+import ContinueReading from '@/components/ContinueReading'
+import VoiceMemoRecorder from '@/components/VoiceMemoRecorder'
+import TimerManager from '@/components/TimerManager'
 import { SpeechManager } from '@/lib/speech'
 import { useAppStore } from '@/lib/store'
 import { loadSettings, updateSetting } from '@/lib/storage'
 import { fetchWeather, getCurrentTimeText, getWeatherText, getGreeting } from '@/lib/weather'
+import { Favorite } from '@/lib/favorites'
+import { Progress } from '@/lib/progress'
 
-type Page = 'main' | 'news' | 'sns' | 'settings' | 'help' |
+type Page = 'main' | 'news' | 'sns' | 'settings' | 'help' | 'tools' |
             'hatena-comments' | '5ch-boards' | '5ch-threads' | '5ch-posts' |
             'novel-list' | 'novel-content' | 'podcast-list' | 'podcast-episodes' |
-            'rss-feeds' | 'rss-articles'
+            'rss-feeds' | 'rss-articles' | 'favorites' | 'continue-reading' |
+            'voice-memo' | 'timer'
 
 export default function Home() {
   const [speechManager, setSpeechManager] = useState<SpeechManager | null>(null)
@@ -130,10 +137,61 @@ export default function Home() {
       },
     },
     {
+      label: 'ツール',
+      action: () => {
+        navigateTo('tools')
+        speechManager?.speak('ツールメニューに移動しました。お気に入り、続きから再生、音声メモ、タイマーが利用できます')
+      },
+    },
+    {
       label: '設定',
       action: () => {
         navigateTo('settings')
         speechManager?.speak('設定ページに移動しました')
+      },
+    },
+    {
+      label: '停止',
+      action: () => {
+        speechManager?.stop()
+      },
+    },
+  ]
+
+  const toolsMenuActions = [
+    {
+      label: '戻る',
+      action: () => {
+        navigateTo('main')
+        speechManager?.speak('メインメニューに戻りました')
+      },
+    },
+    {
+      label: 'お気に入り',
+      action: () => {
+        navigateTo('favorites')
+        speechManager?.speak('お気に入り一覧に移動しました')
+      },
+    },
+    {
+      label: '続きから',
+      action: () => {
+        navigateTo('continue-reading')
+        speechManager?.speak('続きから再生に移動しました')
+      },
+    },
+    {
+      label: 'メモ',
+      action: () => {
+        navigateTo('voice-memo')
+        speechManager?.speak('音声メモに移動しました')
+      },
+    },
+    {
+      label: 'タイマー',
+      action: () => {
+        navigateTo('timer')
+        speechManager?.speak('タイマーに移動しました')
       },
     },
     {
@@ -147,11 +205,17 @@ export default function Home() {
       label: '情報',
       action: () => {
         speechManager?.speak(
-          'Esuna バージョン 0.3.0。' +
+          'Esuna バージョン 0.4.0。' +
           '視覚障害者向けアクセシブルWebアプリケーション。' +
-          'はてなブックマーク、SNS、5ちゃんねる、RSSニュース、青空文庫、Podcastが利用できます。' +
-          '起動時に時刻と天気予報を読み上げます。'
+          'はてなブックマーク、SNS、5ちゃんねる、RSSニュース、青空文庫、Podcast、' +
+          'お気に入り、続きから再生、音声メモ、タイマーが利用できます。'
         )
+      },
+    },
+    {
+      label: '読み上げ',
+      action: () => {
+        speechManager?.speak('ツールメニュー。お気に入り、続きから再生、音声メモ、タイマー、ヘルプ、情報、読み上げ、停止が利用できます')
       },
     },
     {
@@ -498,6 +562,75 @@ export default function Home() {
               speechManager.speak('フィード一覧に戻りました')
             }}
           />
+        </main>
+      )
+
+    case 'favorites':
+      return (
+        <main>
+          <FavoritesList
+            speech={speechManager}
+            onBack={() => {
+              navigateTo('main')
+              speechManager.speak('メインメニューに戻りました')
+            }}
+            onSelectFavorite={(favorite: Favorite) => {
+              // お気に入りの種類に応じて適切なページに遷移
+              // 今回はシンプルにメッセージのみ
+              speechManager.speak(`${favorite.title} を開く機能は今後実装予定です`)
+            }}
+          />
+        </main>
+      )
+
+    case 'continue-reading':
+      return (
+        <main>
+          <ContinueReading
+            speech={speechManager}
+            onBack={() => {
+              navigateTo('main')
+              speechManager.speak('メインメニューに戻りました')
+            }}
+            onSelectProgress={(progress: Progress) => {
+              // 進捗の種類に応じて適切なページに遷移
+              // 今回はシンプルにメッセージのみ
+              speechManager.speak(`${progress.title} の続きから再生する機能は今後実装予定です`)
+            }}
+          />
+        </main>
+      )
+
+    case 'voice-memo':
+      return (
+        <main>
+          <VoiceMemoRecorder
+            speech={speechManager}
+            onBack={() => {
+              navigateTo('main')
+              speechManager.speak('メインメニューに戻りました')
+            }}
+          />
+        </main>
+      )
+
+    case 'timer':
+      return (
+        <main>
+          <TimerManager
+            speech={speechManager}
+            onBack={() => {
+              navigateTo('main')
+              speechManager.speak('メインメニューに戻りました')
+            }}
+          />
+        </main>
+      )
+
+    case 'tools':
+      return (
+        <main>
+          <GridSystem actions={toolsMenuActions} speech={speechManager} />
         </main>
       )
 
