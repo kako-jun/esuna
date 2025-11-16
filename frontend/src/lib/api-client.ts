@@ -94,6 +94,27 @@ export interface SNSPost {
   url?: string;
 }
 
+export interface NovelContent {
+  title: string;
+  author: string;
+  content: string;
+  sections: NovelSection[];
+}
+
+export interface NovelSection {
+  title: string;
+  content: string;
+}
+
+export interface PodcastEpisode {
+  id: string;
+  title: string;
+  description: string;
+  pub_date: string;
+  audio_url?: string;
+  duration: number;
+}
+
 // はてなブックマーク API
 export const fetchHatenaHot = async (): Promise<HatenaEntry[]> => {
   return apiFetch<HatenaEntry[]>('/api/hatena/hot');
@@ -148,6 +169,23 @@ export const fetchSNSPosts = async (
   }
 
   return apiFetch<SNSPost[]>(`/api/sns/posts?${params.toString()}`);
+};
+
+// 小説 API
+export const fetchNovelContent = async (
+  authorId: string,
+  fileId: string
+): Promise<NovelContent> => {
+  return apiFetch<NovelContent>(`/api/novels/content?author_id=${authorId}&file_id=${fileId}`);
+};
+
+// Podcast API
+export const fetchPodcastEpisodes = async (
+  feedUrl: string,
+  limit: number = 10
+): Promise<PodcastEpisode[]> => {
+  const encodedUrl = encodeURIComponent(feedUrl);
+  return apiFetch<PodcastEpisode[]>(`/api/podcasts/episodes?feed_url=${encodedUrl}&limit=${limit}`);
 };
 
 // エラーログ送信
