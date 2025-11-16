@@ -8,12 +8,17 @@ import SNSPostReader from '@/components/SNSPostReader'
 import FivechBoardList from '@/components/FivechBoardList'
 import FivechThreadList from '@/components/FivechThreadList'
 import FivechPostReader from '@/components/FivechPostReader'
+import NovelList from '@/components/NovelList'
+import NovelReader from '@/components/NovelReader'
+import PodcastList from '@/components/PodcastList'
+import PodcastPlayer from '@/components/PodcastPlayer'
 import { SpeechManager } from '@/lib/speech'
 import { useAppStore } from '@/lib/store'
 import { loadSettings, updateSetting } from '@/lib/storage'
 
 type Page = 'main' | 'news' | 'sns' | 'settings' | 'help' |
-            'hatena-comments' | '5ch-boards' | '5ch-threads' | '5ch-posts'
+            'hatena-comments' | '5ch-boards' | '5ch-threads' | '5ch-posts' |
+            'novel-list' | 'novel-content' | 'podcast-list' | 'podcast-episodes'
 
 export default function Home() {
   const [speechManager, setSpeechManager] = useState<SpeechManager | null>(null)
@@ -81,16 +86,19 @@ export default function Home() {
       },
     },
     {
-      label: 'テスト',
+      label: '小説',
       action: () => {
-        speechManager?.speak('これは読み上げ機能のテストです。正常に動作しています。')
+        navigateTo('novel-list')
+        setContentType('novel')
+        speechManager?.speak('青空文庫 小説一覧に移動しました')
       },
     },
     {
-      label: 'ヘルプ',
+      label: 'Podcast',
       action: () => {
-        navigateTo('help')
-        speechManager?.speak('ヘルプページに移動しました')
+        navigateTo('podcast-list')
+        setContentType('podcast')
+        speechManager?.speak('Podcast一覧に移動しました')
       },
     },
     {
@@ -101,19 +109,20 @@ export default function Home() {
       },
     },
     {
-      label: '情報',
+      label: 'ヘルプ',
       action: () => {
-        speechManager?.speak(
-          'Esuna バージョン 0.1.0。' +
-          '視覚障害者向けアクセシブルWebアプリケーション。' +
-          'はてなブックマーク、SNS、5ちゃんねるが閲覧できます。'
-        )
+        navigateTo('help')
+        speechManager?.speak('ヘルプページに移動しました')
       },
     },
     {
-      label: 'リロード',
+      label: '情報',
       action: () => {
-        window.location.reload()
+        speechManager?.speak(
+          'Esuna バージョン 0.2.0。' +
+          '視覚障害者向けアクセシブルWebアプリケーション。' +
+          'はてなブックマーク、SNS、5ちゃんねる、青空文庫、Podcastが利用できます。'
+        )
       },
     },
     {
@@ -175,6 +184,13 @@ export default function Home() {
       },
     },
     {
+      label: '音量：小',
+      action: () => {
+        updateSetting('speech', { volume: 0.5 })
+        speechManager?.speak('音量を小さくしました。設定を保存しました', { volume: 0.5 })
+      },
+    },
+    {
       label: autoNavigationEnabled ? '自動OFF' : '自動ON',
       action: () => {
         const newValue = !autoNavigationEnabled
@@ -185,12 +201,6 @@ export default function Home() {
             ? '自動ナビゲーションを有効にしました。音声読み上げ後、自動的に次のコンテンツに移動します'
             : '自動ナビゲーションを無効にしました'
         )
-      },
-    },
-    {
-      label: '停止',
-      action: () => {
-        speechManager?.stop()
       },
     },
   ]
@@ -370,6 +380,64 @@ export default function Home() {
             onBack={() => {
               navigateTo('5ch-threads')
               speechManager.speak('スレッド一覧に戻りました')
+            }}
+          />
+        </main>
+      )
+
+    case 'novel-list':
+      return (
+        <main>
+          <NovelList
+            speech={speechManager}
+            onBack={() => {
+              navigateTo('main')
+              speechManager.speak('メインメニューに戻りました')
+            }}
+            onSelectNovel={() => {
+              navigateTo('novel-content')
+            }}
+          />
+        </main>
+      )
+
+    case 'novel-content':
+      return (
+        <main>
+          <NovelReader
+            speech={speechManager}
+            onBack={() => {
+              navigateTo('novel-list')
+              speechManager.speak('小説一覧に戻りました')
+            }}
+          />
+        </main>
+      )
+
+    case 'podcast-list':
+      return (
+        <main>
+          <PodcastList
+            speech={speechManager}
+            onBack={() => {
+              navigateTo('main')
+              speechManager.speak('メインメニューに戻りました')
+            }}
+            onSelectPodcast={() => {
+              navigateTo('podcast-episodes')
+            }}
+          />
+        </main>
+      )
+
+    case 'podcast-episodes':
+      return (
+        <main>
+          <PodcastPlayer
+            speech={speechManager}
+            onBack={() => {
+              navigateTo('podcast-list')
+              speechManager.speak('Podcast一覧に戻りました')
             }}
           />
         </main>
