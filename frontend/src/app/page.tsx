@@ -18,22 +18,26 @@ import FavoritesList from '@/components/FavoritesList'
 import ContinueReading from '@/components/ContinueReading'
 import VoiceMemoRecorder from '@/components/VoiceMemoRecorder'
 import TimerManager from '@/components/TimerManager'
+import RadioStationList from '@/components/RadioStationList'
+import RadioPlayer from '@/components/RadioPlayer'
 import { SpeechManager } from '@/lib/speech'
 import { useAppStore } from '@/lib/store'
 import { loadSettings, updateSetting } from '@/lib/storage'
 import { fetchWeather, getCurrentTimeText, getWeatherText, getGreeting } from '@/lib/weather'
 import { Favorite } from '@/lib/favorites'
 import { Progress } from '@/lib/progress'
+import { RadioStation } from '@/lib/radio'
 
-type Page = 'main' | 'news' | 'sns' | 'settings' | 'help' | 'tools' |
+type Page = 'main' | 'news' | 'sns' | 'settings' | 'help' | 'tools' | 'audio' |
             'hatena-comments' | '5ch-boards' | '5ch-threads' | '5ch-posts' |
             'novel-list' | 'novel-content' | 'podcast-list' | 'podcast-episodes' |
             'rss-feeds' | 'rss-articles' | 'favorites' | 'continue-reading' |
-            'voice-memo' | 'timer'
+            'voice-memo' | 'timer' | 'radio-stations' | 'radio-player'
 
 export default function Home() {
   const [speechManager, setSpeechManager] = useState<SpeechManager | null>(null)
   const [currentPage, setCurrentPage] = useState<Page>('main')
+  const [selectedRadioStation, setSelectedRadioStation] = useState<RadioStation | null>(null)
   const { setPage, setContentType, setAutoNavigation, autoNavigationEnabled } = useAppStore()
 
   useEffect(() => {
@@ -129,11 +133,10 @@ export default function Home() {
       },
     },
     {
-      label: 'Podcast',
+      label: 'オーディオ',
       action: () => {
-        navigateTo('podcast-list')
-        setContentType('podcast')
-        speechManager?.speak('Podcast一覧に移動しました')
+        navigateTo('audio')
+        speechManager?.speak('オーディオメニューに移動しました。Podcastとラジオが利用できます')
       },
     },
     {
@@ -205,9 +208,9 @@ export default function Home() {
       label: '情報',
       action: () => {
         speechManager?.speak(
-          'Esuna バージョン 0.4.0。' +
+          'Esuna バージョン 0.5.0。' +
           '視覚障害者向けアクセシブルWebアプリケーション。' +
-          'はてなブックマーク、SNS、5ちゃんねる、RSSニュース、青空文庫、Podcast、' +
+          'はてなブックマーク、SNS、5ちゃんねる、RSSニュース、青空文庫、Podcast、ラジオ、' +
           'お気に入り、続きから再生、音声メモ、タイマーが利用できます。'
         )
       },
@@ -223,6 +226,59 @@ export default function Home() {
       action: () => {
         speechManager?.stop()
       },
+    },
+  ]
+
+  const audioMenuActions = [
+    {
+      label: '戻る',
+      action: () => {
+        navigateTo('main')
+        speechManager?.speak('メインメニューに戻りました')
+      },
+    },
+    {
+      label: 'Podcast',
+      action: () => {
+        navigateTo('podcast-list')
+        setContentType('podcast')
+        speechManager?.speak('Podcast一覧に移動しました')
+      },
+    },
+    {
+      label: 'ラジオ',
+      action: () => {
+        navigateTo('radio-stations')
+        speechManager?.speak('ラジオ局一覧に移動しました')
+      },
+    },
+    {
+      label: '読み上げ',
+      action: () => {
+        speechManager?.speak('オーディオメニュー。Podcast、ラジオ、読み上げ、停止が利用できます')
+      },
+    },
+    {
+      label: '停止',
+      action: () => {
+        speechManager?.stop()
+      },
+    },
+    {
+      label: '',
+      action: () => {},
+    },
+    {
+      label: '',
+      action: () => {},
+    },
+    {
+      label: '',
+      action: () => {},
+    },
+    {
+      label: '',
+      action: () => {},
     },
   ]
 
@@ -373,7 +429,7 @@ export default function Home() {
     {
       label: 'バージョン',
       action: () => {
-        speechManager?.speak('Esuna バージョン 0.1.0')
+        speechManager?.speak('Esuna バージョン 0.5.0')
       },
     },
     {
@@ -513,8 +569,8 @@ export default function Home() {
           <PodcastList
             speech={speechManager}
             onBack={() => {
-              navigateTo('main')
-              speechManager.speak('メインメニューに戻りました')
+              navigateTo('audio')
+              speechManager.speak('オーディオメニューに戻りました')
             }}
             onSelectPodcast={() => {
               navigateTo('podcast-episodes')
@@ -631,6 +687,48 @@ export default function Home() {
       return (
         <main>
           <GridSystem actions={toolsMenuActions} speech={speechManager} />
+        </main>
+      )
+
+    case 'audio':
+      return (
+        <main>
+          <GridSystem actions={audioMenuActions} speech={speechManager} />
+        </main>
+      )
+
+    case 'radio-stations':
+      return (
+        <main>
+          <RadioStationList
+            speech={speechManager}
+            onBack={() => {
+              navigateTo('audio')
+              speechManager.speak('オーディオメニューに戻りました')
+            }}
+            onSelectStation={(station: RadioStation) => {
+              setSelectedRadioStation(station)
+              navigateTo('radio-player')
+            }}
+          />
+        </main>
+      )
+
+    case 'radio-player':
+      if (!selectedRadioStation) {
+        navigateTo('radio-stations')
+        return null
+      }
+      return (
+        <main>
+          <RadioPlayer
+            station={selectedRadioStation}
+            speech={speechManager}
+            onBack={() => {
+              navigateTo('radio-stations')
+              speechManager.speak('ラジオ局一覧に戻りました')
+            }}
+          />
         </main>
       )
 

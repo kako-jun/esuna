@@ -11,7 +11,7 @@ import logging
 from datetime import datetime
 
 # スクレイパーをインポート
-from .scrapers import hatena, fivech, sns, aozora, podcast
+from .scrapers import hatena, fivech, sns, aozora, podcast, radio
 
 # ロガー設定
 logging.basicConfig(
@@ -232,6 +232,69 @@ async def get_podcast_episodes(
         return episodes
     except Exception as e:
         logger.error(f"Error in get_podcast_episodes: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+# ラジオ API
+@app.get("/api/radio/stream-url/{service}/{station_id}")
+async def get_radio_stream_url(
+    service: str,
+    station_id: str
+):
+    """
+    ラジオストリーミングURLを取得
+
+    Args:
+        service: サービス名 (nhk, radiko)
+        station_id: 局ID
+
+    Returns:
+        {
+            "streamUrl": str,
+            "format": str,
+            "expiresAt": str | None
+        }
+    """
+    try:
+        stream_data = await radio.get_stream_url(service, station_id)
+        return stream_data
+    except NotImplementedError as e:
+        raise HTTPException(status_code=501, detail=str(e))
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        logger.error(f"Error in get_radio_stream_url: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/radio/now-playing/{service}/{station_id}")
+async def get_radio_now_playing(
+    service: str,
+    station_id: str
+):
+    """
+    現在放送中の番組情報を取得
+
+    Args:
+        service: サービス名 (nhk, radiko)
+        station_id: 局ID
+
+    Returns:
+        {
+            "title": str,
+            "description": str,
+            "startTime": str,
+            "endTime": str
+        }
+        または None
+    """
+    try:
+        now_playing = await radio.get_now_playing(service, station_id)
+        if now_playing is None:
+            raise HTTPException(status_code=404, detail="Now playing information not available")
+        return now_playing
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error in get_radio_now_playing: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 # グローバルエラーハンドラー
