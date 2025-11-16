@@ -20,6 +20,8 @@ import VoiceMemoRecorder from '@/components/VoiceMemoRecorder'
 import TimerManager from '@/components/TimerManager'
 import RadioStationList from '@/components/RadioStationList'
 import RadioPlayer from '@/components/RadioPlayer'
+import AutoplaySettings from '@/components/AutoplaySettings'
+import AutoplayPlayer from '@/components/AutoplayPlayer'
 import { SpeechManager } from '@/lib/speech'
 import { useAppStore } from '@/lib/store'
 import { loadSettings, updateSetting } from '@/lib/storage'
@@ -27,12 +29,14 @@ import { fetchWeather, getCurrentTimeText, getWeatherText, getGreeting } from '@
 import { Favorite } from '@/lib/favorites'
 import { Progress } from '@/lib/progress'
 import { RadioStation } from '@/lib/radio'
+import { AutoplayItem } from '@/lib/autoplay'
 
 type Page = 'main' | 'news' | 'sns' | 'settings' | 'help' | 'tools' | 'audio' |
             'hatena-comments' | '5ch-boards' | '5ch-threads' | '5ch-posts' |
             'novel-list' | 'novel-content' | 'podcast-list' | 'podcast-episodes' |
             'rss-feeds' | 'rss-articles' | 'favorites' | 'continue-reading' |
-            'voice-memo' | 'timer' | 'radio-stations' | 'radio-player'
+            'voice-memo' | 'timer' | 'radio-stations' | 'radio-player' |
+            'autoplay-settings' | 'autoplay-player'
 
 export default function Home() {
   const [speechManager, setSpeechManager] = useState<SpeechManager | null>(null)
@@ -198,6 +202,13 @@ export default function Home() {
       },
     },
     {
+      label: 'おまかせ',
+      action: () => {
+        navigateTo('autoplay-settings')
+        speechManager?.speak('おまかせモード設定に移動しました')
+      },
+    },
+    {
       label: 'ヘルプ',
       action: () => {
         navigateTo('help')
@@ -208,17 +219,17 @@ export default function Home() {
       label: '情報',
       action: () => {
         speechManager?.speak(
-          'Esuna バージョン 0.5.0。' +
+          'Esuna バージョン 0.6.0。' +
           '視覚障害者向けアクセシブルWebアプリケーション。' +
           'はてなブックマーク、SNS、5ちゃんねる、RSSニュース、青空文庫、Podcast、ラジオ、' +
-          'お気に入り、続きから再生、音声メモ、タイマーが利用できます。'
+          'お気に入り、続きから再生、音声メモ、タイマー、おまかせモードが利用できます。'
         )
       },
     },
     {
       label: '読み上げ',
       action: () => {
-        speechManager?.speak('ツールメニュー。お気に入り、続きから再生、音声メモ、タイマー、ヘルプ、情報、読み上げ、停止が利用できます')
+        speechManager?.speak('ツールメニュー。お気に入り、続きから再生、音声メモ、タイマー、おまかせ、ヘルプ、情報、読み上げ、停止が利用できます')
       },
     },
     {
@@ -429,7 +440,7 @@ export default function Home() {
     {
       label: 'バージョン',
       action: () => {
-        speechManager?.speak('Esuna バージョン 0.5.0')
+        speechManager?.speak('Esuna バージョン 0.6.0')
       },
     },
     {
@@ -727,6 +738,57 @@ export default function Home() {
             onBack={() => {
               navigateTo('radio-stations')
               speechManager.speak('ラジオ局一覧に戻りました')
+            }}
+          />
+        </main>
+      )
+
+    case 'autoplay-settings':
+      return (
+        <main>
+          <AutoplaySettings
+            speech={speechManager}
+            onBack={() => {
+              navigateTo('tools')
+              speechManager.speak('ツールメニューに戻りました')
+            }}
+            onStartAutoplay={() => {
+              navigateTo('autoplay-player')
+            }}
+          />
+        </main>
+      )
+
+    case 'autoplay-player':
+      return (
+        <main>
+          <AutoplayPlayer
+            speech={speechManager}
+            onBack={() => {
+              navigateTo('autoplay-settings')
+              speechManager.speak('おまかせ設定に戻りました')
+            }}
+            onNavigateToContent={(item: AutoplayItem) => {
+              // コンテンツタイプに応じて適切なページに遷移
+              switch (item.type) {
+                case 'novel':
+                  navigateTo('novel-list')
+                  break
+                case 'podcast':
+                  navigateTo('podcast-list')
+                  break
+                case 'radio':
+                  setSelectedRadioStation(item.data)
+                  navigateTo('radio-player')
+                  break
+                case 'rss-news':
+                  navigateTo('rss-feeds')
+                  break
+                case 'hatena':
+                  navigateTo('news')
+                  setContentType('hatena-hot')
+                  break
+              }
             }}
           />
         </main>
