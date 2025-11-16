@@ -20,6 +20,13 @@ export interface AppSettings {
   ui: {
     theme: 'light' | 'dark' | 'auto';
     autoNavigation: boolean; // 自動ナビゲーション有効化
+    speakTimeOnStart: boolean; // 起動時に時刻を読み上げ
+    speakWeatherOnStart: boolean; // 起動時に天気予報を読み上げ
+  };
+  // 天気予報設定
+  weather: {
+    city: string; // 都市名（例: Tokyo）
+    enabled: boolean;
   };
 }
 
@@ -37,6 +44,12 @@ const DEFAULT_SETTINGS: AppSettings = {
   ui: {
     theme: 'auto',
     autoNavigation: false,
+    speakTimeOnStart: true,
+    speakWeatherOnStart: true,
+  },
+  weather: {
+    city: 'Tokyo',
+    enabled: true,
   },
 };
 
@@ -63,6 +76,7 @@ export const loadSettings = (): AppSettings => {
       speech: { ...DEFAULT_SETTINGS.speech, ...parsed.speech },
       api: { ...DEFAULT_SETTINGS.api, ...parsed.api },
       ui: { ...DEFAULT_SETTINGS.ui, ...parsed.ui },
+      weather: { ...DEFAULT_SETTINGS.weather, ...parsed.weather },
     };
   } catch (error) {
     console.error('Failed to load settings:', error);
