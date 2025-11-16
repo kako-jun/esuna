@@ -12,13 +12,17 @@ import NovelList from '@/components/NovelList'
 import NovelReader from '@/components/NovelReader'
 import PodcastList from '@/components/PodcastList'
 import PodcastPlayer from '@/components/PodcastPlayer'
+import RSSFeedList from '@/components/RSSFeedList'
+import RSSArticleReader from '@/components/RSSArticleReader'
 import { SpeechManager } from '@/lib/speech'
 import { useAppStore } from '@/lib/store'
 import { loadSettings, updateSetting } from '@/lib/storage'
+import { fetchWeather, getCurrentTimeText, getWeatherText, getGreeting } from '@/lib/weather'
 
 type Page = 'main' | 'news' | 'sns' | 'settings' | 'help' |
             'hatena-comments' | '5ch-boards' | '5ch-threads' | '5ch-posts' |
-            'novel-list' | 'novel-content' | 'podcast-list' | 'podcast-episodes'
+            'novel-list' | 'novel-content' | 'podcast-list' | 'podcast-episodes' |
+            'rss-feeds' | 'rss-articles'
 
 export default function Home() {
   const [speechManager, setSpeechManager] = useState<SpeechManager | null>(null)
@@ -39,16 +43,33 @@ export default function Home() {
 
     setSpeechManager(manager)
 
-    setTimeout(() => {
-      manager.speak(
-        'Esuna へようこそ。視覚障害者向けアクセシブルアプリケーションです。' +
-        'キーボードの任意のキーを押してキーボードモードに切り替えるか、画面をタップして操作してください。',
-        {
-          rate: settings.speech.rate,
-          pitch: settings.speech.pitch,
-          volume: settings.speech.volume,
+    // 起動時の読み上げ
+    setTimeout(async () => {
+      let message = getGreeting() + '。Esuna へようこそ。';
+
+      // 時刻読み上げ
+      if (settings.ui.speakTimeOnStart) {
+        message += getCurrentTimeText() + '。';
+      }
+
+      // 天気予報読み上げ
+      if (settings.ui.speakWeatherOnStart && settings.weather.enabled) {
+        try {
+          const weather = await fetchWeather(settings.weather.city);
+          message += getWeatherText(weather) + '。';
+        } catch (error) {
+          console.error('Weather fetch error:', error);
+          // 天気予報取得失敗時はスキップ
         }
-      )
+      }
+
+      message += 'キーボードの任意のキーを押してキーボードモードに切り替えるか、画面をタップして操作してください。';
+
+      manager.speak(message, {
+        rate: settings.speech.rate,
+        pitch: settings.speech.pitch,
+        volume: settings.speech.volume,
+      });
     }, 1000)
 
     return () => {
@@ -86,6 +107,13 @@ export default function Home() {
       },
     },
     {
+      label: 'ニュース',
+      action: () => {
+        navigateTo('rss-feeds')
+        speechManager?.speak('RSSニュース フィード一覧に移動しました')
+      },
+    },
+    {
       label: '小説',
       action: () => {
         navigateTo('novel-list')
@@ -119,9 +147,10 @@ export default function Home() {
       label: '情報',
       action: () => {
         speechManager?.speak(
-          'Esuna バージョン 0.2.0。' +
+          'Esuna バージョン 0.3.0。' +
           '視覚障害者向けアクセシブルWebアプリケーション。' +
-          'はてなブックマーク、SNS、5ちゃんねる、青空文庫、Podcastが利用できます。'
+          'はてなブックマーク、SNS、5ちゃんねる、RSSニュース、青空文庫、Podcastが利用できます。' +
+          '起動時に時刻と天気予報を読み上げます。'
         )
       },
     },
@@ -438,6 +467,35 @@ export default function Home() {
             onBack={() => {
               navigateTo('podcast-list')
               speechManager.speak('Podcast一覧に戻りました')
+            }}
+          />
+        </main>
+      )
+
+    case 'rss-feeds':
+      return (
+        <main>
+          <RSSFeedList
+            speech={speechManager}
+            onBack={() => {
+              navigateTo('main')
+              speechManager.speak('メインメニューに戻りました')
+            }}
+            onSelectFeed={() => {
+              navigateTo('rss-articles')
+            }}
+          />
+        </main>
+      )
+
+    case 'rss-articles':
+      return (
+        <main>
+          <RSSArticleReader
+            speech={speechManager}
+            onBack={() => {
+              navigateTo('rss-feeds')
+              speechManager.speak('フィード一覧に戻りました')
             }}
           />
         </main>
