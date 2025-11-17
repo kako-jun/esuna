@@ -3,13 +3,15 @@
  * アプリケーションの状態管理
  */
 import { create } from 'zustand';
-import type { HatenaEntry, HatenaComment, FivechBoard, FivechThread, FivechPost, SNSPost } from './api-client';
+import type { HatenaEntry, HatenaComment, FivechBoard, FivechThread, FivechPost, SNSPost, NovelContent, NovelSection, PodcastEpisode } from './api-client';
+import type { Novel } from './novels';
+import type { Podcast } from './podcasts';
 
 // コンテンツタイプ
-export type ContentType = 'hatena-hot' | 'hatena-latest' | '5ch' | 'sns' | 'news';
+export type ContentType = 'hatena-hot' | 'hatena-latest' | '5ch' | 'sns' | 'news' | 'novel' | 'podcast';
 
 // ページタイプ
-export type PageType = 'home' | 'content-list' | 'content-detail' | 'comment-list' | 'comment-detail' | '5ch-boards' | '5ch-threads' | '5ch-posts';
+export type PageType = 'home' | 'content-list' | 'content-detail' | 'comment-list' | 'comment-detail' | '5ch-boards' | '5ch-threads' | '5ch-posts' | 'novel-list' | 'novel-content' | 'podcast-list' | 'podcast-episodes';
 
 interface AppState {
   // 現在のページ
@@ -36,6 +38,16 @@ interface AppState {
   // SNS
   snsPosts: SNSPost[];
   currentSNSPostIndex: number;
+
+  // 小説
+  selectedNovel: Novel | null;
+  novelContent: NovelContent | null;
+  currentSectionIndex: number;
+
+  // Podcast
+  selectedPodcast: Podcast | null;
+  podcastEpisodes: PodcastEpisode[];
+  currentEpisodeIndex: number;
 
   // 自動ナビゲーション
   autoNavigationEnabled: boolean;
@@ -83,6 +95,22 @@ interface AppState {
   prevSNSPost: () => void;
   getCurrentSNSPost: () => SNSPost | null;
 
+  // 小説
+  setSelectedNovel: (novel: Novel | null) => void;
+  setNovelContent: (content: NovelContent | null) => void;
+  setCurrentSectionIndex: (index: number) => void;
+  nextSection: () => void;
+  prevSection: () => void;
+  getCurrentSection: () => NovelSection | null;
+
+  // Podcast
+  setSelectedPodcast: (podcast: Podcast | null) => void;
+  setPodcastEpisodes: (episodes: PodcastEpisode[]) => void;
+  setCurrentEpisodeIndex: (index: number) => void;
+  nextEpisode: () => void;
+  prevEpisode: () => void;
+  getCurrentEpisode: () => PodcastEpisode | null;
+
   // 自動ナビゲーション
   setAutoNavigation: (enabled: boolean) => void;
 
@@ -110,6 +138,14 @@ export const useAppStore = create<AppState>((set, get) => ({
 
   snsPosts: [],
   currentSNSPostIndex: 0,
+
+  selectedNovel: null,
+  novelContent: null,
+  currentSectionIndex: 0,
+
+  selectedPodcast: null,
+  podcastEpisodes: [],
+  currentEpisodeIndex: 0,
 
   autoNavigationEnabled: false,
 
@@ -234,6 +270,48 @@ export const useAppStore = create<AppState>((set, get) => ({
     return snsPosts[currentSNSPostIndex] || null;
   },
 
+  // 小説
+  setSelectedNovel: (novel) => set({ selectedNovel: novel }),
+  setNovelContent: (content) => set({ novelContent: content, currentSectionIndex: 0 }),
+  setCurrentSectionIndex: (index) => set({ currentSectionIndex: index }),
+  nextSection: () => {
+    const { novelContent, currentSectionIndex } = get();
+    if (novelContent && currentSectionIndex < novelContent.sections.length - 1) {
+      set({ currentSectionIndex: currentSectionIndex + 1 });
+    }
+  },
+  prevSection: () => {
+    const { currentSectionIndex } = get();
+    if (currentSectionIndex > 0) {
+      set({ currentSectionIndex: currentSectionIndex - 1 });
+    }
+  },
+  getCurrentSection: () => {
+    const { novelContent, currentSectionIndex } = get();
+    return novelContent?.sections[currentSectionIndex] || null;
+  },
+
+  // Podcast
+  setSelectedPodcast: (podcast) => set({ selectedPodcast: podcast }),
+  setPodcastEpisodes: (episodes) => set({ podcastEpisodes: episodes, currentEpisodeIndex: 0 }),
+  setCurrentEpisodeIndex: (index) => set({ currentEpisodeIndex: index }),
+  nextEpisode: () => {
+    const { podcastEpisodes, currentEpisodeIndex } = get();
+    if (currentEpisodeIndex < podcastEpisodes.length - 1) {
+      set({ currentEpisodeIndex: currentEpisodeIndex + 1 });
+    }
+  },
+  prevEpisode: () => {
+    const { currentEpisodeIndex } = get();
+    if (currentEpisodeIndex > 0) {
+      set({ currentEpisodeIndex: currentEpisodeIndex - 1 });
+    }
+  },
+  getCurrentEpisode: () => {
+    const { podcastEpisodes, currentEpisodeIndex } = get();
+    return podcastEpisodes[currentEpisodeIndex] || null;
+  },
+
   // 自動ナビゲーション
   setAutoNavigation: (enabled) => set({ autoNavigationEnabled: enabled }),
 
@@ -254,5 +332,11 @@ export const useAppStore = create<AppState>((set, get) => ({
     currentPostIndex: 0,
     snsPosts: [],
     currentSNSPostIndex: 0,
+    selectedNovel: null,
+    novelContent: null,
+    currentSectionIndex: 0,
+    selectedPodcast: null,
+    podcastEpisodes: [],
+    currentEpisodeIndex: 0,
   }),
 }));

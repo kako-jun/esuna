@@ -11,7 +11,7 @@ import logging
 from datetime import datetime
 
 # スクレイパーをインポート
-from .scrapers import hatena, fivech, sns
+from .scrapers import hatena, fivech, sns, aozora, podcast, radio
 
 # ロガー設定
 logging.basicConfig(
@@ -62,6 +62,24 @@ class FivechPost(BaseModel):
     name: str
     datetime: str
     text: str
+
+class NovelSection(BaseModel):
+    title: str
+    content: str
+
+class NovelContent(BaseModel):
+    title: str
+    author: str
+    content: str
+    sections: List[NovelSection]
+
+class PodcastEpisode(BaseModel):
+    id: str
+    title: str
+    description: str
+    pub_date: str
+    audio_url: Optional[str] = None
+    duration: int = 0
 
 class ErrorLog(BaseModel):
     level: str
@@ -186,6 +204,97 @@ async def get_sns_posts(
         raise
     except Exception as e:
         logger.error(f"Error in get_sns_posts: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+# 小説 API
+@app.get("/api/novels/content", response_model=NovelContent)
+async def get_novel_content(
+    author_id: str = Query(..., description="作家ID (例: 000148)"),
+    file_id: str = Query(..., description="ファイルID (例: 773_14560)")
+):
+    """青空文庫の小説本文を取得"""
+    try:
+        content = await aozora.fetch_novel_content(author_id, file_id)
+        return content
+    except Exception as e:
+        logger.error(f"Error in get_novel_content: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+# Podcast API
+@app.get("/api/podcasts/episodes", response_model=List[PodcastEpisode])
+async def get_podcast_episodes(
+    feed_url: str = Query(..., description="PodcastのRSSフィードURL"),
+    limit: int = Query(10, ge=1, le=50, description="取得するエピソード数")
+):
+    """Podcast RSSフィードからエピソード一覧を取得"""
+    try:
+        episodes = await podcast.fetch_podcast_episodes(feed_url, limit)
+        return episodes
+    except Exception as e:
+        logger.error(f"Error in get_podcast_episodes: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+# ラジオ API
+@app.get("/api/radio/stream-url/{service}/{station_id}")
+async def get_radio_stream_url(
+    service: str,
+    station_id: str
+):
+    """
+    ラジオストリーミングURLを取得
+
+    Args:
+        service: サービス名 (nhk, radiko)
+        station_id: 局ID
+
+    Returns:
+        {
+            "streamUrl": str,
+            "format": str,
+            "expiresAt": str | None
+        }
+    """
+    try:
+        stream_data = await radio.get_stream_url(service, station_id)
+        return stream_data
+    except NotImplementedError as e:
+        raise HTTPException(status_code=501, detail=str(e))
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        logger.error(f"Error in get_radio_stream_url: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/radio/now-playing/{service}/{station_id}")
+async def get_radio_now_playing(
+    service: str,
+    station_id: str
+):
+    """
+    現在放送中の番組情報を取得
+
+    Args:
+        service: サービス名 (nhk, radiko)
+        station_id: 局ID
+
+    Returns:
+        {
+            "title": str,
+            "description": str,
+            "startTime": str,
+            "endTime": str
+        }
+        または None
+    """
+    try:
+        now_playing = await radio.get_now_playing(service, station_id)
+        if now_playing is None:
+            raise HTTPException(status_code=404, detail="Now playing information not available")
+        return now_playing
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error in get_radio_now_playing: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 # グローバルエラーハンドラー
