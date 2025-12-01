@@ -77,4 +77,4 @@ env/
 # Backend specific
 backend/.env
 backend/*.db
-backend/*.sqlite
+backend/*.sqlite.claude/settings.local.json
