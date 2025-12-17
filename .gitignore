@@ -79,3 +79,4 @@ backend/.env
 backend/*.db
 backend/*.sqlite.claude/settings.local.json
 .serena/
+.mcp.json
