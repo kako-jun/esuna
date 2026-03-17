@@ -1,28 +1,31 @@
+/* Press Start 2P — pixel font for Famicom FF aesthetic */
+/* NOTE: @import must precede @tailwind directives */
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+/* ============================================================
+   Famicom Final Fantasy (FC FF) Aesthetic
+   Deep navy blue background, white text, pixel-style borders
+   ============================================================ */
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* FF Famicom color palette */
+  --ff-bg:          #000080;   /* Deep navy — classic FC FF menu background */
+  --ff-panel:       #0000AA;   /* Slightly lighter blue for panels */
+  --ff-panel-dark:  #000066;   /* Darker blue for depth */
+  --ff-border:      #ffffff;   /* White border (outer) */
+  --ff-border-inner:#aaaaff;   /* Soft blue-white for inner border line */
+  --ff-text:        #ffffff;   /* Pure white text */
+  --ff-text-dim:    #aaaaff;   /* Dimmed text / empty cells */
+  --ff-cursor:      #ffffff;   /* Cursor / selected indicator */
+  --ff-selected-bg: #0000CC;   /* Selected cell background */
+  --ff-gap:         #000044;   /* Grid gap — near-black navy */
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
-body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
-  margin: 0;
-  padding: 0;
-  overflow: hidden;
-}
-
+/* Reset */
 * {
   box-sizing: border-box;
   padding: 0;
@@ -34,42 +37,20 @@ html, body, #__next {
   width: 100vw;
 }
 
-.grid-container {
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  grid-template-rows: 1fr 1fr 1fr;
-  height: 100vh;
-  width: 100vw;
-  gap: 2px;
-  background: #333;
+body {
+  color: var(--ff-text);
+  background: var(--ff-bg);
+  /* Press Start 2P for pixel look; fall back to monospace */
+  font-family: 'Press Start 2P', 'Courier New', Courier, monospace;
+  font-size: 14px;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
 }
 
-.grid-item {
-  background: var(--background);
-  border: 2px solid #666;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.5rem;
-  font-weight: bold;
-  cursor: pointer;
-  position: relative;
-}
-
-.grid-item:hover {
-  background: #f0f0f0;
-}
-
-.grid-item:focus {
-  outline: 3px solid #007acc;
-  outline-offset: -3px;
-}
-
-.grid-item.active {
-  background: #007acc;
-  color: white;
-}
-
+/* ============================================================
+   Screen reader utility (unchanged — required for a11y)
+   ============================================================ */
 .sr-only {
   position: absolute;
   width: 1px;
@@ -80,4 +61,130 @@ html, body, #__next {
   clip: rect(0, 0, 0, 0);
   white-space: nowrap;
   border: 0;
+}
+
+/* ============================================================
+   Grid container — the full-screen 3×3 FF menu
+   ============================================================ */
+.grid-container {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-rows: 1fr 1fr 1fr;
+  height: 100vh;
+  width: 100vw;
+  gap: 3px;
+  background: var(--ff-gap);   /* narrow dark lines between cells */
+  padding: 8px;                /* outer margin — like an FF menu box */
+  /* Outer white border + inner blue-tint border = FF double-border */
+  border: 3px solid var(--ff-border);
+  outline: 6px solid var(--ff-panel-dark);
+  outline-offset: -9px;
+}
+
+/* ============================================================
+   Grid item — individual FF menu option
+   ============================================================ */
+.grid-item {
+  background: var(--ff-panel);
+  color: var(--ff-text);
+  /* Double-border: outer white, inner blue-tint */
+  border: 2px solid var(--ff-border);
+  outline: 2px solid var(--ff-border-inner);
+  outline-offset: -4px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+
+  font-family: 'Press Start 2P', 'Courier New', Courier, monospace;
+  font-size: clamp(0.6rem, 1.4vw, 1rem);
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-break: break-word;
+
+  cursor: pointer;
+  position: relative;
+
+  /* No box-shadow, no gradients — flat pixel look */
+  transition: none;
+
+  /* Keyboard / pointer focus ring */
+  /* (using outline already for double-border; focus uses box-shadow instead) */
+}
+
+/* Hover state — brighten the cell slightly */
+.grid-item:hover {
+  background: var(--ff-selected-bg);
+  color: var(--ff-text);
+}
+
+/* Focus state — bright white focus indicator for keyboard navigation */
+.grid-item:focus {
+  background: var(--ff-selected-bg);
+  box-shadow: inset 0 0 0 3px var(--ff-cursor);
+  outline: 2px solid var(--ff-border-inner);
+  outline-offset: -4px;
+}
+
+/* Active / selected state — like the FF cursor being on this item */
+.grid-item.active {
+  background: var(--ff-selected-bg);
+  color: var(--ff-cursor);
+  /* White blinking-cursor arrow before the text */
+}
+
+/* FF-style cursor arrow before active item text */
+.grid-item.active::before {
+  content: '▶';
+  position: absolute;
+  left: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--ff-cursor);
+  font-size: 0.7em;
+  animation: ff-blink 0.8s step-end infinite;
+}
+
+/* Empty / disabled cells — dimmed */
+.grid-item.opacity-50 {
+  opacity: 1 !important;          /* override Tailwind opacity-50 */
+  background: var(--ff-panel-dark);
+  color: var(--ff-text-dim);
+  border-color: var(--ff-border-inner);
+  cursor: default;
+}
+
+/* ============================================================
+   Blinking cursor animation (FF-style step blink)
+   ============================================================ */
+@keyframes ff-blink {
+  0%,  100% { opacity: 1; }
+  50%        { opacity: 0; }
+}
+
+/* ============================================================
+   Notification / status overlay (e.g. recording indicator)
+   The VoiceMemoRecorder uses a fixed overlay — restyle it here
+   ============================================================ */
+.ff-status-bar {
+  position: fixed;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--ff-panel);
+  color: var(--ff-text);
+  border: 2px solid var(--ff-border);
+  outline: 2px solid var(--ff-border-inner);
+  outline-offset: -3px;
+  padding: 6px 16px;
+  font-family: 'Press Start 2P', 'Courier New', Courier, monospace;
+  font-size: 0.7rem;
+  z-index: 1000;
+  white-space: nowrap;
+}
+
+/* Recording blink on the status bar label */
+.ff-status-bar--recording {
+  animation: ff-blink 0.6s step-end infinite;
 }

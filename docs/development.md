@@ -40,12 +40,11 @@ esuna/
 │   │   ├── main.py      # エントリポイント
 │   │   └── scrapers/    # スクレイパー群
 │   └── pyproject.toml
-├── .claude/              # プロジェクト管理ドキュメント
+├── docs/                 # プロジェクト管理ドキュメント
 │   ├── architecture.md           # アーキテクチャ設計
-│   ├── todo.md                   # TODO リスト
-│   ├── development-guide.md      # このファイル
-│   ├── future-features.md        # 将来実装予定の機能
-│   └── implementation-progress.md # 実装進捗
+│   ├── roadmap.md                # ロードマップ・TODO・将来機能
+│   ├── development.md            # このファイル
+│   └── progress.md               # 実装進捗
 └── CLAUDE.md             # プロジェクト概要
 ```
 
@@ -295,9 +294,9 @@ GridSystemが自動的にキーバインドを処理する
 ## 🔧 新機能の追加方法
 
 ### Step 1: 設計
-1. `.claude/future-features.md` に機能案を追加
-2. `.claude/todo.md` にタスクを追加
-3. 必要に応じて `.claude/architecture.md` を更新
+1. `docs/roadmap.md` に機能案を追加
+2. `docs/roadmap.md` のTODOセクションにタスクを追加
+3. 必要に応じて `docs/architecture.md` を更新
 
 ### Step 2: データ層の実装
 1. `frontend/src/lib/` に新しいファイルを作成
@@ -385,8 +384,8 @@ case 'calendar':
 4. キーボード操作が正しく動くか確認
 
 ### Step 7: ドキュメント更新
-1. `.claude/implementation-progress.md` に実装内容を追加
-2. `.claude/todo.md` の該当タスクをチェック
+1. `docs/progress.md` に実装内容を追加
+2. `docs/roadmap.md` の該当タスクをチェック
 3. 必要に応じて `CLAUDE.md` を更新
 
 ---

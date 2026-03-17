@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import {
   generateRandomPlaylist,
   loadAutoplaySettings,
@@ -47,33 +47,20 @@ export default function AutoplayPlayer({
     }
   }, [])
 
-  // タイマー管理
-  useEffect(() => {
-    if (!isPlaying || timeRemaining <= 0) {
-      return
-    }
+  // Refs to avoid stale closures inside setInterval
+  const currentIndexRef = useRef(currentIndex)
+  currentIndexRef.current = currentIndex
+  const playlistRef = useRef(playlist)
+  playlistRef.current = playlist
 
-    const interval = setInterval(() => {
-      setTimeRemaining((prev) => {
-        const newTime = prev - 1
-        if (newTime <= 0) {
-          // 次のコンテンツへ
-          nextContent()
-          return settings.playDuration * 60
-        }
-        return newTime
-      })
-    }, 1000)
-
-    return () => clearInterval(interval)
-  }, [isPlaying, timeRemaining, currentIndex])
-
-  // 次のコンテンツ
+  // 次のコンテンツ（ref 経由で最新の値を参照）
   const nextContent = () => {
-    if (currentIndex < playlist.length - 1) {
-      const nextIndex = currentIndex + 1
+    const idx = currentIndexRef.current
+    const pl = playlistRef.current
+    if (idx < pl.length - 1) {
+      const nextIndex = idx + 1
       setCurrentIndex(nextIndex)
-      const nextItem = playlist[nextIndex]
+      const nextItem = pl[nextIndex]
       speech.speak(
         `次のコンテンツ：${getContentTypeName(nextItem.type)}、${nextItem.title}`,
         { interrupt: true }
@@ -84,6 +71,28 @@ export default function AutoplayPlayer({
       setIsPlaying(false)
     }
   }
+
+  // タイマー管理
+  useEffect(() => {
+    if (!isPlaying) {
+      return
+    }
+
+    const interval = setInterval(() => {
+      setTimeRemaining((prev) => {
+        const newTime = prev - 1
+        if (newTime <= 0) {
+          // 次のコンテンツへ（nextContent は ref 経由なので最新の状態を参照できる）
+          nextContent()
+          return settings.playDuration * 60
+        }
+        return newTime
+      })
+    }, 1000)
+
+    return () => clearInterval(interval)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isPlaying])
 
   // 前のコンテンツ
   const prevContent = () => {
@@ -122,7 +131,13 @@ export default function AutoplayPlayer({
   }
 
   if (!currentItem) {
-    return <div>プレイリストが空です</div>
+    return (
+      <div className="grid-container" role="status" aria-live="polite">
+        <div className="grid-item" style={{ gridColumn: '1 / -1', gridRow: '1 / -1' }}>
+          プレイリストが空です
+        </div>
+      </div>
+    )
   }
 
   // グリッドアクション

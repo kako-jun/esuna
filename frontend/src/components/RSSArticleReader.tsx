@@ -173,8 +173,10 @@ export default function RSSArticleReader({ speech, onBack }: RSSArticleReaderPro
 
   if (error) {
     return (
-      <div className="p-4 text-center text-red-600">
-        エラー: {error}
+      <div className="grid-container" role="alert" aria-live="assertive">
+        <div className="grid-item" style={{ gridColumn: '1 / -1', gridRow: '1 / -1' }}>
+          エラー: {error}
+        </div>
       </div>
     )
   }

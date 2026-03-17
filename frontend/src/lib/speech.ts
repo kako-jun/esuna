@@ -2,6 +2,8 @@ export class SpeechManager {
   private synthesis: SpeechSynthesis
   private voices: SpeechSynthesisVoice[] = []
   private currentVoice: SpeechSynthesisVoice | null = null
+  // Queue of pending setVoiceByName calls that arrived before voices loaded
+  private pendingVoiceName: string | null = null
 
   constructor() {
     this.synthesis = window.speechSynthesis
@@ -9,23 +11,37 @@ export class SpeechManager {
   }
 
   private loadVoices() {
-    const loadVoicesWhenAvailable = () => {
+    const applyVoices = () => {
       this.voices = this.synthesis.getVoices()
-      
-      this.currentVoice = this.voices.find(voice => 
+      if (this.voices.length === 0) return
+
+      this.currentVoice = this.voices.find(voice =>
         voice.lang.includes('ja') || voice.name.includes('Japanese')
       ) || this.voices[0] || null
 
-      if (this.voices.length === 0) {
-        setTimeout(loadVoicesWhenAvailable, 100)
+      // Apply any pending voice selection that arrived before voices were ready
+      if (this.pendingVoiceName) {
+        const found = this.voices.find(v => v.name === this.pendingVoiceName)
+        if (found) this.currentVoice = found
+        this.pendingVoiceName = null
       }
     }
 
+    // Chrome fires onvoiceschanged; Firefox/Safari have them synchronously
     if (this.synthesis.onvoiceschanged !== undefined) {
-      this.synthesis.onvoiceschanged = loadVoicesWhenAvailable
+      this.synthesis.onvoiceschanged = applyVoices
     }
-    
-    loadVoicesWhenAvailable()
+
+    // Always attempt synchronous load (works in Firefox/Safari and on repeat calls)
+    applyVoices()
+
+    // Fallback polling in case onvoiceschanged is not fired
+    if (this.voices.length === 0) {
+      const poll = setInterval(() => {
+        applyVoices()
+        if (this.voices.length > 0) clearInterval(poll)
+      }, 100)
+    }
   }
 
   speak(text: string, options?: {
@@ -93,6 +109,9 @@ export class SpeechManager {
     const voice = this.voices.find(v => v.name === voiceName)
     if (voice) {
       this.currentVoice = voice
+    } else {
+      // Voices may not be loaded yet; store the name and apply once ready
+      this.pendingVoiceName = voiceName
     }
   }
 

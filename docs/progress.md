@@ -399,5 +399,5 @@ Route (app)                    Size      First Load JS
 ---
 
 ## 参考リンク
-- [future-features.md](./.claude/future-features.md) - 将来実装予定の機能一覧
+- [roadmap.md](./roadmap.md) - ロードマップ・将来実装予定の機能一覧
 - [CLAUDE.md](../CLAUDE.md) - プロジェクト概要と方針

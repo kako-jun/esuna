@@ -53,7 +53,9 @@ export default function HatenaEntryReader({ speech, onBack, onViewComments, type
     if (hatenaEntries.length === 0) {
       loadEntries()
     }
-  }, [type])
+    // speech と setHatenaEntries は安定した参照だが eslint に合わせて明示する
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [type, speech, setHatenaEntries])
 
   // 現在のエントリーを取得
   const currentEntry = getCurrentEntry()

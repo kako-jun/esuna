@@ -24,6 +24,9 @@ export const useAutoNavigation = ({
   const timerIdRef = useRef<NodeJS.Timeout | null>(null);
   const delayTimerRef = useRef<NodeJS.Timeout | null>(null);
   const lastSpeakingStateRef = useRef<boolean>(false);
+  // Keep a ref to the latest onNext to avoid stale closures inside setInterval
+  const onNextRef = useRef(onNext);
+  onNextRef.current = onNext;
 
   useEffect(() => {
     // 自動ナビゲーションが無効の場合はクリーンアップ
@@ -45,9 +48,9 @@ export const useAutoNavigation = ({
 
       // 読み上げ中から停止に変わった瞬間を検知
       if (lastSpeakingStateRef.current && !isSpeaking) {
-        // delay後に次へ遷移
+        // delay後に次へ遷移（最新の onNext を ref 経由で呼ぶ）
         delayTimerRef.current = setTimeout(() => {
-          onNext();
+          onNextRef.current();
         }, delay);
       }
 
@@ -63,7 +66,9 @@ export const useAutoNavigation = ({
         clearTimeout(delayTimerRef.current);
       }
     };
-  }, [enabled, speech, onNext, interval, delay]);
+    // onNext は ref 経由で参照するので deps から外す（stale closure 対策）
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [enabled, speech, interval, delay]);
 
   // 手動でタイマーをキャンセルする関数
   const cancel = () => {

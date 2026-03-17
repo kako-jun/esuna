@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useId } from 'react'
 import { SpeechManager } from '@/lib/speech'
 
 interface GridAction {
@@ -17,6 +17,7 @@ interface GridSystemProps {
 export default function GridSystem({ actions, speech, onInit }: GridSystemProps) {
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null)
   const [isKeyboardMode, setIsKeyboardMode] = useState(false)
+  const gridId = useId()
 
   useEffect(() => {
     if (onInit) {
@@ -84,8 +85,7 @@ export default function GridSystem({ actions, speech, onInit }: GridSystemProps)
         break
       case 'Escape':
         event.preventDefault()
-        speech.speak('操作を停止しました')
-        window.speechSynthesis.cancel()
+        speech.stop()
         break
       case '1':
       case '2':
@@ -116,36 +116,39 @@ export default function GridSystem({ actions, speech, onInit }: GridSystemProps)
     return () => document.removeEventListener('touchstart', handleTouchStart)
   }, [])
 
+  const activeDescendantId = selectedIndex !== null ? `${gridId}-cell-${selectedIndex}` : undefined
+
   return (
     <div
       className="grid-container"
       onKeyDown={handleKeyDown}
       tabIndex={0}
-      role="application"
-      aria-label="9分割グリッド操作パネル"
+      role="grid"
+      aria-label="操作パネル（1〜9キーで直接選択、矢印キーで移動、Enterで実行、Escapeで停止）"
+      aria-activedescendant={activeDescendantId}
     >
       {Array.from({ length: 9 }, (_, index) => {
         const action = actions[index]
-        const isEmpty = !action
+        const isEmpty = !action || action.label === ''
+        const isSelected = selectedIndex === index
 
         return (
           <div
             key={index}
-            className={`grid-item ${selectedIndex === index ? 'active' : ''} ${isEmpty ? 'opacity-50' : ''}`}
+            id={`${gridId}-cell-${index}`}
+            className={`grid-item ${isSelected ? 'active' : ''} ${isEmpty ? 'opacity-50' : ''}`}
             onClick={() => {
-              if (action) {
+              if (action && !isEmpty) {
                 handleItemClick(action, index)
               }
             }}
-            role="button"
+            role="gridcell"
             tabIndex={-1}
-            aria-label={action ? `${index + 1}番、${action.label}` : `空のセル ${index + 1}`}
+            aria-label={!isEmpty ? `${index + 1}番、${action!.label}` : `空のセル ${index + 1}`}
             aria-disabled={isEmpty}
+            aria-selected={isSelected}
           >
-            {action ? action.label : ''}
-            <span className="sr-only">
-              {selectedIndex === index ? '選択中' : ''}
-            </span>
+            {!isEmpty ? action!.label : ''}
           </div>
         )
       })}

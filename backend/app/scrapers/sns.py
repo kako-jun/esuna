@@ -140,7 +140,7 @@ def format_timestamp(timestamp_str: str) -> str:
             return f"{delta.seconds // 60}分前"
         else:
             return "たった今"
-    except:
+    except Exception:
         return timestamp_str
 
 async def fetch_bluesky_posts(handle: str = None, limit: int = 10) -> List[Dict]:

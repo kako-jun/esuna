@@ -21,6 +21,10 @@ export default function VoiceMemoRecorder({ speech, onBack }: VoiceMemoRecorderP
   const audioChunksRef = useRef<Blob[]>([])
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const recordingTimerRef = useRef<NodeJS.Timeout | null>(null)
+  // Ref always reflects the latest recordingTime to avoid stale closure in onstop
+  const recordingTimeRef = useRef<number>(0)
+  // Ref to track current object URL so we can revoke it on the next play
+  const currentAudioUrlRef = useRef<string | null>(null)
 
   // メモ一覧を読み込み
   useEffect(() => {
@@ -33,6 +37,10 @@ export default function VoiceMemoRecorder({ speech, onBack }: VoiceMemoRecorderP
       }
       if (audioRef.current) {
         audioRef.current.pause()
+      }
+      if (currentAudioUrlRef.current) {
+        URL.revokeObjectURL(currentAudioUrlRef.current)
+        currentAudioUrlRef.current = null
       }
     }
   }, [])
@@ -79,6 +87,7 @@ export default function VoiceMemoRecorder({ speech, onBack }: VoiceMemoRecorderP
       mediaRecorderRef.current = mediaRecorder
       audioChunksRef.current = []
       setRecordingTime(0)
+      recordingTimeRef.current = 0
 
       mediaRecorder.ondataavailable = (event) => {
         audioChunksRef.current.push(event.data)
@@ -88,18 +97,19 @@ export default function VoiceMemoRecorder({ speech, onBack }: VoiceMemoRecorderP
         const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' })
         const base64Data = await blobToBase64(audioBlob)
 
-        // メモを保存
+        // メモを保存（stale closure を避けるため ref から読む）
+        const finalDuration = recordingTimeRef.current
         const now = new Date()
         const title = `音声メモ ${now.toLocaleString('ja-JP')}`
 
         saveMemo({
           title,
           audioData: base64Data,
-          duration: recordingTime,
+          duration: finalDuration,
           tags: [],
         })
 
-        speech.speak(`音声メモを保存しました。長さは${recordingTime}秒です`)
+        speech.speak(`音声メモを保存しました。長さは${finalDuration}秒です`)
 
         // メモ一覧を再読み込み
         loadMemos()
@@ -114,7 +124,11 @@ export default function VoiceMemoRecorder({ speech, onBack }: VoiceMemoRecorderP
 
       // タイマー開始
       recordingTimerRef.current = setInterval(() => {
-        setRecordingTime((prev) => prev + 1)
+        setRecordingTime((prev) => {
+          const next = prev + 1
+          recordingTimeRef.current = next
+          return next
+        })
       }, 1000)
     } catch (error) {
       console.error('Failed to start recording:', error)
@@ -152,7 +166,13 @@ export default function VoiceMemoRecorder({ speech, onBack }: VoiceMemoRecorderP
 
     try {
       const audioBlob = base64ToBlob(currentMemo.audioData)
+
+      // Revoke the previous object URL to avoid memory leaks
+      if (currentAudioUrlRef.current) {
+        URL.revokeObjectURL(currentAudioUrlRef.current)
+      }
       const audioUrl = URL.createObjectURL(audioBlob)
+      currentAudioUrlRef.current = audioUrl
 
       if (!audioRef.current) {
         audioRef.current = new Audio(audioUrl)
@@ -271,8 +291,8 @@ export default function VoiceMemoRecorder({ speech, onBack }: VoiceMemoRecorderP
   return (
     <div>
       {isRecording && (
-        <div className="fixed top-4 left-1/2 transform -translate-x-1/2 bg-red-600 text-white px-4 py-2 rounded">
-          録音中... {recordingTime}秒
+        <div className="ff-status-bar ff-status-bar--recording" role="status" aria-live="polite">
+          ● REC {recordingTime}秒
         </div>
       )}
       <GridSystem actions={actions} speech={speech} />

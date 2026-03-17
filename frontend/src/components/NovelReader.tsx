@@ -67,12 +67,14 @@ export default function NovelReader({ speech, onBack }: NovelReaderProps) {
   // 現在のセクションを取得
   const currentSection = getCurrentSection()
 
-  // セクションを読み上げ
-  const speakSection = () => {
-    if (!currentSection) return
+  // セクションを読み上げ（引数でセクションを明示できる。省略時は getCurrentSection() を使用）
+  const speakSection = (sectionOverride?: { title: string; content: string }, indexOverride?: number) => {
+    const section = sectionOverride ?? getCurrentSection()
+    const idx = indexOverride ?? currentSectionIndex
+    if (!section) return
 
-    const sectionTitle = currentSection.title || `セクション ${currentSectionIndex + 1}`
-    const text = `${sectionTitle}。${currentSection.content}`
+    const sectionTitle = section.title || `セクション ${idx + 1}`
+    const text = `${sectionTitle}。${section.content}`
 
     speech.speak(text, { interrupt: true })
   }
@@ -156,7 +158,11 @@ export default function NovelReader({ speech, onBack }: NovelReaderProps) {
       action: () => {
         if (currentSectionIndex !== 0) {
           useAppStore.getState().setCurrentSectionIndex(0)
-          setTimeout(speakSection, 100)
+          // novelContent.sections[0] を直接渡して stale closure を回避
+          setTimeout(() => {
+            const firstSection = novelContent?.sections[0]
+            if (firstSection) speakSection(firstSection, 0)
+          }, 100)
         } else {
           speech.speak('すでに最初のセクションです')
         }
@@ -195,8 +201,10 @@ export default function NovelReader({ speech, onBack }: NovelReaderProps) {
 
   if (error) {
     return (
-      <div className="p-4 text-center text-red-600">
-        エラー: {error}
+      <div className="grid-container" role="alert" aria-live="assertive">
+        <div className="grid-item" style={{ gridColumn: '1 / -1', gridRow: '1 / -1' }}>
+          エラー: {error}
+        </div>
       </div>
     )
   }

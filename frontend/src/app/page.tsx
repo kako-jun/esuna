@@ -452,7 +452,13 @@ export default function Home() {
   ]
 
   if (!speechManager) {
-    return <div>読み込み中...</div>
+    return (
+      <div className="grid-container" role="status" aria-live="polite">
+        <div className="grid-item" style={{ gridColumn: '1 / -1', gridRow: '1 / -1' }}>
+          読み込み中...
+        </div>
+      </div>
+    )
   }
 
   // ページごとの表示

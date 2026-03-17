@@ -4,6 +4,7 @@
 import httpx
 from bs4 import BeautifulSoup
 from typing import List, Dict
+from urllib.parse import urlparse
 import logging
 import re
 
@@ -70,7 +71,11 @@ def parse_5ch_threads(subject_txt: str, board_url: str, limit: int) -> List[Dict
                 title = title_with_count
 
             # スレッドURLを構築
-            thread_url = f"{board_url.rstrip('/')}/test/read.cgi/{thread_id}/"
+            # 例: https://asahi.5ch.net/newsplus/ → 板名 "newsplus"
+            # read.cgi の形式: https://asahi.5ch.net/test/read.cgi/newsplus/{thread_id}/
+            parsed = urlparse(board_url)
+            board_name = parsed.path.strip('/')
+            thread_url = f"{parsed.scheme}://{parsed.netloc}/test/read.cgi/{board_name}/{thread_id}/"
 
             threads.append({
                 "title": title,
@@ -88,14 +93,16 @@ async def fetch_5ch_posts(thread_url: str, start: int = 1, end: int = 100) -> Li
     """スレッドの投稿を取得"""
     try:
         # dat形式で取得（より軽量）
-        # URLからthread_idを抽出
-        match = re.search(r'/(\d+)/?$', thread_url.rstrip('/'))
+        # thread_url 例: https://asahi.5ch.net/test/read.cgi/newsplus/1234567890/
+        # dat URL 例:    https://asahi.5ch.net/newsplus/dat/1234567890.dat
+        match = re.search(r'/test/read\.cgi/([^/]+)/(\d+)/?$', thread_url)
         if not match:
             raise ValueError(f"Invalid thread URL: {thread_url}")
 
-        thread_id = match.group(1)
-        board_url = re.sub(r'/test/read\.cgi/\d+/?$', '', thread_url)
-        dat_url = f"{board_url}/{thread_id}.dat"
+        board_name = match.group(1)
+        thread_id = match.group(2)
+        parsed = urlparse(thread_url)
+        dat_url = f"{parsed.scheme}://{parsed.netloc}/{board_name}/dat/{thread_id}.dat"
 
         async with httpx.AsyncClient(timeout=30.0) as client:
             headers = {
