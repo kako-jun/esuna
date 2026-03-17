@@ -540,7 +540,7 @@ try {
 
 ### 3. バージョンアップ
 1. `package.json` のバージョンを更新
-2. `.claude/implementation-progress.md` を更新
+2. `docs/progress.md` を更新
 3. コミット
 
 ### 4. デプロイ
@@ -584,7 +584,7 @@ try {
 3. 環境情報を記載（OS、ブラウザ等）
 
 ### 機能提案
-1. `.claude/future-features.md` に追加
+1. `docs/roadmap.md` に追加
 2. Issueで議論
 
 ---
