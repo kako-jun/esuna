@@ -61,7 +61,7 @@ export default function RadioPlayer({ station, speech, onBack }: RadioPlayerProp
         console.error('Init error:', err)
         setIsLoading(false)
         setError('ラジオ局への接続に失敗しました')
-        speech.speak('ラジオ局への接続に失敗しました。この局は現在利用できません')
+        speech.speak('ラジオ局への接続に失敗しました。バックエンドAPIが未稼働のため、現在この機能は利用できません')
       }
     }
 

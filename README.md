@@ -54,7 +54,7 @@ git clone https://github.com/kako-jun/esuna.git
 cd esuna
 
 # Docker Composeで起動
-docker-compose up -d
+docker compose up -d
 
 # フロントエンド: http://localhost:3000
 # バックエンドAPI: http://localhost:8000

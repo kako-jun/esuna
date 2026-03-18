@@ -125,7 +125,7 @@ export default function SNSPostReader({ speech, onBack }: SNSPostReaderProps) {
       },
     },
     {
-      label: loading ? '読み込み中...' : currentPost ? currentPost.author : '投稿なし',
+      label: loading ? '読み込み中...' : currentPost ? `${currentPost.author}（サンプル）` : '投稿なし',
       action: speakPost,
     },
     {
@@ -159,7 +159,7 @@ export default function SNSPostReader({ speech, onBack }: SNSPostReaderProps) {
         actions={actions}
         speech={speech}
         onInit={() => {
-          speech.speak(`SNS投稿 現在${platform}を表示中`)
+          speech.speak(`SNS投稿 現在${platform}を表示中。※現在はサンプルデータを表示しています`)
           if (snsPosts.length > 0) {
             speech.speak(`${snsPosts.length}件の投稿があります`)
           }
