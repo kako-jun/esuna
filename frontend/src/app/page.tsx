@@ -649,8 +649,60 @@ export default function Home() {
             }}
             onSelectFavorite={(favorite: Favorite) => {
               // お気に入りの種類に応じて適切なページに遷移
-              // 今回はシンプルにメッセージのみ
-              speechManager.speak(`${favorite.title} を開く機能は今後実装予定です`)
+              switch (favorite.type) {
+                case 'podcast':
+                  if (favorite.data?.feedUrl) {
+                    const { setSelectedPodcast } = useAppStore.getState()
+                    setSelectedPodcast(favorite.data)
+                    navigateTo('podcast-episodes')
+                    speechManager.speak(`Podcast「${favorite.title}」を開きます`)
+                  } else {
+                    navigateTo('podcast-list')
+                    speechManager.speak(`Podcast一覧に移動しました`)
+                  }
+                  break
+                case 'novel':
+                  if (favorite.data?.authorId && favorite.data?.fileId) {
+                    const { setSelectedNovel } = useAppStore.getState()
+                    setSelectedNovel(favorite.data)
+                    navigateTo('novel-content')
+                    speechManager.speak(`小説「${favorite.title}」を開きます`)
+                  } else {
+                    navigateTo('novel-list')
+                    speechManager.speak(`小説一覧に移動しました`)
+                  }
+                  break
+                case 'rss-feed':
+                  navigateTo('rss-articles')
+                  speechManager.speak(`RSSフィード「${favorite.title}」を開きます`)
+                  break
+                case '5ch-board':
+                  if (favorite.data?.url) {
+                    const { setCurrentBoardIndex } = useAppStore.getState()
+                    const boards = useAppStore.getState().fivechBoards
+                    const boardIndex = boards.findIndex((b: any) => b.url === favorite.data.url)
+                    if (boardIndex >= 0) {
+                      setCurrentBoardIndex(boardIndex)
+                    }
+                    navigateTo('5ch-threads')
+                    speechManager.speak(`5ちゃんねる板「${favorite.title}」を開きます`)
+                  } else {
+                    navigateTo('5ch-boards')
+                    speechManager.speak(`5ちゃんねる板一覧に移動しました`)
+                  }
+                  break
+                case '5ch-thread':
+                  if (favorite.data?.url) {
+                    navigateTo('5ch-posts')
+                    speechManager.speak(`スレッド「${favorite.title}」を開きます`)
+                  } else {
+                    navigateTo('5ch-boards')
+                    speechManager.speak(`5ちゃんねる板一覧に移動しました`)
+                  }
+                  break
+                default:
+                  speechManager.speak(`${favorite.title} を開けませんでした。対応していないコンテンツタイプです`)
+              }
             }}
           />
         </main>
@@ -666,9 +718,68 @@ export default function Home() {
               speechManager.speak('メインメニューに戻りました')
             }}
             onSelectProgress={(progress: Progress) => {
-              // 進捗の種類に応じて適切なページに遷移
-              // 今回はシンプルにメッセージのみ
-              speechManager.speak(`${progress.title} の続きから再生する機能は今後実装予定です`)
+              // 進捗の種類に応じて適切なページに遷移し、保存位置を復元
+              switch (progress.type) {
+                case 'novel':
+                  if (progress.data?.authorId && progress.data?.fileId) {
+                    const { setSelectedNovel, setCurrentSectionIndex } = useAppStore.getState()
+                    setSelectedNovel(progress.data)
+                    // 保存されたセクション位置を復元
+                    setTimeout(() => {
+                      setCurrentSectionIndex(progress.currentIndex)
+                    }, 100)
+                    navigateTo('novel-content')
+                    speechManager.speak(
+                      `小説「${progress.title}」の続きから再生します。` +
+                      `${progress.currentIndex + 1}番目のセクションからです`
+                    )
+                  } else {
+                    navigateTo('novel-list')
+                    speechManager.speak(`小説一覧に移動しました`)
+                  }
+                  break
+                case 'podcast':
+                  if (progress.data?.feedUrl) {
+                    const { setSelectedPodcast, setCurrentEpisodeIndex } = useAppStore.getState()
+                    setSelectedPodcast(progress.data)
+                    setTimeout(() => {
+                      setCurrentEpisodeIndex(progress.currentIndex)
+                    }, 100)
+                    navigateTo('podcast-episodes')
+                    speechManager.speak(
+                      `Podcast「${progress.title}」の続きから再生します。` +
+                      `${progress.currentIndex + 1}番目のエピソードからです`
+                    )
+                  } else {
+                    navigateTo('podcast-list')
+                    speechManager.speak(`Podcast一覧に移動しました`)
+                  }
+                  break
+                case 'rss-article':
+                  navigateTo('rss-articles')
+                  speechManager.speak(
+                    `RSSニュース「${progress.title}」の続きから再生します`
+                  )
+                  break
+                case '5ch-thread':
+                  if (progress.data?.url) {
+                    const { setCurrentPostIndex } = useAppStore.getState()
+                    setTimeout(() => {
+                      setCurrentPostIndex(progress.currentIndex)
+                    }, 100)
+                    navigateTo('5ch-posts')
+                    speechManager.speak(
+                      `スレッド「${progress.title}」の続きから再生します。` +
+                      `${progress.currentIndex + 1}番目のレスからです`
+                    )
+                  } else {
+                    navigateTo('5ch-boards')
+                    speechManager.speak(`5ちゃんねる板一覧に移動しました`)
+                  }
+                  break
+                default:
+                  speechManager.speak(`${progress.title} の続きから再生できませんでした。対応していないコンテンツタイプです`)
+              }
             }}
           />
         </main>

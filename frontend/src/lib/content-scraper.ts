@@ -132,9 +132,10 @@ export class ContentScraper {
   }
 
   private stripHtml(html: string): string {
-    const div = document.createElement('div')
-    div.innerHTML = html
-    return div.textContent || div.innerText || ''
+    // DOMParserを使用してHTMLを安全にパース（innerHTMLによるXSSを回避）
+    const parser = new DOMParser()
+    const doc = parser.parseFromString(html, 'text/html')
+    return doc.body.textContent || ''
   }
 
   // Twitter風のダミーデータ生成（実際のTwitter APIは有料のため）

@@ -9,6 +9,10 @@ from pydantic import BaseModel
 from typing import List, Optional
 import logging
 from datetime import datetime
+from urllib.parse import urlparse
+import asyncio
+import ipaddress
+import socket
 
 # スクレイパーをインポート
 from .scrapers import hatena, fivech, sns, aozora, podcast, radio
@@ -20,19 +24,109 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+# SSRF防止: 許可するドメインのリスト
+ALLOWED_DOMAINS = [
+    # はてなブックマーク
+    "b.hatena.ne.jp",
+    "hatena.ne.jp",
+    # 5ch
+    "5ch.net",
+    # Podcast RSS フィード（主要ホスト）
+    "feeds.feedburner.com",
+    "anchor.fm",
+    "feeds.buzzsprout.com",
+    "feeds.simplecast.com",
+    "feeds.megaphone.fm",
+    "feeds.redcircle.com",
+    "rss.art19.com",
+    "feeds.transistor.fm",
+    "feeds.acast.com",
+    "podcasts.files.bbci.co.uk",
+    "www.omnycontent.com",
+    "feeds.npr.org",
+    "rss.nikkei.com",
+    "feeds.nhk.or.jp",
+    "www3.nhk.or.jp",
+    # Mastodon instances
+    "mastodon.social",
+    "mastodon.jp",
+    "mstdn.jp",
+    "fedibird.com",
+    # Bluesky
+    "bsky.social",
+    "bsky.app",
+    "public.api.bsky.app",
+    # 青空文庫
+    "www.aozora.gr.jp",
+    "aozora.gr.jp",
+    # NHKラジオ
+    "www.nhk.or.jp",
+    "nhk.or.jp",
+    "radio.nhk.or.jp",
+    # radiko
+    "radiko.jp",
+    "f-radiko.smartstream.ne.jp",
+]
+
+
+async def is_url_allowed(url: str) -> bool:
+    """URLが許可リストに含まれるドメインかチェックする（SSRF防止）"""
+    try:
+        parsed = urlparse(url)
+        hostname = parsed.hostname
+        scheme = parsed.scheme
+
+        # HTTPとHTTPSのみ許可
+        if scheme not in ("http", "https"):
+            return False
+
+        if not hostname:
+            return False
+
+        # IPアドレス直接指定を拒否（ローカルネットワークアクセス防止）
+        try:
+            ip = ipaddress.ip_address(hostname)
+            if ip.is_private or ip.is_loopback or ip.is_reserved or ip.is_link_local:
+                return False
+        except ValueError:
+            pass  # ホスト名はIPアドレスではない（正常）
+
+        # DNS解決結果がプライベートIPでないか確認（ブロッキング回避のためスレッドで実行）
+        try:
+            resolved = await asyncio.to_thread(socket.getaddrinfo, hostname, None)
+            for _, _, _, _, sockaddr in resolved:
+                ip = ipaddress.ip_address(sockaddr[0])
+                if ip.is_private or ip.is_loopback or ip.is_reserved or ip.is_link_local:
+                    return False
+        except socket.gaierror:
+            return False
+
+        # 許可ドメインリストとの照合（サブドメインも許可）
+        hostname_lower = hostname.lower()
+        for domain in ALLOWED_DOMAINS:
+            if hostname_lower == domain or hostname_lower.endswith("." + domain):
+                return True
+
+        return False
+    except Exception:
+        return False
+
+
 app = FastAPI(
     title="Esuna API",
     description="視覚障害者向けコンテンツ集約API",
     version="0.1.0"
 )
 
-# CORS設定（開発環境）
+# CORS設定
+import os
+_cors_origins = os.environ.get("CORS_ORIGINS", "http://localhost:3000").split(",")
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # 本番環境では適切に設定する
+    allow_origins=_cors_origins,
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "OPTIONS"],
+    allow_headers=["Content-Type", "Authorization"],
 )
 
 # データモデル
@@ -135,6 +229,8 @@ async def get_hatena_latest():
 @app.get("/api/hatena/comments", response_model=List[HatenaComment])
 async def get_hatena_comments(url: str = Query(..., description="はてなブックマークコメントページURL")):
     """はてなブックマークのコメントを取得"""
+    if not await is_url_allowed(url):
+        raise HTTPException(status_code=400, detail="許可されていないURLです")
     try:
         comments = await hatena.fetch_hatena_comments(url)
         return comments
@@ -159,6 +255,8 @@ async def get_5ch_threads(
     limit: int = Query(50, ge=1, le=100, description="取得件数")
 ):
     """5chのスレッド一覧を取得"""
+    if not await is_url_allowed(board_url):
+        raise HTTPException(status_code=400, detail="許可されていないURLです")
     try:
         threads = await fivech.fetch_5ch_threads(board_url, limit)
         return threads
@@ -173,6 +271,8 @@ async def get_5ch_posts(
     end: int = Query(100, ge=1, le=1000, description="終了レス番号")
 ):
     """5chの投稿を取得"""
+    if not await is_url_allowed(thread_url):
+        raise HTTPException(status_code=400, detail="許可されていないURLです")
     try:
         posts = await fivech.fetch_5ch_posts(thread_url, start, end)
         return posts
@@ -227,6 +327,8 @@ async def get_podcast_episodes(
     limit: int = Query(10, ge=1, le=50, description="取得するエピソード数")
 ):
     """Podcast RSSフィードからエピソード一覧を取得"""
+    if not await is_url_allowed(feed_url):
+        raise HTTPException(status_code=400, detail="許可されていないURLです。許可されたPodcastホストを使用してください")
     try:
         episodes = await podcast.fetch_podcast_episodes(feed_url, limit)
         return episodes
