@@ -20,6 +20,16 @@ YahooやLINEのようなポータルアプリという発想である。
 そのようなアプリをNextで作っていく。
 アプリ名はEsunaである。ファイナルファンタジーの回復魔法が由来。
 
+## CI/CD
+
+- **CI**: `.github/workflows/ci.yml` - push/PR to main triggers frontend (npm ci + build + lint) and backend (ruff check + format + pytest)
+- **Deploy**: Cloudflare Pages Git integration (push to main = auto deploy). CF dashboard config: build cmd `cd frontend && npm run build`, output `frontend/out`
+- **API deploy**: wrangler CLI manual deploy (future)
+- **Pre-commit**: Husky + lint-staged at repo root (eslint+prettier for frontend, ruff format for backend)
+- **Note**: GitHub Pages `deploy.yml` removed, `basePath` logic removed from `next.config.js`
+
+---
+
 操作は統一されたルールが必要。ユーザーはタップする場所を細かく認識できないため、画面を9分割した矩形ごとに機能を割り当てる。
 左上ほど優先度高く、右下ほど低いとか、戻るは常に同じ場所にあるとか、遷移するたびに現在地を読み上げ、どんなボタンがあるかをしつこすぎない程度に教えるなど。
 まずは、Xの書き込みや、ニュースの本文、はてなのコメントなどが読み上げられると良い。
