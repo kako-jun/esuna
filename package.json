@@ -14,9 +14,6 @@
     ],
     "frontend/**/*.{json,css,md}": [
       "prettier --write"
-    ],
-    "backend/**/*.py": [
-      "ruff format"
     ]
   }
 }
