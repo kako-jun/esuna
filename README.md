@@ -19,75 +19,44 @@ Esunaは、失明しても今と同じ趣味を楽しめるように設計され
 
 ```
 esuna/
-├── frontend/        # Next.js + React + TypeScript
-├── backend/         # FastAPI + Python
+├── frontend/        # Vite + SolidJS + TypeScript
+├── backend/         # Hono (Cloudflare Workers) + TypeScript
 └── compose.yaml     # Docker Compose設定
 ```
 
 ### 技術スタック
 
 **フロントエンド:**
-- Next.js 14（App Router）
-- React 18
+- Vite
+- SolidJS
 - TypeScript
-- Tailwind CSS
 - Web Speech API
 
 **バックエンド:**
-- FastAPI
-- Python 3.11+
-- httpx（非同期HTTPクライアント）
-- BeautifulSoup4（HTMLパース）
+- Hono（Cloudflare Workers）
+- TypeScript
+- cheerio（HTMLパース）
 
 ## セットアップ
 
 ### 必要な環境
 
-- Docker & Docker Compose（推奨）
-- または、Node.js 20+ と Python 3.11+
+- Node.js 20+
 
-### Docker Composeで起動（推奨）
+### 開発サーバー起動
 
 ```bash
 # リポジトリをクローン
 git clone https://github.com/kako-jun/esuna.git
 cd esuna
 
-# Docker Composeで起動
-docker compose up -d
+# フロントエンド
+cd frontend && npm install && npm run dev
+# → http://localhost:5173
 
-# フロントエンド: http://localhost:3000
-# バックエンドAPI: http://localhost:8000
-# APIドキュメント: http://localhost:8000/docs
-```
-
-### 手動セットアップ
-
-**バックエンド:**
-
-```bash
-cd backend
-
-# uvをインストール（推奨）
-pip install uv
-
-# 依存関係をインストール
-uv sync
-
-# 開発サーバー起動
-uv run uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
-```
-
-**フロントエンド:**
-
-```bash
-cd frontend
-
-# 依存関係をインストール
-npm install
-
-# 開発サーバー起動
-npm run dev
+# バックエンド（別ターミナル）
+cd backend && npm install && npm run dev
+# → http://localhost:8787
 ```
 
 ## API エンドポイント
@@ -108,11 +77,22 @@ npm run dev
 
 - `GET /api/sns/posts?platform=<twitter|mastodon|bluesky>` - 投稿一覧
 
+### 小説（青空文庫）
+
+- `GET /api/novels/content?author_id=<ID>&file_id=<ID>` - 小説本文
+
+### Podcast
+
+- `GET /api/podcasts/episodes?feed_url=<URL>` - エピソード一覧
+
+### ラジオ
+
+- `GET /api/radio/stream-url/:service/:stationId` - ストリーミングURL
+- `GET /api/radio/now-playing/:service/:stationId` - 放送中の番組情報
+
 ### その他
 
 - `POST /api/log` - エラーログ送信
-
-詳細なAPIドキュメントは `http://localhost:8000/docs` を参照してください。
 
 ## 使い方
 
@@ -140,27 +120,18 @@ npm run dev
 
 ## デプロイ
 
-### GitHub Pages
+### フロントエンド（Cloudflare Pages）
 
-フロントエンドは自動的にGitHub Pagesにデプロイされます。
+- `main` ブランチへのプッシュで自動デプロイ
+- ビルドコマンド: `cd frontend && npm run build`
+- 出力ディレクトリ: `frontend/dist`
+- カスタムドメイン: `esuna.llll-ll.com`
 
-- デプロイURL: https://kako-jun.github.io/esuna/
-- 自動デプロイ: `main`ブランチへのプッシュで自動実行
+### バックエンド（Cloudflare Workers）
 
-#### バックエンドAPI
-
-バックエンドは別途デプロイが必要です（推奨サービス）：
-- Railway
-- Render
-- Vercel (Serverless Functions)
-
-デプロイ後、フロントエンドの環境変数 `NEXT_PUBLIC_API_URL` を設定してください。
-
-GitHub Secretsで設定:
-```
-Settings > Secrets > Actions > New repository secret
-Name: API_URL
-Value: https://your-backend-url.com
+```bash
+cd backend
+npx wrangler deploy
 ```
 
 ## 開発

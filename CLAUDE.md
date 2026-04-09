@@ -20,13 +20,13 @@ YahooやLINEのようなポータルアプリという発想である。
 そのようなアプリをNextで作っていく。
 アプリ名はEsunaである。ファイナルファンタジーの回復魔法が由来。
 
-## CI/CD
+## 技術スタック
 
-- **CI**: `.github/workflows/ci.yml` - push/PR to main triggers frontend (npm ci + build + lint) and backend (ruff check + format + pytest)
-- **Deploy**: Cloudflare Pages Git integration (push to main = auto deploy). CF dashboard config: build cmd `cd frontend && npm run build`, output `frontend/out`
-- **API deploy**: wrangler CLI manual deploy (future)
-- **Pre-commit**: Husky + lint-staged at repo root (eslint+prettier for frontend, ruff format for backend)
-- **Note**: GitHub Pages `deploy.yml` removed, `basePath` logic removed from `next.config.js`
+- **フロントエンド**: Vite + SolidJS + TypeScript（`frontend/`）
+- **バックエンド**: Hono on Cloudflare Workers（`backend/`）
+- **デプロイ**: フロントエンド → CF Pages（push to main = auto deploy）、バックエンド → `wrangler deploy`
+- **CI**: `.github/workflows/ci.yml` - push/PR to main triggers frontend (tsc + vite build) and backend (tsc)
+- **Pre-commit**: Husky + lint-staged at repo root (prettier for frontend)
 
 ---
 
