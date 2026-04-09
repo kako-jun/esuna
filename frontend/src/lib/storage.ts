@@ -14,10 +14,6 @@ export interface AppSettings {
     volume: number // 音量 (0 - 1)
     voice: string | null // 音声名
   }
-  // API設定
-  api: {
-    baseUrl: string // API URL
-  }
   // UI設定
   ui: {
     theme: 'light' | 'dark' | 'auto'
@@ -39,9 +35,6 @@ const DEFAULT_SETTINGS: AppSettings = {
     pitch: 1.0,
     volume: 1.0,
     voice: null,
-  },
-  api: {
-    baseUrl: import.meta.env.VITE_API_URL || 'http://localhost:8787',
   },
   ui: {
     theme: 'auto',
@@ -69,7 +62,6 @@ export const loadSettings = (): AppSettings => {
     // デフォルト値とマージ（新しい設定項目が追加された場合のため）
     return {
       speech: { ...DEFAULT_SETTINGS.speech, ...parsed.speech },
-      api: { ...DEFAULT_SETTINGS.api, ...parsed.api },
       ui: { ...DEFAULT_SETTINGS.ui, ...parsed.ui },
       weather: { ...DEFAULT_SETTINGS.weather, ...parsed.weather },
     }

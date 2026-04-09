@@ -216,8 +216,7 @@ GET  /api/radio/now-playing/{service}/{station_id}
   "settings": {
     "speech": { "rate": 1.0, "pitch": 1.0, "volume": 1.0, "voice": "Google 日本語" },
     "ui": { "theme": "default", "autoNavigation": false, "speakTimeOnStart": true, "speakWeatherOnStart": true },
-    "weather": { "city": "Tokyo", "enabled": true },
-    "api": { "baseUrl": "http://localhost:8787" }
+    "weather": { "city": "Tokyo", "enabled": true }
   },
   "favorites": [
     { "id": "podcast_1234", "type": "podcast", "title": "Rebuild", "data": {}, "addedAt": "2025-01-01T00:00:00Z" }
