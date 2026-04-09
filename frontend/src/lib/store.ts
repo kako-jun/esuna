@@ -285,17 +285,9 @@ function createAppStore() {
 }
 
 // Singleton store wrapped in createRoot to provide reactive context
-let _store: ReturnType<typeof createAppStore> | null = null;
-
-function getStore() {
-  if (!_store) {
-    createRoot(() => {
-      _store = createAppStore();
-    });
-  }
-  return _store!;
-}
+// Module-level createRoot persists across HMR without stale references
+const _store = createRoot(() => createAppStore());
 
 export function useAppStore() {
-  return getStore();
+  return _store;
 }

@@ -138,7 +138,8 @@ export async function getStreamUrl(stationId: string): Promise<string> {
 
   // バックエンドAPIが必要な場合
   if (station.requiresBackend) {
-    const apiBaseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+    const { getApiBaseUrl } = await import('./api-client');
+    const apiBaseUrl = getApiBaseUrl();
     const response = await fetch(`${apiBaseUrl}/api/radio/stream-url/${station.service}/${stationId}`);
 
     if (!response.ok) {

@@ -36,7 +36,7 @@ app.use("*", async (c, next) => {
 app.get("/", (c) => {
   return c.json({
     service: "Esuna API",
-    version: "0.2.0",
+    version: "0.6.0",
     status: "running",
   });
 });
@@ -47,11 +47,16 @@ app.get("/health", (c) => {
 
 // エラーログ収集
 app.post("/api/log", async (c) => {
-  const body = await c.req.json();
-  console.log(
-    `Frontend Error: ${body.message} | URL: ${body.url} | UA: ${body.user_agent}`
-  );
-  return c.json({ status: "logged" });
+  try {
+    const body = await c.req.json();
+    const message = typeof body.message === "string" ? body.message.slice(0, 1000) : "";
+    const url = typeof body.url === "string" ? body.url.slice(0, 500) : "";
+    const userAgent = typeof body.user_agent === "string" ? body.user_agent.slice(0, 500) : "";
+    console.log(`Frontend Error: ${message} | URL: ${url} | UA: ${userAgent}`);
+    return c.json({ status: "logged" });
+  } catch {
+    return c.json({ error: "Invalid request body" }, 400);
+  }
 });
 
 // =============================================================
@@ -170,6 +175,10 @@ app.get("/api/sns/posts", async (c) => {
       return c.json(posts);
     } else if (platform === "mastodon") {
       const instance = username || "mastodon.social";
+      // SSRF防止: Mastodonインスタンスのドメインを検証
+      if (!isUrlAllowed(`https://${instance}/`)) {
+        return c.json({ error: "許可されていないMastodonインスタンスです" }, 400);
+      }
       const posts = await fetchMastodonPosts(instance, limit);
       return c.json(posts);
     } else if (platform === "bluesky") {
