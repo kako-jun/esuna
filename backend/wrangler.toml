@@ -1,0 +1,7 @@
+name = "esuna-api"
+main = "src/index.ts"
+compatibility_date = "2024-09-25"
+compatibility_flags = ["nodejs_compat"]
+
+[vars]
+CORS_ORIGINS = "https://esuna.llll-ll.com,http://localhost:5173"
