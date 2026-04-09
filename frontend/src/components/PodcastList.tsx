@@ -1,141 +1,73 @@
-'use client'
-
-import { useEffect, useState } from 'react'
-import { useAppStore } from '../lib/store'
-import { POPULAR_PODCASTS } from '../lib/podcasts'
-import { SpeechManager } from '../lib/speech'
-import GridSystem from './GridSystem'
+import { createSignal, onMount } from 'solid-js';
+import { useAppStore } from '../lib/store';
+import { POPULAR_PODCASTS } from '../lib/podcasts';
+import { SpeechManager } from '../lib/speech';
+import GridSystem from './GridSystem';
 
 interface PodcastListProps {
-  speech: SpeechManager
-  onBack: () => void
-  onSelectPodcast: () => void
+  speech: SpeechManager;
+  onBack: () => void;
+  onSelectPodcast: () => void;
 }
 
-export default function PodcastList({ speech, onBack, onSelectPodcast }: PodcastListProps) {
-  const { setSelectedPodcast } = useAppStore()
-  const [currentIndex, setCurrentIndex] = useState(0)
+export default function PodcastList(props: PodcastListProps) {
+  const store = useAppStore();
+  const [currentIndex, setCurrentIndex] = createSignal(0);
 
-  const currentPodcast = POPULAR_PODCASTS[currentIndex]
-
-  // Podcastを読み上げ
-  const speakPodcast = () => {
-    if (!currentPodcast) return
-    speech.speak(
-      `${currentPodcast.category}カテゴリ、${currentPodcast.title}。${currentPodcast.description}`,
-      { interrupt: true }
-    )
-  }
-
-  // 初回読み上げ
-  useEffect(() => {
+  onMount(() => {
     setTimeout(() => {
-      speech.speak(`人気Podcast、${POPULAR_PODCASTS.length}番組を用意しています`)
-      setTimeout(speakPodcast, 2000)
-    }, 500)
-  }, [])
+      props.speech.speak(`人気Podcast、${POPULAR_PODCASTS.length}番組を用意しています`);
+      setTimeout(speakPodcast, 2000);
+    }, 500);
+  });
 
-  // 次のPodcast
-  const nextPodcast = () => {
-    if (currentIndex < POPULAR_PODCASTS.length - 1) {
-      setCurrentIndex(currentIndex + 1)
-      setTimeout(() => {
-        const podcast = POPULAR_PODCASTS[currentIndex + 1]
-        speech.speak(
-          `${podcast.category}カテゴリ、${podcast.title}。${podcast.description}`,
-          { interrupt: true }
-        )
-      }, 100)
-    } else {
-      speech.speak('最後の番組です')
-    }
-  }
+  const speakPodcast = () => {
+    const podcast = POPULAR_PODCASTS[currentIndex()];
+    if (!podcast) return;
+    props.speech.speak(`${podcast.category}カテゴリ、${podcast.title}。${podcast.description}`, { interrupt: true });
+  };
 
-  // 前のPodcast
-  const prevPodcast = () => {
-    if (currentIndex > 0) {
-      setCurrentIndex(currentIndex - 1)
-      setTimeout(() => {
-        const podcast = POPULAR_PODCASTS[currentIndex - 1]
-        speech.speak(
-          `${podcast.category}カテゴリ、${podcast.title}。${podcast.description}`,
-          { interrupt: true }
-        )
-      }, 100)
-    } else {
-      speech.speak('最初の番組です')
-    }
-  }
-
-  // Podcastを選択
-  const selectPodcast = () => {
-    setSelectedPodcast(currentPodcast)
-    speech.speak(`${currentPodcast.title} のエピソード一覧を読み込んでいます`)
-    onSelectPodcast()
-  }
-
-  // グリッドアクション
-  const actions = [
-    {
-      label: '戻る',
-      action: () => {
-        speech.stop()
-        onBack()
-      },
-    },
+  const actions = () => [
+    { label: '戻る', action: () => { props.speech.stop(); props.onBack(); } },
     {
       label: '前の番組',
-      action: prevPodcast,
+      action: () => {
+        if (currentIndex() > 0) {
+          setCurrentIndex(currentIndex() - 1);
+          setTimeout(() => { const p = POPULAR_PODCASTS[currentIndex()]; props.speech.speak(`${p.category}カテゴリ、${p.title}。${p.description}`, { interrupt: true }); }, 100);
+        } else { props.speech.speak('最初の番組です'); }
+      },
     },
     {
       label: '次の番組',
-      action: nextPodcast,
+      action: () => {
+        if (currentIndex() < POPULAR_PODCASTS.length - 1) {
+          setCurrentIndex(currentIndex() + 1);
+          setTimeout(() => { const p = POPULAR_PODCASTS[currentIndex()]; props.speech.speak(`${p.category}カテゴリ、${p.title}。${p.description}`, { interrupt: true }); }, 100);
+        } else { props.speech.speak('最後の番組です'); }
+      },
     },
-    {
-      label: '読み上げ',
-      action: speakPodcast,
-    },
+    { label: '読み上げ', action: speakPodcast },
     {
       label: 'エピソード',
-      action: selectPodcast,
-    },
-    {
-      label: '番組情報',
       action: () => {
-        speech.speak(
-          `番組番号 ${currentIndex + 1}。` +
-          `タイトル：${currentPodcast.title}。` +
-          `カテゴリ：${currentPodcast.category}。` +
-          `${currentPodcast.description}`
-        )
+        const podcast = POPULAR_PODCASTS[currentIndex()];
+        store.setSelectedPodcast(podcast);
+        props.speech.speak(`${podcast.title} のエピソード一覧を読み込んでいます`);
+        props.onSelectPodcast();
       },
     },
-    {
-      label: '番組数',
-      action: () => {
-        speech.speak(`全${POPULAR_PODCASTS.length}番組中、${currentIndex + 1}番目の番組です`)
-      },
-    },
-    {
-      label: '停止',
-      action: () => {
-        speech.stop()
-      },
-    },
+    { label: '番組情報', action: () => { const p = POPULAR_PODCASTS[currentIndex()]; props.speech.speak(`番組番号 ${currentIndex() + 1}。タイトル：${p.title}。カテゴリ：${p.category}。${p.description}`); } },
+    { label: '番組数', action: () => { props.speech.speak(`全${POPULAR_PODCASTS.length}番組中、${currentIndex() + 1}番目の番組です`); } },
+    { label: '停止', action: () => { props.speech.stop(); } },
     {
       label: '先頭',
       action: () => {
-        setCurrentIndex(0)
-        setTimeout(() => {
-          const podcast = POPULAR_PODCASTS[0]
-          speech.speak(
-            `最初の番組に戻りました。${podcast.title}`,
-            { interrupt: true }
-          )
-        }, 100)
+        setCurrentIndex(0);
+        setTimeout(() => { const p = POPULAR_PODCASTS[0]; props.speech.speak(`最初の番組に戻りました。${p.title}`, { interrupt: true }); }, 100);
       },
     },
-  ]
+  ];
 
-  return <GridSystem actions={actions} speech={speech} />
+  return <GridSystem actions={actions()} speech={props.speech} />;
 }

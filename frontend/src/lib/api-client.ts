@@ -5,13 +5,13 @@
 
 // API設定
 const getApiBaseUrl = (): string => {
-  // 環境変数から取得、またはLocalStorageから取得、デフォルトは開発環境URL
+  // LocalStorageから取得、またはVite環境変数、デフォルトは開発環境URL
   if (typeof window !== 'undefined') {
     const stored = localStorage.getItem('apiBaseUrl');
     if (stored) return stored;
   }
 
-  return process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+  return import.meta.env.VITE_API_URL || 'http://localhost:8000';
 };
 
 // API URLを設定

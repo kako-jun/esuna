@@ -95,7 +95,6 @@ export function generateRandomPlaylist(settings: AutoplaySettings, count: number
   }
 
   for (let i = 0; i < count; i++) {
-    // ランダムにタイプを選択
     const randomType = enabledTypes[Math.floor(Math.random() * enabledTypes.length)]
     const item = getRandomItemByType(randomType)
     if (item) {
@@ -103,7 +102,6 @@ export function generateRandomPlaylist(settings: AutoplaySettings, count: number
     }
   }
 
-  // シャッフルが有効な場合
   if (settings.shuffle) {
     shuffleArray(playlist)
   }

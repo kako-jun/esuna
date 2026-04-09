@@ -1,179 +1,114 @@
-'use client'
-
-import { useEffect, useState } from 'react'
-import { useAppStore } from '../lib/store'
-import { fetchHatenaComments } from '../lib/api-client'
-import { SpeechManager } from '../lib/speech'
-import { useAutoNavigation } from '../lib/useAutoNavigation'
-import GridSystem from './GridSystem'
+import { createSignal, onMount } from 'solid-js';
+import { useAppStore } from '../lib/store';
+import { fetchHatenaComments } from '../lib/api-client';
+import { SpeechManager } from '../lib/speech';
+import { useAutoNavigation } from '../lib/useAutoNavigation';
+import GridSystem from './GridSystem';
 
 interface HatenaCommentReaderProps {
-  speech: SpeechManager
-  onBack: () => void
+  speech: SpeechManager;
+  onBack: () => void;
 }
 
-export default function HatenaCommentReader({ speech, onBack }: HatenaCommentReaderProps) {
-  const {
-    hatenaComments,
-    currentCommentIndex,
-    setHatenaComments,
-    nextComment,
-    prevComment,
-    getCurrentComment,
-    getCurrentEntry,
-    autoNavigationEnabled,
-  } = useAppStore()
+export default function HatenaCommentReader(props: HatenaCommentReaderProps) {
+  const store = useAppStore();
+  const [loading, setLoading] = createSignal(false);
 
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  onMount(() => {
+    if (store.state.hatenaComments.length === 0) {
+      loadComments();
+    }
+  });
 
-  // コメント取得
-  useEffect(() => {
-    const loadComments = async () => {
-      const entry = getCurrentEntry()
-      if (!entry || !entry.comments_url) {
-        setError('コメントURLが見つかりません')
-        speech.speak('コメントURLが見つかりません')
-        return
-      }
-
-      setLoading(true)
-      setError(null)
-
-      try {
-        const comments = await fetchHatenaComments(entry.comments_url)
-        setHatenaComments(comments)
-
-        if (comments.length === 0) {
-          speech.speak('コメントがありません')
-        } else {
-          speech.speak(`${comments.length}件のコメントを読み込みました`)
-        }
-      } catch (err) {
-        console.error('Failed to load comments:', err)
-        setError('コメントの読み込みに失敗しました')
-        speech.speak('コメントの読み込みに失敗しました')
-      } finally {
-        setLoading(false)
-      }
+  const loadComments = async () => {
+    const entry = store.getCurrentEntry();
+    if (!entry || !entry.comments_url) {
+      props.speech.speak('コメントURLが見つかりません');
+      return;
     }
 
-    if (hatenaComments.length === 0) {
-      loadComments()
-    }
-  }, [])
-
-  // 現在のコメントを取得
-  const currentComment = getCurrentComment()
-
-  // コメントを読み上げ
-  const speakComment = () => {
-    if (!currentComment) return
-
-    speech.speak(`${currentComment.user_name}さん`, { interrupt: true })
-    setTimeout(() => {
-      speech.speak(currentComment.text)
-    }, 1000)
-  }
-
-  // 自動ナビゲーション
-  useAutoNavigation({
-    enabled: autoNavigationEnabled,
-    speech,
-    onNext: () => {
-      if (currentCommentIndex < hatenaComments.length - 1) {
-        nextComment()
-        setTimeout(speakComment, 100)
+    setLoading(true);
+    try {
+      const comments = await fetchHatenaComments(entry.comments_url);
+      store.setHatenaComments(comments);
+      if (comments.length === 0) {
+        props.speech.speak('コメントがありません');
       } else {
-        speech.speak('最後のコメントです')
+        props.speech.speak(`${comments.length}件のコメントを読み込みました`);
+      }
+    } catch (err) {
+      console.error('Failed to load comments:', err);
+      props.speech.speak('コメントの読み込みに失敗しました');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const speakComment = () => {
+    const currentComment = store.getCurrentComment();
+    if (!currentComment) return;
+    props.speech.speak(`${currentComment.user_name}さん`, { interrupt: true });
+    setTimeout(() => {
+      props.speech.speak(currentComment.text);
+    }, 1000);
+  };
+
+  useAutoNavigation({
+    get enabled() { return store.state.autoNavigationEnabled; },
+    speech: props.speech,
+    onNext: () => {
+      if (store.state.currentCommentIndex < store.state.hatenaComments.length - 1) {
+        store.nextComment();
+        setTimeout(speakComment, 100);
+      } else {
+        props.speech.speak('最後のコメントです');
       }
     },
     delay: 3000,
-  })
+  });
 
-  // グリッドアクション
-  const actions = [
-    {
-      label: '戻る',
-      action: () => {
-        speech.stop()
-        onBack()
-      },
-    },
+  const actions = () => [
+    { label: '戻る', action: () => { props.speech.stop(); props.onBack(); } },
     {
       label: 'リロード',
       action: () => {
-        const entry = getCurrentEntry()
+        const entry = store.getCurrentEntry();
         if (entry && entry.comments_url) {
-          setLoading(true)
+          setLoading(true);
           fetchHatenaComments(entry.comments_url)
-            .then((comments) => {
-              setHatenaComments(comments)
-              speech.speak(`${comments.length}件のコメントを再読み込みしました`)
-            })
-            .catch(() => {
-              speech.speak('再読み込みに失敗しました')
-            })
-            .finally(() => setLoading(false))
+            .then((comments) => { store.setHatenaComments(comments); props.speech.speak(`${comments.length}件のコメントを再読み込みしました`); })
+            .catch(() => { props.speech.speak('再読み込みに失敗しました'); })
+            .finally(() => setLoading(false));
         }
       },
     },
-    {
-      label: '設定',
-      action: () => speech.speak('設定画面は未実装です'),
-    },
+    { label: '設定', action: () => props.speech.speak('設定画面は未実装です') },
     {
       label: '前のコメント',
       action: () => {
-        if (currentCommentIndex > 0) {
-          prevComment()
-          setTimeout(speakComment, 100)
-        } else {
-          speech.speak('最初のコメントです')
-        }
+        if (store.state.currentCommentIndex > 0) { store.prevComment(); setTimeout(speakComment, 100); }
+        else { props.speech.speak('最初のコメントです'); }
       },
     },
-    {
-      label: loading ? '読み込み中...' : currentComment ? `${currentComment.user_name}` : 'コメントなし',
-      action: speakComment,
-    },
+    { label: loading() ? '読み込み中...' : store.getCurrentComment() ? `${store.getCurrentComment()!.user_name}` : 'コメントなし', action: speakComment },
     {
       label: '次のコメント',
       action: () => {
-        if (currentCommentIndex < hatenaComments.length - 1) {
-          nextComment()
-          setTimeout(speakComment, 100)
-        } else {
-          speech.speak('最後のコメントです')
-        }
+        if (store.state.currentCommentIndex < store.state.hatenaComments.length - 1) { store.nextComment(); setTimeout(speakComment, 100); }
+        else { props.speech.speak('最後のコメントです'); }
       },
     },
-    {
-      label: `${currentCommentIndex + 1}/${hatenaComments.length}`,
-      action: () => speech.speak(`${hatenaComments.length}件中、${currentCommentIndex + 1}件目です`),
-    },
-    {
-      label: '全文読み上げ',
-      action: speakComment,
-    },
-    {
-      label: '停止',
-      action: () => speech.stop(),
-    },
-  ]
+    { label: `${store.state.currentCommentIndex + 1}/${store.state.hatenaComments.length}`, action: () => props.speech.speak(`${store.state.hatenaComments.length}件中、${store.state.currentCommentIndex + 1}件目です`) },
+    { label: '全文読み上げ', action: speakComment },
+    { label: '停止', action: () => props.speech.stop() },
+  ];
 
   return (
-    <div className="h-screen w-screen">
-      <GridSystem
-        actions={actions}
-        speech={speech}
-        onInit={() => {
-          speech.speak('はてなブックマーク コメント一覧')
-          if (hatenaComments.length > 0) {
-            speech.speak(`${hatenaComments.length}件のコメントがあります`)
-          }
-        }}
-      />
+    <div class="h-screen w-screen">
+      <GridSystem actions={actions()} speech={props.speech} onInit={() => {
+        props.speech.speak('はてなブックマーク コメント一覧');
+        if (store.state.hatenaComments.length > 0) props.speech.speak(`${store.state.hatenaComments.length}件のコメントがあります`);
+      }} />
     </div>
-  )
+  );
 }

@@ -1,10 +1,4 @@
 /* Press Start 2P — pixel font for Famicom FF aesthetic */
-/* NOTE: @import must precede @tailwind directives */
-@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
-
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
 
 /* ============================================================
    Famicom Final Fantasy (FC FF) Aesthetic
@@ -32,7 +26,7 @@
   margin: 0;
 }
 
-html, body, #__next {
+html, body, #app {
   height: 100vh;
   width: 100vw;
 }
@@ -64,7 +58,7 @@ body {
 }
 
 /* ============================================================
-   Grid container — the full-screen 3×3 FF menu
+   Grid container — the full-screen 3x3 FF menu
    ============================================================ */
 .grid-container {
   display: grid;
@@ -108,9 +102,6 @@ body {
 
   /* No box-shadow, no gradients — flat pixel look */
   transition: none;
-
-  /* Keyboard / pointer focus ring */
-  /* (using outline already for double-border; focus uses box-shadow instead) */
 }
 
 /* Hover state — brighten the cell slightly */
@@ -131,12 +122,11 @@ body {
 .grid-item.active {
   background: var(--ff-selected-bg);
   color: var(--ff-cursor);
-  /* White blinking-cursor arrow before the text */
 }
 
 /* FF-style cursor arrow before active item text */
 .grid-item.active::before {
-  content: '▶';
+  content: '\25B6';
   position: absolute;
   left: 6px;
   top: 50%;
@@ -148,7 +138,7 @@ body {
 
 /* Empty / disabled cells — dimmed */
 .grid-item.opacity-50 {
-  opacity: 1 !important;          /* override Tailwind opacity-50 */
+  opacity: 1 !important;
   background: var(--ff-panel-dark);
   color: var(--ff-text-dim);
   border-color: var(--ff-border-inner);
@@ -165,7 +155,6 @@ body {
 
 /* ============================================================
    Notification / status overlay (e.g. recording indicator)
-   The VoiceMemoRecorder uses a fixed overlay — restyle it here
    ============================================================ */
 .ff-status-bar {
   position: fixed;
@@ -188,3 +177,9 @@ body {
 .ff-status-bar--recording {
   animation: ff-blink 0.6s step-end infinite;
 }
+
+/* Utility classes */
+.h-screen { height: 100vh; }
+.w-screen { width: 100vw; }
+.p-4 { padding: 1rem; }
+.text-center { text-align: center; }

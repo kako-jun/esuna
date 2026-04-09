@@ -14,7 +14,6 @@ export interface RadioStation {
 
 /**
  * NHKらじるらじる
- * NHKの公式ラジオサービス
  */
 export const NHK_STATIONS: RadioStation[] = [
   {
@@ -22,7 +21,7 @@ export const NHK_STATIONS: RadioStation[] = [
     name: 'NHKラジオ第1',
     description: 'ニュース、スポーツ、情報番組',
     service: 'nhk',
-    requiresBackend: true, // HLSストリーミングのため
+    requiresBackend: true,
   },
   {
     id: 'nhk-r2',
@@ -42,7 +41,6 @@ export const NHK_STATIONS: RadioStation[] = [
 
 /**
  * radiko（主要局のみ）
- * エリア判定とAPI認証が必要なため、バックエンド経由で取得
  */
 export const RADIKO_STATIONS: RadioStation[] = [
   {
@@ -91,7 +89,6 @@ export const RADIKO_STATIONS: RadioStation[] = [
 
 /**
  * その他のネットラジオ
- * 直接アクセス可能なストリーミングURL
  */
 export const OTHER_STATIONS: RadioStation[] = [
   {
@@ -126,7 +123,6 @@ export function getStationById(id: string): RadioStation | undefined {
 
 /**
  * ラジオのストリーミングURLを取得
- * バックエンドAPIが必要な場合は、APIを呼び出す
  */
 export async function getStreamUrl(stationId: string): Promise<string> {
   const station = getStationById(stationId);
@@ -142,7 +138,7 @@ export async function getStreamUrl(stationId: string): Promise<string> {
 
   // バックエンドAPIが必要な場合
   if (station.requiresBackend) {
-    const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+    const apiBaseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
     const response = await fetch(`${apiBaseUrl}/api/radio/stream-url/${station.service}/${stationId}`);
 
     if (!response.ok) {
@@ -159,13 +155,12 @@ export async function getStreamUrl(stationId: string): Promise<string> {
 /**
  * 現在放送中の番組情報を取得（将来実装）
  */
-export async function getNowPlaying(stationId: string): Promise<{
+export async function getNowPlaying(_stationId: string): Promise<{
   title: string;
   description: string;
   startTime: string;
   endTime: string;
 } | null> {
   // TODO: バックエンドAPIから番組表を取得
-  // radikoやNHKの番組表APIを使用
   return null;
 }

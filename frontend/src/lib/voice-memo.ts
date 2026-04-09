@@ -5,17 +5,14 @@
 export interface VoiceMemo {
   id: string;
   title: string;
-  audioData: string; // Base64エンコードされた音声データ
-  duration: number; // 秒数
-  createdAt: string; // ISO 8601
-  tags: string[]; // タグ
+  audioData: string;
+  duration: number;
+  createdAt: string;
+  tags: string[];
 }
 
 const STORAGE_KEY = 'esuna_voice_memos';
 
-/**
- * すべての音声メモを取得
- */
 export function getAllMemos(): VoiceMemo[] {
   if (typeof window === 'undefined') {
     return [];
@@ -34,9 +31,6 @@ export function getAllMemos(): VoiceMemo[] {
   }
 }
 
-/**
- * 音声メモを保存
- */
 export function saveMemo(memo: Omit<VoiceMemo, 'id' | 'createdAt'>): VoiceMemo {
   const allMemos = getAllMemos();
 
@@ -46,9 +40,8 @@ export function saveMemo(memo: Omit<VoiceMemo, 'id' | 'createdAt'>): VoiceMemo {
     createdAt: new Date().toISOString(),
   };
 
-  allMemos.unshift(newMemo); // 新しいものを先頭に
+  allMemos.unshift(newMemo);
 
-  // 最大100件まで保存（LocalStorageの容量制限を考慮）
   const limited = allMemos.slice(0, 100);
 
   if (typeof window !== 'undefined') {
@@ -56,7 +49,6 @@ export function saveMemo(memo: Omit<VoiceMemo, 'id' | 'createdAt'>): VoiceMemo {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(limited));
     } catch (error) {
       console.error('Failed to save voice memo:', error);
-      // LocalStorage容量エラーの場合は古いメモを削除
       if (error instanceof Error && error.name === 'QuotaExceededError') {
         const reduced = allMemos.slice(0, 50);
         localStorage.setItem(STORAGE_KEY, JSON.stringify(reduced));
@@ -67,9 +59,6 @@ export function saveMemo(memo: Omit<VoiceMemo, 'id' | 'createdAt'>): VoiceMemo {
   return newMemo;
 }
 
-/**
- * 音声メモを削除
- */
 export function deleteMemo(id: string): void {
   const allMemos = getAllMemos();
   const filtered = allMemos.filter((m) => m.id !== id);
@@ -83,9 +72,6 @@ export function deleteMemo(id: string): void {
   }
 }
 
-/**
- * 音声メモを更新（タイトル、タグ）
- */
 export function updateMemo(id: string, updates: Partial<Pick<VoiceMemo, 'title' | 'tags'>>): void {
   const allMemos = getAllMemos();
   const updated = allMemos.map((m) => (m.id === id ? { ...m, ...updates } : m));
@@ -99,16 +85,10 @@ export function updateMemo(id: string, updates: Partial<Pick<VoiceMemo, 'title' 
   }
 }
 
-/**
- * タグで検索
- */
 export function searchMemosByTag(tag: string): VoiceMemo[] {
   return getAllMemos().filter((m) => m.tags.includes(tag));
 }
 
-/**
- * 日付範囲で検索
- */
 export function searchMemosByDateRange(startDate: Date, endDate: Date): VoiceMemo[] {
   return getAllMemos().filter((m) => {
     const createdAt = new Date(m.createdAt);
@@ -116,18 +96,12 @@ export function searchMemosByDateRange(startDate: Date, endDate: Date): VoiceMem
   });
 }
 
-/**
- * すべての音声メモをクリア
- */
 export function clearAllMemos(): void {
   if (typeof window !== 'undefined') {
     localStorage.removeItem(STORAGE_KEY);
   }
 }
 
-/**
- * 音声データをBlobに変換
- */
 export function base64ToBlob(base64: string, mimeType: string = 'audio/webm'): Blob {
   const byteCharacters = atob(base64);
   const byteNumbers = new Array(byteCharacters.length);
@@ -140,9 +114,6 @@ export function base64ToBlob(base64: string, mimeType: string = 'audio/webm'): B
   return new Blob([byteArray], { type: mimeType });
 }
 
-/**
- * Blobをbase64に変換
- */
 export async function blobToBase64(blob: Blob): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();

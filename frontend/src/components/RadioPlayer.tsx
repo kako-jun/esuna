@@ -1,177 +1,70 @@
-'use client'
-
-import { useEffect, useState, useRef } from 'react'
-import { RadioStation, getStreamUrl } from '../lib/radio'
-import { SpeechManager } from '../lib/speech'
-import GridSystem from './GridSystem'
+import { createSignal, onMount, onCleanup } from 'solid-js';
+import { RadioStation, getStreamUrl } from '../lib/radio';
+import { SpeechManager } from '../lib/speech';
+import GridSystem from './GridSystem';
 
 interface RadioPlayerProps {
-  station: RadioStation
-  speech: SpeechManager
-  onBack: () => void
+  station: RadioStation;
+  speech: SpeechManager;
+  onBack: () => void;
 }
 
-export default function RadioPlayer({ station, speech, onBack }: RadioPlayerProps) {
-  const [isPlaying, setIsPlaying] = useState(false)
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [volume, setVolume] = useState(1.0)
-  const audioRef = useRef<HTMLAudioElement | null>(null)
+export default function RadioPlayer(props: RadioPlayerProps) {
+  const [isPlaying, setIsPlaying] = createSignal(false);
+  const [isLoading, setIsLoading] = createSignal(true);
+  const [error, setError] = createSignal<string | null>(null);
+  const [volume, setVolume] = createSignal(1.0);
+  let audioRef: HTMLAudioElement | null = null;
 
-  // 初期化とストリーミング開始
-  useEffect(() => {
-    const initAudio = async () => {
-      try {
-        setIsLoading(true)
-        setError(null)
+  onMount(async () => {
+    try {
+      setIsLoading(true); setError(null);
+      const streamUrl = await getStreamUrl(props.station.id);
+      const audio = new Audio(streamUrl);
+      audio.volume = volume();
+      audioRef = audio;
 
-        // ストリーミングURLを取得
-        const streamUrl = await getStreamUrl(station.id)
-
-        // Audio要素を作成
-        const audio = new Audio(streamUrl)
-        audio.volume = volume
-        audioRef.current = audio
-
-        // イベントリスナー
-        audio.addEventListener('canplay', () => {
-          setIsLoading(false)
-          speech.speak(`${station.name} の再生を開始します`)
-          audio.play().then(() => {
-            setIsPlaying(true)
-          }).catch((err) => {
-            console.error('Play error:', err)
-            setError('再生に失敗しました')
-            speech.speak('再生に失敗しました')
-          })
-        })
-
-        audio.addEventListener('error', (e) => {
-          console.error('Audio error:', e)
-          setIsLoading(false)
-          setError('ストリーミングの読み込みに失敗しました')
-          speech.speak('ストリーミングの読み込みに失敗しました')
-        })
-
-        audio.addEventListener('ended', () => {
-          setIsPlaying(false)
-        })
-
-      } catch (err) {
-        console.error('Init error:', err)
-        setIsLoading(false)
-        setError('ラジオ局への接続に失敗しました')
-        speech.speak('ラジオ局への接続に失敗しました。バックエンドAPIが未稼働のため、現在この機能は利用できません')
-      }
+      audio.addEventListener('canplay', () => {
+        setIsLoading(false);
+        props.speech.speak(`${props.station.name} の再生を開始します`);
+        audio.play().then(() => { setIsPlaying(true); }).catch((err) => { console.error('Play error:', err); setError('再生に失敗しました'); props.speech.speak('再生に失敗しました'); });
+      });
+      audio.addEventListener('error', () => { setIsLoading(false); setError('ストリーミングの読み込みに失敗しました'); props.speech.speak('ストリーミングの読み込みに失敗しました'); });
+      audio.addEventListener('ended', () => { setIsPlaying(false); });
+    } catch (err) {
+      console.error('Init error:', err);
+      setIsLoading(false); setError('ラジオ局への接続に失敗しました');
+      props.speech.speak('ラジオ局への接続に失敗しました。バックエンドAPIが未稼働のため、現在この機能は利用できません');
     }
+  });
 
-    initAudio()
+  onCleanup(() => {
+    if (audioRef) { audioRef.pause(); audioRef.src = ''; audioRef = null; }
+  });
 
-    // クリーンアップ
-    return () => {
-      if (audioRef.current) {
-        audioRef.current.pause()
-        audioRef.current.src = ''
-        audioRef.current = null
-      }
-    }
-  }, [station.id])
-
-  // 再生/一時停止
   const togglePlay = () => {
-    if (!audioRef.current) return
+    if (!audioRef) return;
+    if (isPlaying()) { audioRef.pause(); setIsPlaying(false); props.speech.speak('一時停止しました'); }
+    else { audioRef.play().then(() => { setIsPlaying(true); props.speech.speak('再生を再開しました'); }).catch(() => { props.speech.speak('再生に失敗しました'); }); }
+  };
 
-    if (isPlaying) {
-      audioRef.current.pause()
-      setIsPlaying(false)
-      speech.speak('一時停止しました')
-    } else {
-      audioRef.current.play().then(() => {
-        setIsPlaying(true)
-        speech.speak('再生を再開しました')
-      }).catch((err) => {
-        console.error('Play error:', err)
-        speech.speak('再生に失敗しました')
-      })
-    }
-  }
-
-  // 音量調整
   const changeVolume = (newVolume: number) => {
-    setVolume(newVolume)
-    if (audioRef.current) {
-      audioRef.current.volume = newVolume
-    }
-    speech.speak(`音量を${Math.round(newVolume * 100)}パーセントに設定しました`)
-  }
+    setVolume(newVolume);
+    if (audioRef) { audioRef.volume = newVolume; }
+    props.speech.speak(`音量を${Math.round(newVolume * 100)}パーセントに設定しました`);
+  };
 
-  // 戻る
-  const handleBack = () => {
-    if (audioRef.current) {
-      audioRef.current.pause()
-    }
-    speech.stop()
-    onBack()
-  }
+  const actions = () => [
+    { label: '戻る', action: () => { if (audioRef) { audioRef.pause(); } props.speech.stop(); props.onBack(); } },
+    { label: isPlaying() ? '一時停止' : '再生', action: togglePlay },
+    { label: '音量：大', action: () => changeVolume(1.0) },
+    { label: '音量：中', action: () => changeVolume(0.7) },
+    { label: '音量：小', action: () => changeVolume(0.4) },
+    { label: '音量：最小', action: () => changeVolume(0.1) },
+    { label: '局情報', action: () => { props.speech.speak(`現在再生中：${props.station.name}。${props.station.description}。状態：${isPlaying() ? '再生中' : '一時停止中'}。音量：${Math.round(volume() * 100)}パーセント`); } },
+    { label: '停止', action: () => { props.speech.stop(); } },
+    { label: isPlaying() ? '再生中' : '停止中', action: () => { if (isLoading()) { props.speech.speak('読み込み中です'); } else if (error()) { props.speech.speak(`エラー：${error()}`); } else { props.speech.speak(isPlaying() ? `${props.station.name} を再生中です` : '一時停止中です'); } } },
+  ];
 
-  // グリッドアクション
-  const actions = [
-    {
-      label: '戻る',
-      action: handleBack,
-    },
-    {
-      label: isPlaying ? '一時停止' : '再生',
-      action: togglePlay,
-    },
-    {
-      label: '音量：大',
-      action: () => changeVolume(1.0),
-    },
-    {
-      label: '音量：中',
-      action: () => changeVolume(0.7),
-    },
-    {
-      label: '音量：小',
-      action: () => changeVolume(0.4),
-    },
-    {
-      label: '音量：最小',
-      action: () => changeVolume(0.1),
-    },
-    {
-      label: '局情報',
-      action: () => {
-        speech.speak(
-          `現在再生中：${station.name}。` +
-          `${station.description}。` +
-          `状態：${isPlaying ? '再生中' : '一時停止中'}。` +
-          `音量：${Math.round(volume * 100)}パーセント`
-        )
-      },
-    },
-    {
-      label: '停止',
-      action: () => {
-        speech.stop()
-      },
-    },
-    {
-      label: isPlaying ? '再生中' : '停止中',
-      action: () => {
-        if (isLoading) {
-          speech.speak('読み込み中です')
-        } else if (error) {
-          speech.speak(`エラー：${error}`)
-        } else {
-          speech.speak(
-            isPlaying ? `${station.name} を再生中です` : '一時停止中です'
-          )
-        }
-      },
-    },
-  ]
-
-  return <GridSystem actions={actions} speech={speech} />
+  return <GridSystem actions={actions()} speech={props.speech} />;
 }

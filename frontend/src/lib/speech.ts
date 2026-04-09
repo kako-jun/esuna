@@ -62,11 +62,11 @@ export class SpeechManager {
     }
 
     const utterance = new SpeechSynthesisUtterance(text)
-    
+
     if (this.currentVoice) {
       utterance.voice = this.currentVoice
     }
-    
+
     utterance.rate = rate
     utterance.pitch = pitch
     utterance.volume = volume
