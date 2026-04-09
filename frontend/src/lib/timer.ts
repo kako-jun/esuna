@@ -5,18 +5,15 @@
 export interface Timer {
   id: string;
   title: string;
-  durationSeconds: number; // 設定時間（秒）
-  remainingSeconds: number; // 残り時間（秒）
-  startedAt: string; // 開始日時（ISO 8601）
+  durationSeconds: number;
+  remainingSeconds: number;
+  startedAt: string;
   isActive: boolean;
-  onComplete?: () => void; // 完了時のコールバック
+  onComplete?: () => void;
 }
 
 const STORAGE_KEY = 'esuna_timers';
 
-/**
- * すべてのタイマーを取得
- */
 export function getAllTimers(): Timer[] {
   if (typeof window === 'undefined') {
     return [];
@@ -35,16 +32,12 @@ export function getAllTimers(): Timer[] {
   }
 }
 
-/**
- * タイマーを保存
- */
 function saveTimers(timers: Timer[]): void {
   if (typeof window === 'undefined') {
     return;
   }
 
   try {
-    // onCompleteは保存しない
     const serializable = timers.map(({ onComplete, ...rest }) => rest);
     localStorage.setItem(STORAGE_KEY, JSON.stringify(serializable));
   } catch (error) {
@@ -52,9 +45,6 @@ function saveTimers(timers: Timer[]): void {
   }
 }
 
-/**
- * タイマーを作成
- */
 export function createTimer(title: string, durationSeconds: number): Timer {
   const timer: Timer = {
     id: `timer_${Date.now()}`,
@@ -72,9 +62,6 @@ export function createTimer(title: string, durationSeconds: number): Timer {
   return timer;
 }
 
-/**
- * タイマーを開始
- */
 export function startTimer(id: string): void {
   const timers = getAllTimers();
   const updated = timers.map((t) =>
@@ -83,52 +70,34 @@ export function startTimer(id: string): void {
   saveTimers(updated);
 }
 
-/**
- * タイマーを一時停止
- */
 export function pauseTimer(id: string): void {
   const timers = getAllTimers();
   const updated = timers.map((t) => (t.id === id ? { ...t, isActive: false } : t));
   saveTimers(updated);
 }
 
-/**
- * タイマーの残り時間を更新
- */
 export function updateTimerRemaining(id: string, remainingSeconds: number): void {
   const timers = getAllTimers();
   const updated = timers.map((t) => (t.id === id ? { ...t, remainingSeconds } : t));
   saveTimers(updated);
 }
 
-/**
- * タイマーを削除
- */
 export function deleteTimer(id: string): void {
   const timers = getAllTimers();
   const filtered = timers.filter((t) => t.id !== id);
   saveTimers(filtered);
 }
 
-/**
- * すべてのタイマーをクリア
- */
 export function clearAllTimers(): void {
   if (typeof window !== 'undefined') {
     localStorage.removeItem(STORAGE_KEY);
   }
 }
 
-/**
- * アクティブなタイマーを取得
- */
 export function getActiveTimers(): Timer[] {
   return getAllTimers().filter((t) => t.isActive);
 }
 
-/**
- * 時間をフォーマット（HH:MM:SS）
- */
 export function formatTime(seconds: number): string {
   const hours = Math.floor(seconds / 3600);
   const minutes = Math.floor((seconds % 3600) / 60);
@@ -143,26 +112,19 @@ export function formatTime(seconds: number): string {
   }
 }
 
-/**
- * 音声入力から時間を解析
- * 例: "30分", "1時間30分", "10秒"
- */
 export function parseTimeFromText(text: string): number | null {
   let totalSeconds = 0;
 
-  // 時間を解析
   const hourMatch = text.match(/(\d+)\s*時間/);
   if (hourMatch) {
     totalSeconds += parseInt(hourMatch[1]) * 3600;
   }
 
-  // 分を解析
   const minuteMatch = text.match(/(\d+)\s*分/);
   if (minuteMatch) {
     totalSeconds += parseInt(minuteMatch[1]) * 60;
   }
 
-  // 秒を解析
   const secondMatch = text.match(/(\d+)\s*秒/);
   if (secondMatch) {
     totalSeconds += parseInt(secondMatch[1]);

@@ -19,11 +19,11 @@ export class RSSReader {
     try {
       const proxyUrl = `${this.corsProxy}${encodeURIComponent(url)}`
       const response = await fetch(proxyUrl)
-      
+
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`)
       }
-      
+
       const xmlText = await response.text()
       return this.parseRSS(xmlText)
     } catch (error) {
@@ -35,10 +35,10 @@ export class RSSReader {
   private parseRSS(xmlText: string): RSSFeed {
     const parser = new DOMParser()
     const xmlDoc = parser.parseFromString(xmlText, 'text/xml')
-    
+
     const feedTitle = this.getTextContent(xmlDoc, 'channel > title') || 'Unknown Feed'
     const feedDescription = this.getTextContent(xmlDoc, 'channel > description') || ''
-    
+
     const items = Array.from(xmlDoc.querySelectorAll('item')).map(item => ({
       title: this.getTextContent(item, 'title') || 'No Title',
       description: this.stripHtml(this.getTextContent(item, 'description') || ''),
@@ -50,7 +50,7 @@ export class RSSReader {
     return {
       title: feedTitle,
       description: feedDescription,
-      items: items.slice(0, 20) // 최대 20개 항목
+      items: items.slice(0, 20)
     }
   }
 
@@ -60,7 +60,6 @@ export class RSSReader {
   }
 
   private stripHtml(html: string): string {
-    // DOMParserを使用してHTMLを安全にパース（innerHTMLによるXSSを回避）
     const parser = new DOMParser()
     const doc = parser.parseFromString(html, 'text/html')
     return doc.body.textContent || ''

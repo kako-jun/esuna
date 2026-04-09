@@ -1,136 +1,66 @@
-'use client'
-
-import { useEffect, useState } from 'react'
-import { RSSReader } from '../lib/rss'
-import { SpeechManager } from '../lib/speech'
-import GridSystem from './GridSystem'
+import { createSignal, onMount } from 'solid-js';
+import { RSSReader } from '../lib/rss';
+import { SpeechManager } from '../lib/speech';
+import GridSystem from './GridSystem';
 
 interface RSSFeedListProps {
-  speech: SpeechManager
-  onBack: () => void
-  onSelectFeed: () => void
+  speech: SpeechManager;
+  onBack: () => void;
+  onSelectFeed: () => void;
 }
 
-export default function RSSFeedList({ speech, onBack, onSelectFeed }: RSSFeedListProps) {
-  const [currentIndex, setCurrentIndex] = useState(0)
-  const [rssReader] = useState(() => new RSSReader())
-  const defaultFeeds = rssReader.getDefaultFeeds()
+export default function RSSFeedList(props: RSSFeedListProps) {
+  const [currentIndex, setCurrentIndex] = createSignal(0);
+  const rssReader = new RSSReader();
+  const defaultFeeds = rssReader.getDefaultFeeds();
 
-  const currentFeed = defaultFeeds[currentIndex]
-
-  // フィードを読み上げ
-  const speakFeed = () => {
-    if (!currentFeed) return
-    speech.speak(
-      `${currentFeed.name}。フィード番号 ${currentIndex + 1}`,
-      { interrupt: true }
-    )
-  }
-
-  // 初回読み上げ
-  useEffect(() => {
+  onMount(() => {
     setTimeout(() => {
-      speech.speak(`RSSフィード、${defaultFeeds.length}個のニュースサイトを用意しています`)
-      setTimeout(speakFeed, 2000)
-    }, 500)
-  }, [])
+      props.speech.speak(`RSSフィード、${defaultFeeds.length}個のニュースサイトを用意しています`);
+      setTimeout(speakFeed, 2000);
+    }, 500);
+  });
 
-  // 次のフィード
-  const nextFeed = () => {
-    if (currentIndex < defaultFeeds.length - 1) {
-      setCurrentIndex(currentIndex + 1)
-      setTimeout(() => {
-        const feed = defaultFeeds[currentIndex + 1]
-        speech.speak(`${feed.name}`, { interrupt: true })
-      }, 100)
-    } else {
-      speech.speak('最後のフィードです')
-    }
-  }
+  const speakFeed = () => {
+    const feed = defaultFeeds[currentIndex()];
+    if (!feed) return;
+    props.speech.speak(`${feed.name}。フィード番号 ${currentIndex() + 1}`, { interrupt: true });
+  };
 
-  // 前のフィード
-  const prevFeed = () => {
-    if (currentIndex > 0) {
-      setCurrentIndex(currentIndex - 1)
-      setTimeout(() => {
-        const feed = defaultFeeds[currentIndex - 1]
-        speech.speak(`${feed.name}`, { interrupt: true })
-      }, 100)
-    } else {
-      speech.speak('最初のフィードです')
-    }
-  }
-
-  // フィードを選択
-  const selectFeed = () => {
-    // グローバルステートに選択したフィードを保存
-    if (typeof window !== 'undefined') {
-      sessionStorage.setItem('selectedRSSFeed', JSON.stringify(currentFeed))
-    }
-    speech.speak(`${currentFeed.name} の記事一覧を読み込んでいます`)
-    onSelectFeed()
-  }
-
-  // グリッドアクション
-  const actions = [
-    {
-      label: '戻る',
-      action: () => {
-        speech.stop()
-        onBack()
-      },
-    },
+  const actions = () => [
+    { label: '戻る', action: () => { props.speech.stop(); props.onBack(); } },
     {
       label: '前のフィード',
-      action: prevFeed,
+      action: () => {
+        if (currentIndex() > 0) { setCurrentIndex(currentIndex() - 1); setTimeout(() => { props.speech.speak(`${defaultFeeds[currentIndex()].name}`, { interrupt: true }); }, 100); }
+        else { props.speech.speak('最初のフィードです'); }
+      },
     },
     {
       label: '次のフィード',
-      action: nextFeed,
+      action: () => {
+        if (currentIndex() < defaultFeeds.length - 1) { setCurrentIndex(currentIndex() + 1); setTimeout(() => { props.speech.speak(`${defaultFeeds[currentIndex()].name}`, { interrupt: true }); }, 100); }
+        else { props.speech.speak('最後のフィードです'); }
+      },
     },
-    {
-      label: '読み上げ',
-      action: speakFeed,
-    },
+    { label: '読み上げ', action: speakFeed },
     {
       label: '記事一覧',
-      action: selectFeed,
-    },
-    {
-      label: 'フィード情報',
       action: () => {
-        speech.speak(
-          `フィード番号 ${currentIndex + 1}。` +
-          `名前：${currentFeed.name}。`
-        )
+        const feed = defaultFeeds[currentIndex()];
+        if (typeof window !== 'undefined') { sessionStorage.setItem('selectedRSSFeed', JSON.stringify(feed)); }
+        props.speech.speak(`${feed.name} の記事一覧を読み込んでいます`);
+        props.onSelectFeed();
       },
     },
-    {
-      label: 'フィード数',
-      action: () => {
-        speech.speak(`全${defaultFeeds.length}フィード中、${currentIndex + 1}番目のフィードです`)
-      },
-    },
-    {
-      label: '停止',
-      action: () => {
-        speech.stop()
-      },
-    },
+    { label: 'フィード情報', action: () => { const feed = defaultFeeds[currentIndex()]; props.speech.speak(`フィード番号 ${currentIndex() + 1}。名前：${feed.name}。`); } },
+    { label: 'フィード数', action: () => { props.speech.speak(`全${defaultFeeds.length}フィード中、${currentIndex() + 1}番目のフィードです`); } },
+    { label: '停止', action: () => { props.speech.stop(); } },
     {
       label: '先頭',
-      action: () => {
-        setCurrentIndex(0)
-        setTimeout(() => {
-          const feed = defaultFeeds[0]
-          speech.speak(
-            `最初のフィードに戻りました。${feed.name}`,
-            { interrupt: true }
-          )
-        }, 100)
-      },
+      action: () => { setCurrentIndex(0); setTimeout(() => { props.speech.speak(`最初のフィードに戻りました。${defaultFeeds[0].name}`, { interrupt: true }); }, 100); },
     },
-  ]
+  ];
 
-  return <GridSystem actions={actions} speech={speech} />
+  return <GridSystem actions={actions()} speech={props.speech} />;
 }

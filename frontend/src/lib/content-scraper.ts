@@ -12,14 +12,14 @@ export class ContentScraper {
     try {
       const proxyUrl = `${this.corsProxy}${encodeURIComponent(url)}`
       const response = await fetch(proxyUrl)
-      
+
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`)
       }
-      
+
       const data = await response.json()
       const htmlContent = data.contents
-      
+
       return this.parseHtmlContent(htmlContent, url)
     } catch (error) {
       console.error('Web scraping error:', error)
@@ -30,13 +30,11 @@ export class ContentScraper {
   private parseHtmlContent(html: string, url: string): ScrapedContent {
     const parser = new DOMParser()
     const doc = parser.parseFromString(html, 'text/html')
-    
-    // タイトルを取得
-    const title = doc.querySelector('title')?.textContent?.trim() || 
-                  doc.querySelector('h1')?.textContent?.trim() || 
+
+    const title = doc.querySelector('title')?.textContent?.trim() ||
+                  doc.querySelector('h1')?.textContent?.trim() ||
                   'タイトルなし'
-    
-    // メインコンテンツを取得（複数のセレクターを試行）
+
     const contentSelectors = [
       'article',
       '.article',
@@ -48,7 +46,7 @@ export class ContentScraper {
       '#content',
       '#main'
     ]
-    
+
     let content = ''
     for (const selector of contentSelectors) {
       const element = doc.querySelector(selector)
@@ -57,65 +55,60 @@ export class ContentScraper {
         if (content.length > 100) break
       }
     }
-    
-    // コンテンツが見つからない場合はbody全体から抽出
+
     if (!content || content.length < 100) {
       const bodyElement = doc.querySelector('body')
       if (bodyElement) {
         content = this.extractTextContent(bodyElement)
       }
     }
-    
+
     return {
       title: this.cleanText(title),
-      content: this.cleanText(content).substring(0, 2000), // 2000文字に制限
+      content: this.cleanText(content).substring(0, 2000),
       url,
       timestamp: new Date().toISOString()
     }
   }
 
   private extractTextContent(element: Element): string {
-    // スクリプトタグとスタイルタグを除去
     const scripts = element.querySelectorAll('script, style, nav, header, footer, aside')
     scripts.forEach(script => script.remove())
-    
-    // テキストコンテンツを抽出
+
     const textContent = element.textContent || ''
-    
-    // 段落に分けて処理
+
     const paragraphs = textContent
       .split(/\n\s*\n/)
       .map(p => p.trim())
-      .filter(p => p.length > 20) // 短すぎる段落は除外
-      .slice(0, 10) // 最大10段落
-    
+      .filter(p => p.length > 20)
+      .slice(0, 10)
+
     return paragraphs.join('\n\n')
   }
 
   private cleanText(text: string): string {
     return text
-      .replace(/\s+/g, ' ') // 複数の空白を1つに
-      .replace(/\n\s*\n/g, '\n') // 複数の改行を1つに
+      .replace(/\s+/g, ' ')
+      .replace(/\n\s*\n/g, '\n')
       .trim()
   }
 
-  // はてなブックマークの人気エントリーを取得
   async getHatenaPopularEntries(): Promise<ScrapedContent[]> {
     try {
       const rssUrl = 'https://b.hatena.ne.jp/hotentry.rss'
       const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(rssUrl)}`
       const response = await fetch(proxyUrl)
       const xmlText = await response.text()
-      
+
       const parser = new DOMParser()
       const xmlDoc = parser.parseFromString(xmlText, 'text/xml')
-      
+
       const items = Array.from(xmlDoc.querySelectorAll('item')).slice(0, 10).map(item => {
         const title = item.querySelector('title')?.textContent || 'タイトルなし'
         const description = item.querySelector('description')?.textContent || ''
         const link = item.querySelector('link')?.textContent || ''
         const pubDate = item.querySelector('pubDate')?.textContent || ''
-        
+
         return {
           title: this.cleanText(title),
           content: this.cleanText(this.stripHtml(description)),
@@ -123,7 +116,7 @@ export class ContentScraper {
           timestamp: pubDate
         }
       })
-      
+
       return items
     } catch (error) {
       console.error('Hatena scraping error:', error)
@@ -132,13 +125,11 @@ export class ContentScraper {
   }
 
   private stripHtml(html: string): string {
-    // DOMParserを使用してHTMLを安全にパース（innerHTMLによるXSSを回避）
     const parser = new DOMParser()
     const doc = parser.parseFromString(html, 'text/html')
     return doc.body.textContent || ''
   }
 
-  // Twitter風のダミーデータ生成（実際のTwitter APIは有料のため）
   generateSampleSocialPosts(): ScrapedContent[] {
     const samplePosts = [
       {
@@ -172,7 +163,7 @@ export class ContentScraper {
         timestamp: new Date().toISOString()
       }
     ]
-    
+
     return samplePosts
   }
 }

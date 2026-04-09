@@ -1,6 +1,5 @@
 /**
  * 天気予報ヘルパー
- * OpenWeather APIを使用（無料枠で十分）
  */
 
 export interface WeatherData {
@@ -13,15 +12,9 @@ export interface WeatherData {
   windSpeed: number;
 }
 
-/**
- * 天気予報を取得
- * 注意: OpenWeather APIキーが必要
- * 環境変数 NEXT_PUBLIC_OPENWEATHER_API_KEY に設定
- */
 export async function fetchWeather(city: string): Promise<WeatherData> {
-  const apiKey = process.env.NEXT_PUBLIC_OPENWEATHER_API_KEY;
+  const apiKey = import.meta.env.VITE_OPENWEATHER_API_KEY;
 
-  // APIキーがない場合はダミーデータを返す
   if (!apiKey) {
     console.warn('OpenWeather API key not found, returning dummy data');
     return {
@@ -60,9 +53,6 @@ export async function fetchWeather(city: string): Promise<WeatherData> {
   }
 }
 
-/**
- * 現在時刻を読みやすい形式で取得
- */
 export function getCurrentTimeText(): string {
   const now = new Date();
   const year = now.getFullYear();
@@ -78,16 +68,10 @@ export function getCurrentTimeText(): string {
   return `今日は${year}年${month}月${date}日、${dayOfWeek}、${period}${displayHours}時${minutes}分です`;
 }
 
-/**
- * 天気予報を読みやすい形式で取得
- */
 export function getWeatherText(weather: WeatherData): string {
   return `${weather.city}の天気は${weather.description}、気温は${weather.temperature}度、最高気温${weather.tempMax}度、最低気温${weather.tempMin}度です`;
 }
 
-/**
- * 挨拶文を生成（時間帯に応じて）
- */
 export function getGreeting(): string {
   const hour = new Date().getHours();
 

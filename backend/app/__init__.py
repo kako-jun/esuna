@@ -1,3 +1,0 @@
-"""
-Esuna Backend Application
-"""
