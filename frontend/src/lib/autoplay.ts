@@ -3,18 +3,14 @@
  * ランダムにコンテンツを選択して連続再生する
  */
 
+import { getSubKey, setSubKey } from './storage-root'
 import { POPULAR_NOVELS } from './novels'
 import { POPULAR_PODCASTS } from './podcasts'
 import { getAllStations } from './radio'
 import { RSSReader } from './rss'
 
 // コンテンツタイプ
-export type AutoplayContentType =
-  | 'novel'
-  | 'podcast'
-  | 'radio'
-  | 'rss-news'
-  | 'hatena'
+export type AutoplayContentType = 'novel' | 'podcast' | 'radio' | 'rss-news' | 'hatena'
 
 // 自動再生設定
 export interface AutoplaySettings {
@@ -30,27 +26,19 @@ const DEFAULT_AUTOPLAY_SETTINGS: AutoplaySettings = {
   shuffle: true,
 }
 
-// LocalStorageキー
-const STORAGE_KEY = 'esuna_autoplay_settings'
-
 /**
  * 自動再生設定を読み込む
  */
 export function loadAutoplaySettings(): AutoplaySettings {
-  if (typeof window === 'undefined') {
-    return DEFAULT_AUTOPLAY_SETTINGS
-  }
-
   try {
-    const stored = localStorage.getItem(STORAGE_KEY)
-    if (!stored) {
+    const stored = getSubKey('autoplaySettings')
+    if (!stored || typeof stored !== 'object') {
       return DEFAULT_AUTOPLAY_SETTINGS
     }
 
-    const parsed = JSON.parse(stored)
     return {
       ...DEFAULT_AUTOPLAY_SETTINGS,
-      ...parsed,
+      ...(stored as Record<string, unknown>),
     }
   } catch (error) {
     console.error('Failed to load autoplay settings:', error)
@@ -62,12 +50,8 @@ export function loadAutoplaySettings(): AutoplaySettings {
  * 自動再生設定を保存する
  */
 export function saveAutoplaySettings(settings: AutoplaySettings): void {
-  if (typeof window === 'undefined') {
-    return
-  }
-
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(settings))
+    setSubKey('autoplaySettings', settings)
   } catch (error) {
     console.error('Failed to save autoplay settings:', error)
   }
@@ -86,7 +70,10 @@ export interface AutoplayItem {
 /**
  * ランダムにコンテンツを生成
  */
-export function generateRandomPlaylist(settings: AutoplaySettings, count: number = 10): AutoplayItem[] {
+export function generateRandomPlaylist(
+  settings: AutoplaySettings,
+  count: number = 10,
+): AutoplayItem[] {
   const playlist: AutoplayItem[] = []
   const { enabledTypes } = settings
 

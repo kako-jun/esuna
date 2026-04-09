@@ -207,95 +207,36 @@ GET  /api/radio/now-playing/{service}/{station_id}
 
 ### LocalStorage構造
 
-#### 1. アプリ設定
-**キー**: `esuna_settings`
+すべてのデータは単一キー `"esuna"` に JSON オブジェクトとして格納される。
+管理は `storage-root.ts` が担当し、各モジュールは `getSubKey` / `setSubKey` / `removeSubKey` で読み書きする。
+
+**キー**: `esuna`
 ```json
 {
-  "speech": {
-    "rate": 1.0,
-    "pitch": 1.0,
-    "volume": 1.0,
-    "voice": "Google 日本語"
+  "settings": {
+    "speech": { "rate": 1.0, "pitch": 1.0, "volume": 1.0, "voice": "Google 日本語" },
+    "ui": { "theme": "default", "autoNavigation": false, "speakTimeOnStart": true, "speakWeatherOnStart": true },
+    "weather": { "city": "Tokyo", "enabled": true },
+    "api": { "baseUrl": "http://localhost:8787" }
   },
-  "ui": {
-    "theme": "default",
-    "autoNavigation": false,
-    "speakTimeOnStart": true,
-    "speakWeatherOnStart": true
+  "favorites": [
+    { "id": "podcast_1234", "type": "podcast", "title": "Rebuild", "data": {}, "addedAt": "2025-01-01T00:00:00Z" }
+  ],
+  "progress": [
+    { "id": "content-id", "type": "novel", "currentIndex": 5, "totalCount": 20, "lastReadAt": "2025-01-01T00:00:00Z", "data": {} }
+  ],
+  "voiceMemos": [
+    { "id": "memo_1234", "title": "メモ1", "audioData": "base64...", "duration": 30, "createdAt": "2025-01-01T00:00:00Z", "tags": ["仕事"] }
+  ],
+  "timers": [
+    { "id": "timer_1234", "title": "作業タイマー", "durationSeconds": 300, "remainingSeconds": 180, "isActive": true }
+  ],
+  "autoplaySettings": {
+    "enabledTypes": ["novel", "podcast", "radio"],
+    "playDuration": 10,
+    "shuffle": true
   },
-  "weather": {
-    "city": "Tokyo",
-    "enabled": true
-  },
-  "api": {
-    "baseUrl": "http://localhost:8000"
-  }
-}
-```
-
-#### 2. お気に入り
-**キー**: `esuna_favorites`
-```json
-[
-  {
-    "id": "uuid-v4",
-    "type": "podcast",
-    "title": "Rebuild",
-    "data": { /* Podcast詳細 */ },
-    "addedAt": "2025-01-01T00:00:00Z"
-  }
-]
-```
-
-#### 3. 進捗
-**キー**: `esuna_progress_{type}_{id}`
-```json
-{
-  "id": "content-id",
-  "type": "novel",
-  "currentIndex": 5,
-  "totalCount": 20,
-  "lastReadAt": "2025-01-01T00:00:00Z",
-  "data": { /* コンテンツ詳細 */ }
-}
-```
-
-#### 4. 音声メモ
-**キー**: `esuna_voice_memos`
-```json
-[
-  {
-    "id": "uuid-v4",
-    "title": "メモ1",
-    "audioData": "data:audio/webm;base64,...",
-    "duration": 30,
-    "createdAt": "2025-01-01T00:00:00Z",
-    "tags": ["仕事", "アイデア"]
-  }
-]
-```
-
-#### 5. タイマー
-**キー**: `esuna_timers`
-```json
-[
-  {
-    "id": "uuid-v4",
-    "title": "作業タイマー",
-    "durationSeconds": 300,
-    "remainingSeconds": 180,
-    "isActive": true
-  }
-]
-```
-
-#### 6. おまかせモード設定
-**キー**: `esuna_autoplay_settings`
-```json
-{
-  "enabledTypes": ["novel", "podcast", "radio"],
-  "playDuration": 10,
-  "shuffle": true
+  "apiBaseUrl": "http://localhost:8787"
 }
 ```
 
