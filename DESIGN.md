@@ -1,0 +1,214 @@
+# DESIGN.md
+
+esuna — Design System
+
+## 1. Visual Theme & Atmosphere
+
+Famicom Final Fantasy menu UI. A full-screen 3x3 grid on deep navy, bordered by double white/blue lines, with pixel font text. Audio is the primary interface — visual design serves as secondary feedback for an accessibility-first tool. The retro game aesthetic is deliberate: it creates a recognizable, memorable identity while the high-contrast navy/white palette ensures readability for low-vision users.
+
+Dark theme only. No light mode. No smooth transitions.
+
+Inspirations: FC Final Fantasy command menus, Dragon Quest spell selection, 8-bit RPG interfaces.
+
+## 2. Color Palette & Roles
+
+CSS custom properties in `globals.css`.
+
+| Variable            | Value     | Usage                        |
+| ------------------- | --------- | ---------------------------- |
+| `--ff-bg`           | `#000080` | Deep navy background         |
+| `--ff-panel`        | `#0000AA` | Interactive panel cells      |
+| `--ff-panel-dark`   | `#000066` | Disabled/depth states        |
+| `--ff-border`       | `#ffffff` | Outer borders (white)        |
+| `--ff-border-inner` | `#aaaaff` | Inner borders (soft blue)    |
+| `--ff-text`         | `#ffffff` | Primary text                 |
+| `--ff-text-dim`     | `#aaaaff` | Secondary/empty cell text    |
+| `--ff-cursor`       | `#ffffff` | Active cursor indicator      |
+| `--ff-selected-bg`  | `#0000CC` | Selected/focused cell        |
+| `--ff-gap`          | `#000044` | Grid gap color               |
+
+Contrast ratio: ~14:1 (WCAG AAA). Navy on white is the entire palette.
+
+## 3. Typography Rules
+
+### Font Family
+
+| Context | Family                                             |
+| ------- | -------------------------------------------------- |
+| All     | `"Press Start 2P", "Courier New", Courier, monospace` |
+
+Press Start 2P loaded from Google Fonts. Pixel font everywhere.
+
+### Type Scale
+
+| Element       | Size                           | Notes                |
+| ------------- | ------------------------------ | -------------------- |
+| Grid items    | `clamp(0.6rem, 1.4vw, 1rem)`  | Fluid scaling        |
+| Body          | `14px`                         | Base size            |
+| Status bar    | `0.7rem`                       |                      |
+| Cursor marker | `0.7em`                        | Relative to parent   |
+
+Line height: `1.6` in grid items. `white-space: pre-wrap`, `word-break: break-word`.
+
+## 4. Component Stylings
+
+### 3x3 Grid (Primary UI)
+
+```css
+display: grid;
+grid-template-columns: 1fr 1fr 1fr;
+grid-template-rows: 1fr 1fr 1fr;
+gap: 3px;    /* --ff-gap dark navy lines */
+padding: 8px;
+```
+
+Full viewport: `100vw × 100vh`, `overflow: hidden`.
+
+### Grid Cell
+
+- Background: `var(--ff-panel)`
+- Border: `2px solid var(--ff-border)` (white)
+- Inner outline: `2px solid var(--ff-border-inner)` (blue), offset `-4px`
+- Text: centered, flex
+- Hover: `var(--ff-selected-bg)`
+- Focus: `3px inset white box-shadow` + outline
+- Disabled: `var(--ff-panel-dark)`, `var(--ff-text-dim)`, opacity adjusted
+
+### Active Cell Cursor
+
+- `::before` pseudo-element: `▶` (Unicode `\25B6`)
+- Position: absolute left `6px`, vertically centered
+- Animation: `ff-blink 0.8s step-end infinite`
+
+### Double-Border Frame (Outer Container)
+
+- Outer: `3px solid #ffffff`
+- Inner: `6px solid #000066` (outline with `-9px` offset)
+- Creates authentic FC FF double-line effect
+
+### Status Bar
+
+- Position: fixed top `12px`, centered
+- Background: `var(--ff-panel)`
+- Double-border (same pattern as grid)
+- Padding: `6px 16px`
+- Z-index: `1000`
+- Recording state: `ff-blink 0.6s step-end infinite`
+
+## 5. Layout Principles
+
+### Full-Screen Layout
+
+- `html, body, #app`: `100vh × 100vw`
+- `overflow: hidden`
+- `box-sizing: border-box` globally
+- No scrolling. Everything fits in the viewport.
+
+### Grid Sizing
+
+- All cells equal: `1fr × 1fr`
+- Gap: `3px` (dark navy separator)
+- Container padding: `8px`
+- No max-width constraint
+
+### Spacing
+
+Minimal. The grid fills everything.
+
+- Status bar padding: `6px 16px`
+- Grid container padding: `8px`
+
+## 6. Depth & Elevation
+
+### Z-Index
+
+| Layer      | Value | Element     |
+| ---------- | ----- | ----------- |
+| Grid       | auto  | Main grid   |
+| Status bar | 1000  | Floating notification |
+
+### Shadows
+
+None. Depth comes from border layering (double-line effect).
+
+### Border Radius
+
+None. Sharp rectangles everywhere — pixel-accurate to FC FF.
+
+## 7. Do's and Don'ts
+
+### Do
+
+- Use `Press Start 2P` pixel font everywhere
+- Apply double-border frame (white outer + blue inner) on containers
+- Use `step-end` timing for all animations — no smooth transitions
+- Keep the 3x3 grid as the sole navigation structure
+- Map keyboard numbers 1-9 directly to grid cells
+- Use `clamp()` for responsive font sizing
+- Include full ARIA: `role="grid"`, `role="gridcell"`, `aria-activedescendant`
+- Announce all interactions via Web Speech API
+
+### Don't
+
+- Add smooth transitions. `transition: none` is deliberate — retro snappiness
+- Use border-radius on any element
+- Add colors outside the navy/white/blue palette
+- Create scrollable content — everything fits in viewport
+- Use non-pixel fonts
+- Add shadows or gradients
+
+### Animations
+
+| Animation  | Duration | Timing    | Usage             |
+| ---------- | -------- | --------- | ----------------- |
+| `ff-blink` | 0.8s     | `step-end` | Cursor blink     |
+| `ff-blink` | 0.6s     | `step-end` | Recording status |
+
+Step-end only. No easing. No smooth fades.
+
+## 8. Responsive Behavior
+
+No traditional breakpoints. The design uses:
+
+- `clamp(0.6rem, 1.4vw, 1rem)` for fluid font scaling
+- `100vw / 100vh` for full-screen fill
+- Equal `1fr` distribution handles all screen sizes
+
+Audio-first means responsive design focuses on touch targets and screen reader compatibility, not content reflow.
+
+## 9. Agent Prompt Guide
+
+### CSS Variable Quick Reference
+
+```
+--ff-bg:           #000080  (deep navy)
+--ff-panel:        #0000AA  (cell blue)
+--ff-panel-dark:   #000066  (disabled)
+--ff-border:       #ffffff  (white border)
+--ff-border-inner: #aaaaff  (blue border)
+--ff-text:         #ffffff  (white text)
+--ff-text-dim:     #aaaaff  (dim text)
+--ff-selected-bg:  #0000CC  (focus blue)
+--ff-gap:          #000044  (gap navy)
+```
+
+### When generating UI for this project
+
+- Full-screen 3x3 grid. No other layout structure
+- Press Start 2P pixel font. No sans-serif
+- Double-border on everything (white outer, blue inner)
+- `step-end` animations only. No smooth transitions
+- Navy/white/blue palette exclusively. No warm colors, no grays
+- Keyboard-first: 1-9 keys map to cells, arrows navigate
+- ARIA-heavy: every cell needs gridcell role, labels, selected state
+- Web Speech API speaks every interaction
+- No border-radius, no shadows, no gradients
+- High contrast (14:1) is an accessibility requirement, not an aesthetic choice
+
+### Color Emotion Reference
+
+- **Navy (#000080):** Authority, depth, the menu void
+- **Panel blue (#0000AA):** Interactive surface, selectable
+- **White (#ffffff):** Text, borders, the cursor — everything active
+- **Dim blue (#aaaaff):** Inactive, empty, waiting
+- **Selected (#0000CC):** Focus, chosen, ready to execute
