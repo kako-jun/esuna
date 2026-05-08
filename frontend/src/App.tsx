@@ -151,9 +151,9 @@ export default function App() {
     { label: '速度設定', action: () => { navigateTo('settings-speech'); speechManager()?.speak('読み上げ速度設定に移動しました'); } },
     { label: '音量：標準', action: () => { updateSetting('speech', { volume: 1.0 }); speechManager()?.setDefaults({ volume: 1.0 }); speechManager()?.speak('音量を標準にしました。設定を保存しました'); } },
     { label: '音量：小', action: () => { updateSetting('speech', { volume: 0.5 }); speechManager()?.setDefaults({ volume: 0.5 }); speechManager()?.speak('音量を小さくしました。設定を保存しました'); } },
-    { label: 'ピッチ：低', action: () => { updateSetting('speech', { pitch: 0.7 }); speechManager()?.setDefaults({ pitch: 0.7 }); speechManager()?.speak('ピッチを低くしました。設定を保存しました', { pitch: 0.7 }); } },
-    { label: 'ピッチ：標準', action: () => { updateSetting('speech', { pitch: 1.0 }); speechManager()?.setDefaults({ pitch: 1.0 }); speechManager()?.speak('ピッチを標準にしました。設定を保存しました', { pitch: 1.0 }); } },
-    { label: 'ピッチ：高', action: () => { updateSetting('speech', { pitch: 1.5 }); speechManager()?.setDefaults({ pitch: 1.5 }); speechManager()?.speak('ピッチを高くしました。設定を保存しました', { pitch: 1.5 }); } },
+    { label: 'ピッチ：低', action: () => { updateSetting('speech', { pitch: 0.7 }); speechManager()?.setDefaults({ pitch: 0.7 }); speechManager()?.speak('ピッチを低くしました。設定を保存しました'); } },
+    { label: 'ピッチ：標準', action: () => { updateSetting('speech', { pitch: 1.0 }); speechManager()?.setDefaults({ pitch: 1.0 }); speechManager()?.speak('ピッチを標準にしました。設定を保存しました'); } },
+    { label: 'ピッチ：高', action: () => { updateSetting('speech', { pitch: 1.5 }); speechManager()?.setDefaults({ pitch: 1.5 }); speechManager()?.speak('ピッチを高くしました。設定を保存しました'); } },
     { label: '', action: () => {} },
     {
       label: store.state.autoNavigationEnabled ? '自動OFF' : '自動ON',

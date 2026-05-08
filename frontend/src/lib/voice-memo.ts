@@ -52,7 +52,7 @@ async function ensureMigrated(): Promise<void> {
     }).catch((e) => {
       console.warn('Migration from LocalStorage failed:', e)
       // migrationDone は false のまま → 次回再試行
-    }).finally(() => {
+      // migrationPromise をリセットして次回呼び出し時に再実行できるようにする
       migrationPromise = null
     })
   }
