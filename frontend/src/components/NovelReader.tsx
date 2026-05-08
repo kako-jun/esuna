@@ -6,6 +6,7 @@ import { useAutoNavigation } from '../lib/useAutoNavigation';
 import GridSystem from './GridSystem';
 import StatusMessage from './StatusMessage';
 import { FORMAL_SERVICE_NAMES, previewText } from '../lib/service-copy';
+import { createGuideAction } from '../lib/grid-guide';
 
 interface NovelReaderProps {
   speech: SpeechManager;
@@ -62,44 +63,40 @@ export default function NovelReader(props: NovelReaderProps) {
     delay: 2000,
   });
 
-  const actions = () => [
-    { label: '戻る', action: () => { props.speech.stop(); store.setNovelContent(null); props.onBack(); } },
-    { label: '前のセクション', action: () => { if (store.state.currentSectionIndex > 0) { store.prevSection(); setTimeout(speakSection, 100); } else { props.speech.speak('最初のセクションです'); } } },
-    { label: '次のセクション', action: () => { if (store.state.novelContent && store.state.currentSectionIndex < store.state.novelContent.sections.length - 1) { store.nextSection(); setTimeout(speakSection, 100); } else { props.speech.speak('最後のセクションです'); } } },
-    { label: '位置', action: () => { if (store.state.novelContent) { props.speech.speak(`全${store.state.novelContent.sections.length}セクション中、${store.state.currentSectionIndex + 1}番目のセクションです`); } } },
-    {
-      label: store.getCurrentSection()
-        ? `${store.getCurrentSection()!.title || `区切り ${store.state.currentSectionIndex + 1}`}\n${previewText(store.getCurrentSection()!.content, 58)}`
-        : '本文なし',
-      action: () => speakSection(),
-    },
-    { label: '作品情報', action: () => { if (store.state.novelContent && store.state.selectedNovel) { props.speech.speak(`タイトル：${store.state.novelContent.title}。著者：${store.state.novelContent.author}。全${store.state.novelContent.sections.length}セクション`); } } },
-    {
-      label: '先頭',
-      action: () => {
-        if (store.state.currentSectionIndex !== 0) {
-          store.setCurrentSectionIndex(0);
-          setTimeout(() => { const firstSection = store.state.novelContent?.sections[0]; if (firstSection) speakSection(firstSection, 0); }, 100);
-        } else { props.speech.speak('すでに最初のセクションです'); }
+  const actions = () => {
+    const actionList = [
+      { label: '戻る', action: () => { props.speech.stop(); store.setNovelContent(null); props.onBack(); } },
+      { label: '前のセクション', action: () => { if (store.state.currentSectionIndex > 0) { store.prevSection(); setTimeout(speakSection, 100); } else { props.speech.speak('最初のセクションです'); } } },
+      { label: '次のセクション', action: () => { if (store.state.novelContent && store.state.currentSectionIndex < store.state.novelContent.sections.length - 1) { store.nextSection(); setTimeout(speakSection, 100); } else { props.speech.speak('最後のセクションです'); } } },
+      { label: '位置', action: () => { if (store.state.novelContent) { props.speech.speak(`全${store.state.novelContent.sections.length}セクション中、${store.state.currentSectionIndex + 1}番目のセクションです`); } } },
+      {
+        label: store.getCurrentSection()
+          ? `${store.getCurrentSection()!.title || `区切り ${store.state.currentSectionIndex + 1}`}\n${previewText(store.getCurrentSection()!.content, 58)}`
+          : '本文なし',
+        action: () => speakSection(),
       },
-    },
-    { label: '停止', action: () => { props.speech.stop(); } },
-    {
-      label: 'リロード',
-      action: () => {
-        props.speech.speak('再読み込みします');
-        store.setNovelContent(null);
-        setTimeout(() => {
-          const selectedNovel = store.state.selectedNovel;
-          if (selectedNovel) {
-            fetchNovelContent(selectedNovel.authorId, selectedNovel.fileId)
-              .then((content) => { store.setNovelContent(content); props.speech.speak('再読み込みしました'); })
-              .catch(() => { props.speech.speak('再読み込みに失敗しました'); });
-          }
-        }, 500);
+      { label: '作品情報', action: () => { if (store.state.novelContent && store.state.selectedNovel) { props.speech.speak(`タイトル：${store.state.novelContent.title}。著者：${store.state.novelContent.author}。全${store.state.novelContent.sections.length}セクション`); } } },
+      {
+        label: 'リロード',
+        action: () => {
+          props.speech.speak('再読み込みします');
+          store.setNovelContent(null);
+          setTimeout(() => {
+            const selectedNovel = store.state.selectedNovel;
+            if (selectedNovel) {
+              fetchNovelContent(selectedNovel.authorId, selectedNovel.fileId)
+                .then((content) => { store.setNovelContent(content); props.speech.speak('再読み込みしました'); })
+                .catch(() => { props.speech.speak('再読み込みに失敗しました'); });
+            }
+          }, 500);
+        },
       },
-    },
-  ];
+      { label: '停止', action: () => { props.speech.stop(); } },
+      createGuideAction('青空文庫本文表示', props.speech, () => actionList),
+    ];
+
+    return actionList;
+  };
 
   return (
     <Show

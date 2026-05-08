@@ -4,6 +4,7 @@ import { SpeechManager } from '../lib/speech';
 import GridSystem from './GridSystem';
 import StatusMessage from './StatusMessage';
 import { FORMAL_SERVICE_NAMES } from '../lib/service-copy';
+import { createGuideAction } from '../lib/grid-guide';
 
 interface RadioPlayerProps {
   station: RadioStation;
@@ -56,17 +57,21 @@ export default function RadioPlayer(props: RadioPlayerProps) {
     props.speech.speak(`音量を${Math.round(newVolume * 100)}パーセントに設定しました`);
   };
 
-  const actions = () => [
-    { label: '戻る', action: () => { if (audioRef) { audioRef.pause(); } props.speech.stop(); props.onBack(); } },
-    { label: isPlaying() ? '一時停止' : '再生', action: togglePlay },
-    { label: '音量：大', action: () => changeVolume(1.0) },
-    { label: '音量：中', action: () => changeVolume(0.7) },
-    { label: '音量：小', action: () => changeVolume(0.4) },
-    { label: '音量：最小', action: () => changeVolume(0.1) },
-    { label: '局情報', action: () => { props.speech.speak(`現在再生中：${props.station.name}。${props.station.description}。状態：${isPlaying() ? '再生中' : '一時停止中'}。音量：${Math.round(volume() * 100)}パーセント`); } },
-    { label: '停止', action: () => { props.speech.stop(); } },
-    { label: isPlaying() ? '再生中' : '停止中', action: () => { if (isLoading()) { props.speech.speak('読み込み中です'); } else if (error()) { props.speech.speak(`エラー：${error()}`); } else { props.speech.speak(isPlaying() ? `${props.station.name} を再生中です` : '一時停止中です'); } } },
-  ];
+  const actions = () => {
+    const actionList = [
+      { label: '戻る', action: () => { if (audioRef) { audioRef.pause(); } props.speech.stop(); props.onBack(); } },
+      { label: isPlaying() ? '一時停止' : '再生', action: togglePlay },
+      { label: '音量：大', action: () => changeVolume(1.0) },
+      { label: '音量：中', action: () => changeVolume(0.7) },
+      { label: '音量：小', action: () => changeVolume(0.4) },
+      { label: '音量：最小', action: () => changeVolume(0.1) },
+      { label: '局情報', action: () => { props.speech.speak(`現在再生中：${props.station.name}。${props.station.description}。状態：${isPlaying() ? '再生中' : '一時停止中'}。音量：${Math.round(volume() * 100)}パーセント`); } },
+      { label: '停止', action: () => { props.speech.stop(); } },
+      createGuideAction('ラジオ再生画面', props.speech, () => actionList),
+    ];
+
+    return actionList;
+  };
 
   if (isLoading()) {
     return (

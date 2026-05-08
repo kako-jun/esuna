@@ -5,6 +5,7 @@ import { useAutoNavigation } from '../lib/useAutoNavigation';
 import GridSystem from './GridSystem';
 import StatusMessage from './StatusMessage';
 import { FORMAL_SERVICE_NAMES, previewText } from '../lib/service-copy';
+import { createGuideAction } from '../lib/grid-guide';
 
 interface RSSArticleReaderProps {
   speech: SpeechManager;
@@ -58,22 +59,26 @@ export default function RSSArticleReader(props: RSSArticleReaderProps) {
     delay: 2000,
   });
 
-  const actions = () => [
-    { label: '戻る', action: () => { props.speech.stop(); props.onBack(); } },
-    { label: '前の記事', action: () => { if (currentIndex() > 0) { setCurrentIndex(currentIndex() - 1); setTimeout(speakArticle, 100); } else { props.speech.speak('最初の記事です'); } } },
-    { label: '次の記事', action: () => { if (currentIndex() < articles().length - 1) { setCurrentIndex(currentIndex() + 1); setTimeout(speakArticle, 100); } else { props.speech.speak('最後の記事です'); } } },
-    { label: '本文', action: () => { const a = articles()[currentIndex()]; if (a?.content) { props.speech.speak(`本文。${a.content}`, { interrupt: true }); } else { props.speech.speak('本文が取得できませんでした'); } } },
-    {
-      label: articles()[currentIndex()]
-        ? `${articles()[currentIndex()]!.title}\n${previewText(articles()[currentIndex()]!.description || articles()[currentIndex()]!.content, 58)}`
-        : '記事なし',
-      action: speakArticle,
-    },
-    { label: '位置', action: () => { props.speech.speak(`全${articles().length}記事中、${currentIndex() + 1}番目の記事です`); } },
-    { label: '日時', action: () => { const a = articles()[currentIndex()]; if (a) { props.speech.speak(`公開日時：${a.pubDate}`); } } },
-    { label: '停止', action: () => { props.speech.stop(); } },
-    { label: '先頭', action: () => { setCurrentIndex(0); setTimeout(speakArticle, 100); } },
-  ];
+  const actions = () => {
+    const actionList = [
+      { label: '戻る', action: () => { props.speech.stop(); props.onBack(); } },
+      { label: '前の記事', action: () => { if (currentIndex() > 0) { setCurrentIndex(currentIndex() - 1); setTimeout(speakArticle, 100); } else { props.speech.speak('最初の記事です'); } } },
+      { label: '次の記事', action: () => { if (currentIndex() < articles().length - 1) { setCurrentIndex(currentIndex() + 1); setTimeout(speakArticle, 100); } else { props.speech.speak('最後の記事です'); } } },
+      { label: '本文', action: () => { const a = articles()[currentIndex()]; if (a?.content) { props.speech.speak(`本文。${a.content}`, { interrupt: true }); } else { props.speech.speak('本文が取得できませんでした'); } } },
+      {
+        label: articles()[currentIndex()]
+          ? `${articles()[currentIndex()]!.title}\n${previewText(articles()[currentIndex()]!.description || articles()[currentIndex()]!.content, 58)}`
+          : '記事なし',
+        action: speakArticle,
+      },
+      { label: '位置', action: () => { props.speech.speak(`全${articles().length}記事中、${currentIndex() + 1}番目の記事です`); } },
+      { label: '日時', action: () => { const a = articles()[currentIndex()]; if (a) { props.speech.speak(`公開日時：${a.pubDate}`); } } },
+      { label: '停止', action: () => { props.speech.stop(); } },
+      createGuideAction('RSSニュース記事一覧', props.speech, () => actionList),
+    ];
+
+    return actionList;
+  };
 
   return (
     <Show

@@ -2,6 +2,7 @@ import { createSignal, onMount, onCleanup } from 'solid-js';
 import { SpeechManager } from '../lib/speech';
 import { getAllTimers, createTimer, startTimer, pauseTimer, deleteTimer, updateTimerRemaining, Timer, formatTime } from '../lib/timer';
 import GridSystem from './GridSystem';
+import { createGuideAction } from '../lib/grid-guide';
 
 interface TimerManagerProps {
   speech: SpeechManager;
@@ -68,60 +69,68 @@ export default function TimerManager(props: TimerManagerProps) {
     props.speech.speak(`プリセット ${presetIndex() + 1}。${preset.title}`, { interrupt: true });
   };
 
-  const listActions = () => [
-    { label: '戻る', action: () => { props.speech.stop(); props.onBack(); } },
-    { label: '前', action: () => { if (currentIndex() > 0) { setCurrentIndex(currentIndex() - 1); setTimeout(speakTimer, 100); } else { props.speech.speak('最初のタイマーです'); } } },
-    { label: '次', action: () => { if (currentIndex() < timers().length - 1) { setCurrentIndex(currentIndex() + 1); setTimeout(speakTimer, 100); } else { props.speech.speak('最後のタイマーです'); } } },
-    { label: '情報', action: speakTimer },
-    {
-      label: timers()[currentIndex()]?.isActive ? '停止' : '開始',
-      action: () => {
-        const timer = timers()[currentIndex()];
-        if (!timer) { props.speech.speak('タイマーがありません'); return; }
-        if (timer.isActive) { pauseTimer(timer.id); props.speech.speak('タイマーを一時停止しました'); }
-        else { startTimer(timer.id); props.speech.speak('タイマーを開始しました'); }
-        loadTimers();
+  const listActions = () => {
+    const actionList = [
+      { label: '戻る', action: () => { props.speech.stop(); props.onBack(); } },
+      { label: '前', action: () => { if (currentIndex() > 0) { setCurrentIndex(currentIndex() - 1); setTimeout(speakTimer, 100); } else { props.speech.speak('最初のタイマーです'); } } },
+      { label: '次', action: () => { if (currentIndex() < timers().length - 1) { setCurrentIndex(currentIndex() + 1); setTimeout(speakTimer, 100); } else { props.speech.speak('最後のタイマーです'); } } },
+      { label: '情報', action: speakTimer },
+      {
+        label: timers()[currentIndex()]?.isActive ? '停止' : '開始',
+        action: () => {
+          const timer = timers()[currentIndex()];
+          if (!timer) { props.speech.speak('タイマーがありません'); return; }
+          if (timer.isActive) { pauseTimer(timer.id); props.speech.speak('タイマーを一時停止しました'); }
+          else { startTimer(timer.id); props.speech.speak('タイマーを開始しました'); }
+          loadTimers();
+        },
       },
-    },
-    {
-      label: '削除',
-      action: () => {
-        const timer = timers()[currentIndex()];
-        if (!timer) { props.speech.speak('削除するタイマーがありません'); return; }
-        deleteTimer(timer.id);
-        props.speech.speak('タイマーを削除しました');
-        const updated = getAllTimers();
-        setTimers(updated);
-        if (currentIndex() >= updated.length && updated.length > 0) { setCurrentIndex(updated.length - 1); }
-        else if (updated.length === 0) { setCurrentIndex(0); }
+      {
+        label: '削除',
+        action: () => {
+          const timer = timers()[currentIndex()];
+          if (!timer) { props.speech.speak('削除するタイマーがありません'); return; }
+          deleteTimer(timer.id);
+          props.speech.speak('タイマーを削除しました');
+          const updated = getAllTimers();
+          setTimers(updated);
+          if (currentIndex() >= updated.length && updated.length > 0) { setCurrentIndex(updated.length - 1); }
+          else if (updated.length === 0) { setCurrentIndex(0); }
+        },
       },
-    },
-    { label: 'プリセット', action: () => { setMode('preset'); props.speech.speak('プリセットタイマー選択モードに切り替えました'); setTimeout(speakPreset, 1000); } },
-    { label: '件数', action: () => { if (timers().length === 0) { props.speech.speak('タイマーはまだ設定されていません'); } else { props.speech.speak(`全${timers().length}件中、${currentIndex() + 1}番目のタイマーです`); } } },
-    { label: '停止音声', action: () => { props.speech.stop(); } },
-  ];
+      { label: 'プリセット', action: () => { setMode('preset'); props.speech.speak('プリセットタイマー選択モードに切り替えました'); setTimeout(speakPreset, 1000); } },
+      { label: '停止音声', action: () => { props.speech.stop(); } },
+      createGuideAction('タイマー一覧', props.speech, () => actionList),
+    ];
 
-  const presetActions = () => [
-    { label: '戻る', action: () => { setMode('list'); props.speech.speak('タイマー一覧モードに切り替えました'); if (timers().length > 0) { setTimeout(speakTimer, 1000); } } },
-    { label: '前', action: () => { if (presetIndex() > 0) { setPresetIndex(presetIndex() - 1); setTimeout(speakPreset, 100); } else { props.speech.speak('最初のプリセットです'); } } },
-    { label: '次', action: () => { if (presetIndex() < PRESET_TIMERS.length - 1) { setPresetIndex(presetIndex() + 1); setTimeout(speakPreset, 100); } else { props.speech.speak('最後のプリセットです'); } } },
-    { label: '読み上げ', action: speakPreset },
-    {
-      label: '作成',
-      action: () => {
-        const preset = PRESET_TIMERS[presetIndex()];
-        createTimer(preset.title, preset.seconds);
-        props.speech.speak(`${preset.title}のタイマーを作成しました`);
-        loadTimers();
-        setMode('list');
-        props.speech.speak('タイマー一覧モードに切り替えました');
+    return actionList;
+  };
+
+  const presetActions = () => {
+    const actionList = [
+      { label: '戻る', action: () => { setMode('list'); props.speech.speak('タイマー一覧モードに切り替えました'); if (timers().length > 0) { setTimeout(speakTimer, 1000); } } },
+      { label: '前', action: () => { if (presetIndex() > 0) { setPresetIndex(presetIndex() - 1); setTimeout(speakPreset, 100); } else { props.speech.speak('最初のプリセットです'); } } },
+      { label: '次', action: () => { if (presetIndex() < PRESET_TIMERS.length - 1) { setPresetIndex(presetIndex() + 1); setTimeout(speakPreset, 100); } else { props.speech.speak('最後のプリセットです'); } } },
+      { label: '読み上げ', action: speakPreset },
+      {
+        label: '作成',
+        action: () => {
+          const preset = PRESET_TIMERS[presetIndex()];
+          createTimer(preset.title, preset.seconds);
+          props.speech.speak(`${preset.title}のタイマーを作成しました`);
+          loadTimers();
+          setMode('list');
+          props.speech.speak('タイマー一覧モードに切り替えました');
+        },
       },
-    },
-    { label: '', action: () => {} },
-    { label: '', action: () => {} },
-    { label: 'プリセット数', action: () => { props.speech.speak(`全${PRESET_TIMERS.length}プリセット中、${presetIndex() + 1}番目です`); } },
-    { label: '停止', action: () => { props.speech.stop(); } },
-  ];
+      { label: '', action: () => {} },
+      { label: 'プリセット数', action: () => { props.speech.speak(`全${PRESET_TIMERS.length}プリセット中、${presetIndex() + 1}番目です`); } },
+      { label: '停止', action: () => { props.speech.stop(); } },
+      createGuideAction('タイマープリセット一覧', props.speech, () => actionList),
+    ];
+
+    return actionList;
+  };
 
   return <GridSystem actions={mode() === 'list' ? listActions() : presetActions()} speech={props.speech} />;
 }

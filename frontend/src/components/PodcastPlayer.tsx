@@ -5,6 +5,7 @@ import { SpeechManager } from '../lib/speech';
 import GridSystem from './GridSystem';
 import StatusMessage from './StatusMessage';
 import { FORMAL_SERVICE_NAMES, previewText } from '../lib/service-copy';
+import { createGuideAction } from '../lib/grid-guide';
 
 interface PodcastPlayerProps {
   speech: SpeechManager;
@@ -72,22 +73,26 @@ export default function PodcastPlayer(props: PodcastPlayerProps) {
     if (audioRef) { audioRef.pause(); audioRef.currentTime = 0; setIsPlaying(false); props.speech.speak('再生を停止しました'); }
   };
 
-  const actions = () => [
-    { label: '戻る', action: () => { props.speech.stop(); stopAudio(); store.setPodcastEpisodes([]); props.onBack(); } },
-    { label: '前のエピソード', action: () => { if (store.state.currentEpisodeIndex > 0) { stopAudio(); audioRef = null; store.prevEpisode(); setTimeout(speakEpisode, 100); } else { props.speech.speak('最初のエピソードです'); } } },
-    { label: '次のエピソード', action: () => { if (store.state.currentEpisodeIndex < store.state.podcastEpisodes.length - 1) { stopAudio(); audioRef = null; store.nextEpisode(); setTimeout(speakEpisode, 100); } else { props.speech.speak('最後のエピソードです'); } } },
-    { label: isPlaying() ? '一時停止' : '再生', action: playAudio },
-    {
-      label: store.getCurrentEpisode()
-        ? `${store.getCurrentEpisode()!.title}\n${previewText(store.getCurrentEpisode()!.description, 58)}`
-        : 'エピソードなし',
-      action: speakEpisode,
-    },
-    { label: '停止', action: stopAudio },
-    { label: '位置', action: () => { props.speech.speak(`全${store.state.podcastEpisodes.length}エピソード中、${store.state.currentEpisodeIndex + 1}番目のエピソードです`); } },
-    { label: '番組情報', action: () => { const p = store.state.selectedPodcast; if (p) { props.speech.speak(`番組名：${p.title}。カテゴリ：${p.category}。全${store.state.podcastEpisodes.length}エピソード`); } } },
-    { label: '先頭', action: () => { if (store.state.currentEpisodeIndex !== 0) { stopAudio(); audioRef = null; store.setCurrentEpisodeIndex(0); setTimeout(speakEpisode, 100); } else { props.speech.speak('すでに最初のエピソードです'); } } },
-  ];
+  const actions = () => {
+    const actionList = [
+      { label: '戻る', action: () => { props.speech.stop(); stopAudio(); store.setPodcastEpisodes([]); props.onBack(); } },
+      { label: '前のエピソード', action: () => { if (store.state.currentEpisodeIndex > 0) { stopAudio(); audioRef = null; store.prevEpisode(); setTimeout(speakEpisode, 100); } else { props.speech.speak('最初のエピソードです'); } } },
+      { label: '次のエピソード', action: () => { if (store.state.currentEpisodeIndex < store.state.podcastEpisodes.length - 1) { stopAudio(); audioRef = null; store.nextEpisode(); setTimeout(speakEpisode, 100); } else { props.speech.speak('最後のエピソードです'); } } },
+      { label: isPlaying() ? '一時停止' : '再生', action: playAudio },
+      {
+        label: store.getCurrentEpisode()
+          ? `${store.getCurrentEpisode()!.title}\n${previewText(store.getCurrentEpisode()!.description, 58)}`
+          : 'エピソードなし',
+        action: speakEpisode,
+      },
+      { label: '音声停止', action: stopAudio },
+      { label: '位置', action: () => { props.speech.speak(`全${store.state.podcastEpisodes.length}エピソード中、${store.state.currentEpisodeIndex + 1}番目のエピソードです`); } },
+      { label: '番組情報', action: () => { const p = store.state.selectedPodcast; if (p) { props.speech.speak(`番組名：${p.title}。カテゴリ：${p.category}。全${store.state.podcastEpisodes.length}エピソード`); } } },
+      createGuideAction('Podcastエピソード一覧', props.speech, () => actionList),
+    ];
+
+    return actionList;
+  };
 
   return (
     <Show

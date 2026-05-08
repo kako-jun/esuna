@@ -2,6 +2,7 @@ import { createSignal, onMount, onCleanup, Show } from 'solid-js';
 import { SpeechManager } from '../lib/speech';
 import { saveMemo, getAllMemos, deleteMemo, VoiceMemo, blobToBase64, base64ToBlob } from '../lib/voice-memo';
 import GridSystem from './GridSystem';
+import { createGuideAction } from '../lib/grid-guide';
 
 interface VoiceMemoRecorderProps {
   speech: SpeechManager;
@@ -124,17 +125,21 @@ export default function VoiceMemoRecorder(props: VoiceMemoRecorderProps) {
     else if (updated.length === 0) { setCurrentIndex(0); }
   };
 
-  const actions = () => [
-    { label: '戻る', action: () => { props.speech.stop(); if (isRecording()) { stopRecording(); } if (isPlaying()) { audioRef?.pause(); } props.onBack(); } },
-    { label: '前のメモ', action: () => { if (currentIndex() > 0) { setCurrentIndex(currentIndex() - 1); setTimeout(speakMemo, 100); } else { props.speech.speak('最初のメモです'); } } },
-    { label: '次のメモ', action: () => { if (currentIndex() < memos().length - 1) { setCurrentIndex(currentIndex() + 1); setTimeout(speakMemo, 100); } else { props.speech.speak('最後のメモです'); } } },
-    { label: '情報', action: speakMemo },
-    { label: isRecording() ? '録音停止' : '録音開始', action: isRecording() ? stopRecording : startRecording },
-    { label: isPlaying() ? '停止' : '再生', action: playMemo },
-    { label: '削除', action: deleteCurrent },
-    { label: '件数', action: () => { if (memos().length === 0) { props.speech.speak('メモはまだ保存されていません'); } else { props.speech.speak(`全${memos().length}件中、${currentIndex() + 1}番目のメモです`); } } },
-    { label: '停止', action: () => { props.speech.stop(); if (isPlaying()) { audioRef?.pause(); setIsPlaying(false); } } },
-  ];
+  const actions = () => {
+    const actionList = [
+      { label: '戻る', action: () => { props.speech.stop(); if (isRecording()) { stopRecording(); } if (isPlaying()) { audioRef?.pause(); } props.onBack(); } },
+      { label: '前のメモ', action: () => { if (currentIndex() > 0) { setCurrentIndex(currentIndex() - 1); setTimeout(speakMemo, 100); } else { props.speech.speak('最初のメモです'); } } },
+      { label: '次のメモ', action: () => { if (currentIndex() < memos().length - 1) { setCurrentIndex(currentIndex() + 1); setTimeout(speakMemo, 100); } else { props.speech.speak('最後のメモです'); } } },
+      { label: '情報', action: speakMemo },
+      { label: isRecording() ? '録音停止' : '録音開始', action: isRecording() ? stopRecording : startRecording },
+      { label: isPlaying() ? '再生停止' : '再生', action: playMemo },
+      { label: '削除', action: deleteCurrent },
+      { label: '停止', action: () => { props.speech.stop(); if (isPlaying()) { audioRef?.pause(); setIsPlaying(false); } } },
+      createGuideAction('音声メモ一覧', props.speech, () => actionList),
+    ];
+
+    return actionList;
+  };
 
   return (
     <div>
