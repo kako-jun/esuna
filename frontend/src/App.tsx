@@ -228,16 +228,12 @@ export default function App() {
                 navigateTo('rss-articles'); speechManager()!.speak(`RSSフィード「${favorite.title}」を開きます`);
                 break;
               case '5ch-board':
-                if (favorite.data?.url) {
-                  const boards = store.state.fivechBoards;
-                  const boardIndex = boards.findIndex((b: any) => b.url === favorite.data.url);
-                  if (boardIndex >= 0) { store.setCurrentBoardIndex(boardIndex); }
-                  navigateTo('5ch-threads'); speechManager()!.speak(`5ちゃんねる板「${favorite.title}」を開きます`);
-                } else { navigateTo('5ch-boards'); speechManager()!.speak('5ちゃんねる板一覧に移動しました'); }
+                navigateTo('5ch-boards');
+                speechManager()!.speak(`5ちゃんねる板「${favorite.title}」へ移動しました。現在は板名の確認までで、スレッド一覧は未対応です`);
                 break;
               case '5ch-thread':
-                if (favorite.data?.url) { navigateTo('5ch-posts'); speechManager()!.speak(`スレッド「${favorite.title}」を開きます`); }
-                else { navigateTo('5ch-boards'); speechManager()!.speak('5ちゃんねる板一覧に移動しました'); }
+                navigateTo('5ch-boards');
+                speechManager()!.speak(`5ちゃんねるのスレッド「${favorite.title}」はまだ開けません。現在は板名の確認までです`);
                 break;
               default:
                 speechManager()!.speak(`${favorite.title} を開けませんでした。対応していないコンテンツタイプです`);
@@ -267,11 +263,8 @@ export default function App() {
                 navigateTo('rss-articles'); speechManager()!.speak(`RSSニュース「${progress.title}」の続きから再生します`);
                 break;
               case '5ch-thread':
-                if (progress.data?.url) {
-                  setTimeout(() => { store.setCurrentPostIndex(progress.currentIndex); }, 100);
-                  navigateTo('5ch-posts');
-                  speechManager()!.speak(`スレッド「${progress.title}」の続きから再生します。${progress.currentIndex + 1}番目のレスからです`);
-                } else { navigateTo('5ch-boards'); speechManager()!.speak('5ちゃんねる板一覧に移動しました'); }
+                navigateTo('5ch-boards');
+                speechManager()!.speak(`5ちゃんねるの続きから再生は、現在未対応です。スレッド「${progress.title}」はまだ再開できません`);
                 break;
               default:
                 speechManager()!.speak(`${progress.title} の続きから再生できませんでした。対応していないコンテンツタイプです`);
