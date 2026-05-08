@@ -44,19 +44,21 @@ export default function GridSystem(props: GridSystemProps) {
 
   const executeItem = (action: GridAction, index: number) => {
     setSelectedIndex(index);
-    // タップ起点（キーボードモードでない）かつ設定 ON のときのみ短く振動
-    if (!isKeyboardMode() && store.state.vibrationEnabled && typeof navigator !== 'undefined' && 'vibrate' in navigator) {
-      try {
-        navigator.vibrate(30);
-      } catch {
-        // 一部ブラウザでは vibrate がエラーを投げることがあるので無視
-      }
-    }
     action.action();
+  };
+
+  const triggerTapVibration = () => {
+    if (!store.state.vibrationEnabled || !('vibrate' in navigator)) return;
+    try {
+      navigator.vibrate(30);
+    } catch {
+      // 一部ブラウザでは vibrate がエラーを投げることがあるので無視
+    }
   };
 
   const handleItemClick = (action: GridAction, index: number) => {
     if (selectedIndex() === index) {
+      triggerTapVibration();
       executeItem(action, index);
       return;
     }

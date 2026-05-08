@@ -195,7 +195,7 @@ export default function App() {
     { label: '操作方法', action: () => { speechManager()?.speak('操作方法を説明します。画面は9つのエリアに分かれています。数字の1から9のキーで直接選択するか、矢印キーで移動してEnterキーで決定できます。Escapeキーで読み上げを停止できます。'); } },
     { label: '機能説明', action: () => { speechManager()?.speak(`利用可能な機能を説明します。${FORMAL_SERVICE_NAMES.hatena}では人気エントリーとコメントを確認できます。${FORMAL_SERVICE_NAMES.sns} は現在試験表示で、X には未対応です。${FORMAL_SERVICE_NAMES.fivech} は現在未対応で、板名の確認までです。${FORMAL_SERVICE_NAMES.aozora}は現在取得に失敗する場合があります。`); } },
     { label: 'キーボード', action: () => { speechManager()?.speak('キーボード操作を説明します。1から9キー：各エリアを直接選択。矢印キー：エリア間を移動。Enterキー：選択したエリアを実行。Escapeキー：読み上げ停止または前のページに戻る。'); } },
-    { label: 'タッチ', action: () => { speechManager()?.speak('タッチ操作を説明します。画面をタップ：そのエリアを選択して実行。ダブルタップ：再度実行。'); } },
+    { label: 'タッチ', action: () => { speechManager()?.speak('タッチ操作を説明します。画面をタップ：そのエリアを選択して読み上げ。同じ場所をもう一度タップ：実行。対応端末では実行時に短く振動します。設定でオフにできます。'); } },
     { label: '音声', action: () => { speechManager()?.speak('音声機能を説明します。すべての操作は音声でガイダンスされます。設定から読み上げ速度とピッチを調整できます。停止ボタンでいつでも読み上げを停止できます。'); } },
     { label: '自動ナビゲーション', action: () => { speechManager()?.speak('自動ナビゲーション機能を説明します。設定で有効にすると、音声読み上げ完了後、自動的に次のコンテンツに移動します。ハンズフリーで連続閲覧ができます。'); } },
     { label: 'バージョン', action: () => { speechManager()?.speak('Esuna バージョン 0.6.0'); } },
