@@ -20,8 +20,7 @@ Esunaは、失明しても今と同じ趣味を楽しめるように設計され
 ```
 esuna/
 ├── frontend/        # Vite + SolidJS + TypeScript
-├── backend/         # Hono (Cloudflare Workers) + TypeScript
-└── compose.yaml     # Docker Compose設定
+└── backend/         # Hono (Cloudflare Workers) + TypeScript
 ```
 
 ### 技術スタック
@@ -61,31 +60,31 @@ cd backend && npm install && npm run dev
 
 ## API エンドポイント
 
-### はてなブックマーク
+### はてなブックマーク（成立）
 
 - `GET /api/hatena/hot` - 人気エントリー
 - `GET /api/hatena/latest` - 新着エントリー
 - `GET /api/hatena/comments?url=<URL>` - コメント
 
-### 5ch
+### 5ch（未対応: HTTP 530）
 
 - `GET /api/5ch/boards` - 板一覧
 - `GET /api/5ch/threads?board_url=<URL>` - スレッド一覧
 - `GET /api/5ch/posts?thread_url=<URL>` - 投稿
 
-### SNS
+### SNS（試験的）
 
-- `GET /api/sns/posts?platform=<twitter|mastodon|bluesky>` - 投稿一覧
+- `GET /api/sns/posts?platform=<mastodon|bluesky>` - 投稿一覧
 
-### 小説（青空文庫）
+### 小説 / 青空文庫（試験的）
 
 - `GET /api/novels/content?author_id=<ID>&file_id=<ID>` - 小説本文
 
-### Podcast
+### Podcast（試験的）
 
 - `GET /api/podcasts/episodes?feed_url=<URL>` - エピソード一覧
 
-### ラジオ
+### ラジオ / radiko（未対応: 501 Not Implemented）
 
 - `GET /api/radio/stream-url/:service/:stationId` - ストリーミングURL
 - `GET /api/radio/now-playing/:service/:stationId` - 放送中の番組情報
@@ -103,20 +102,32 @@ cd backend && npm install && npm run dev
 - **Enterキー**: 決定
 - **Escapeキー**: 読み上げ停止/戻る
 
-### 9分割グリッド
+### 9分割グリッド（正規配置）
 
 ```
 ┌─────┬──────────────┬─────┐
 │  1  │      2      │  3  │
-│戻る │ リロード     │設定 │
+│戻る │  前の項目    │次の項目│
 ├─────┼──────────────┼─────┤
 │  4  │      5      │  6  │
-│前へ │メインコンテンツ│次へ │
+│情報 │  主対象      │アクション│
 ├─────┼──────────────┼─────┤
 │  7  │      8      │  9  │
-│機能 │   機能      │機能 │
+│補助 │    停止      │画面案内│
 └─────┴──────────────┴─────┘
 ```
+
+| 位置 | 役割 | 説明 |
+|------|------|------|
+| 1 | 戻る | 固定 |
+| 2 | 前の項目 | — |
+| 3 | 次の項目 | — |
+| 4 | 読み上げ / リロード / 情報 | — |
+| 5 | 主対象 | 固定 |
+| 6 | 主アクション（開く・再生・コメント等） | — |
+| 7 | 補助情報（件数・位置） | — |
+| 8 | 停止 | 固定 |
+| 9 | 画面案内 | 固定 |
 
 ## デプロイ
 
@@ -125,7 +136,7 @@ cd backend && npm install && npm run dev
 - `main` ブランチへのプッシュで自動デプロイ
 - ビルドコマンド: `cd frontend && npm run build`
 - 出力ディレクトリ: `frontend/dist`
-- カスタムドメイン: `esuna.llll-ll.com`
+- URL: https://esuna.llll-ll.com
 
 ### バックエンド（Cloudflare Workers）
 
@@ -134,23 +145,20 @@ cd backend
 npx wrangler deploy
 ```
 
+URL: https://esuna-api.kako-jun.workers.dev
+
 ## 開発
 
 ### ブランチ戦略
 
-- `main`: 安定版
-- `claude/*`: 開発ブランチ（Claude Code用）
+- `main`: 安定版（push = CF Pages 自動デプロイ）
+- `fix/*` / `feat/*`: 開発ブランチ
 
 ### コミット
 
 ```bash
-# 変更をステージング
 git add .
-
-# コミット
 git commit -m "適切なコミットメッセージ"
-
-# プッシュ
 git push -u origin <branch-name>
 ```
 
@@ -165,3 +173,6 @@ MIT License
 ## 関連ドキュメント
 
 - [CLAUDE.md](./CLAUDE.md) - プロジェクトコンセプトと開発方針
+- [docs/grid-layout.md](./docs/grid-layout.md) - 9マスUI規約
+- [docs/status-matrix.md](./docs/status-matrix.md) - 機能の成立状況
+- [docs/architecture.md](./docs/architecture.md) - アーキテクチャ設計
