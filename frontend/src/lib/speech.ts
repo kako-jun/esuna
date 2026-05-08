@@ -4,6 +4,8 @@ export class SpeechManager {
   private currentVoice: SpeechSynthesisVoice | null = null
   // Queue of pending setVoiceByName calls that arrived before voices loaded
   private pendingVoiceName: string | null = null
+  // Session ID to discard stale onend callbacks after cancel()
+  private queueSessionId = 0
 
   constructor() {
     this.synthesis = window.speechSynthesis
@@ -44,6 +46,19 @@ export class SpeechManager {
     }
   }
 
+  private createUtterance(text: string, rate: number, pitch: number, volume: number): SpeechSynthesisUtterance {
+    const utterance = new SpeechSynthesisUtterance(text)
+    if (this.currentVoice) utterance.voice = this.currentVoice
+    utterance.rate = rate
+    utterance.pitch = pitch
+    utterance.volume = volume
+    utterance.lang = 'ja-JP'
+    utterance.onerror = (event) => {
+      console.error('Speech synthesis error:', event.error)
+    }
+    return utterance
+  }
+
   speak(text: string, options?: {
     rate?: number
     pitch?: number
@@ -61,21 +76,7 @@ export class SpeechManager {
       this.synthesis.cancel()
     }
 
-    const utterance = new SpeechSynthesisUtterance(text)
-
-    if (this.currentVoice) {
-      utterance.voice = this.currentVoice
-    }
-
-    utterance.rate = rate
-    utterance.pitch = pitch
-    utterance.volume = volume
-    utterance.lang = 'ja-JP'
-
-    utterance.onerror = (event) => {
-      console.error('Speech synthesis error:', event.error)
-    }
-
+    const utterance = this.createUtterance(text, rate, pitch, volume)
     this.synthesis.speak(utterance)
   }
 
@@ -84,20 +85,15 @@ export class SpeechManager {
     pitch?: number
     volume?: number
   }) {
+    if (texts.length === 0) return
     const { rate = 1.0, pitch = 1.0, volume = 1.0 } = options || {}
+    const sessionId = ++this.queueSessionId
     this.synthesis.cancel()
 
     const speakNext = (index: number) => {
+      if (this.queueSessionId !== sessionId) return // stale chain after cancel()
       if (index >= texts.length) return
-      const utterance = new SpeechSynthesisUtterance(texts[index])
-      if (this.currentVoice) utterance.voice = this.currentVoice
-      utterance.rate = rate
-      utterance.pitch = pitch
-      utterance.volume = volume
-      utterance.lang = 'ja-JP'
-      utterance.onerror = (event) => {
-        console.error('Speech synthesis error:', event.error)
-      }
+      const utterance = this.createUtterance(texts[index], rate, pitch, volume)
       utterance.onend = () => speakNext(index + 1)
       this.synthesis.speak(utterance)
     }

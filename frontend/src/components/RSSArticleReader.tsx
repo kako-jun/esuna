@@ -35,10 +35,10 @@ export default function RSSArticleReader(props: RSSArticleReaderProps) {
     try {
       const rssFeed = await rssReader.fetchRSS(feed.url);
       setArticles(rssFeed.items);
-      setTimeout(() => {
-        props.speech.speak(`${feed.name} の記事を${rssFeed.items.length}件読み込みました。最新の記事から読み上げます`);
-        setTimeout(() => speakArticle(), 2000);
-      }, 500);
+      const first = rssFeed.items[0];
+      const texts = [`${feed.name} の記事を${rssFeed.items.length}件読み込みました。最新の記事から読み上げます`];
+      if (first) texts.push(`記事 1。${first.title}。${first.description}`);
+      props.speech.speakQueue(texts);
     } catch (err) {
       console.error('Failed to load RSS:', err);
       const msg = failureSpeech(
@@ -63,7 +63,7 @@ export default function RSSArticleReader(props: RSSArticleReaderProps) {
     enabled: false,
     speech: props.speech,
     onNext: () => {
-      if (currentIndex() < articles().length - 1) { setCurrentIndex(currentIndex() + 1); setTimeout(speakArticle, 100); }
+      if (currentIndex() < articles().length - 1) { setCurrentIndex(currentIndex() + 1); speakArticle(); }
       else { props.speech.speak('最後の記事です'); }
     },
     delay: 2000,
@@ -72,8 +72,8 @@ export default function RSSArticleReader(props: RSSArticleReaderProps) {
   const actions = () => {
     const actionList: GridAction[] = [
       { label: '戻る', action: () => { props.speech.stop(); props.onBack(); } },
-      { label: '前の記事', action: () => { if (currentIndex() > 0) { setCurrentIndex(currentIndex() - 1); setTimeout(speakArticle, 100); } else { props.speech.speak('最初の記事です'); } } },
-      { label: '次の記事', action: () => { if (currentIndex() < articles().length - 1) { setCurrentIndex(currentIndex() + 1); setTimeout(speakArticle, 100); } else { props.speech.speak('最後の記事です'); } } },
+      { label: '前の記事', action: () => { if (currentIndex() > 0) { setCurrentIndex(currentIndex() - 1); speakArticle(); } else { props.speech.speak('最初の記事です'); } } },
+      { label: '次の記事', action: () => { if (currentIndex() < articles().length - 1) { setCurrentIndex(currentIndex() + 1); speakArticle(); } else { props.speech.speak('最後の記事です'); } } },
       { label: '本文', action: () => { const a = articles()[currentIndex()]; if (a?.content) { props.speech.speak(`本文。${a.content}`, { interrupt: true }); } else { props.speech.speak('本文が取得できませんでした。見出しと概要のみです。'); } } },
       {
         label: articles()[currentIndex()]

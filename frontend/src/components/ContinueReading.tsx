@@ -18,28 +18,33 @@ export default function ContinueReading(props: ContinueReadingProps) {
   onMount(() => {
     const recent = getRecentProgress(20);
     setProgressList(recent);
-    setTimeout(() => {
-      if (recent.length === 0) { props.speech.speak('続きから再生できるコンテンツはまだありません'); }
-      else { props.speech.speak(`続きから再生、${recent.length}件あります`); setTimeout(() => speakProgress(), 2000); }
-    }, 500);
+    if (recent.length === 0) {
+      props.speech.speak('続きから再生できるコンテンツはまだありません');
+    } else {
+      props.speech.speakQueue([`続きから再生、${recent.length}件あります`, speakProgressText(recent[0])]);
+    }
   });
 
   const getTypeText = (type: ProgressType): string => {
     return getFormalProgressTypeName(type);
   };
 
+  const speakProgressText = (p: Progress): string => {
+    const percent = Math.round((p.currentIndex / p.totalCount) * 100);
+    return `${getTypeText(p.type)}、${p.title}。進捗は${percent}パーセント、${p.currentIndex + 1}番目、全${p.totalCount}件中です`;
+  };
+
   const speakProgress = () => {
     const p = progressList()[currentIndex()];
     if (!p) return;
-    const percent = Math.round((p.currentIndex / p.totalCount) * 100);
-    props.speech.speak(`${getTypeText(p.type)}、${p.title}。進捗は${percent}パーセント、${p.currentIndex + 1}番目、全${p.totalCount}件中です`, { interrupt: true });
+    props.speech.speak(speakProgressText(p), { interrupt: true });
   };
 
   const actions = () => {
     const actionList: GridAction[] = [
       { label: '戻る', action: () => { props.speech.stop(); props.onBack(); } },
-      { label: '前', action: () => { if (currentIndex() > 0) { setCurrentIndex(currentIndex() - 1); setTimeout(speakProgress, 100); } else { props.speech.speak('最初の進捗です'); } } },
-      { label: '次', action: () => { if (currentIndex() < progressList().length - 1) { setCurrentIndex(currentIndex() + 1); setTimeout(speakProgress, 100); } else { props.speech.speak('最後の進捗です'); } } },
+      { label: '前', action: () => { if (currentIndex() > 0) { setCurrentIndex(currentIndex() - 1); speakProgress(); } else { props.speech.speak('最初の進捗です'); } } },
+      { label: '次', action: () => { if (currentIndex() < progressList().length - 1) { setCurrentIndex(currentIndex() + 1); speakProgress(); } else { props.speech.speak('最後の進捗です'); } } },
       { label: '読み上げ', action: speakProgress },
       {
         label: progressList()[currentIndex()]
@@ -57,7 +62,7 @@ export default function ContinueReading(props: ContinueReadingProps) {
           const updated = getRecentProgress(20);
           setProgressList(updated);
           if (currentIndex() >= updated.length && updated.length > 0) { setCurrentIndex(updated.length - 1); }
-          else if (updated.length === 0) { setCurrentIndex(0); setTimeout(() => { props.speech.speak('進捗がすべて削除されました'); }, 1500); }
+          else if (updated.length === 0) { setCurrentIndex(0); props.speech.speak('進捗がすべて削除されました'); }
         },
       },
       { label: '件数', action: () => { if (progressList().length === 0) { props.speech.speak('進捗はまだ記録されていません'); } else { props.speech.speak(`全${progressList().length}件中、${currentIndex() + 1}番目の進捗です`); } } },
