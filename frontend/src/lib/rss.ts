@@ -1,3 +1,5 @@
+import { getApiBaseUrl } from './api-client'
+
 export interface RSSItem {
   title: string
   description: string
@@ -13,11 +15,9 @@ export interface RSSFeed {
 }
 
 export class RSSReader {
-  private corsProxy = 'https://api.allorigins.win/raw?url='
-
   async fetchRSS(url: string): Promise<RSSFeed> {
     try {
-      const proxyUrl = `${this.corsProxy}${encodeURIComponent(url)}`
+      const proxyUrl = `${getApiBaseUrl()}/api/proxy?url=${encodeURIComponent(url)}`
       const response = await fetch(proxyUrl)
 
       if (!response.ok) {

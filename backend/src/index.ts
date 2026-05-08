@@ -288,6 +288,48 @@ app.get("/api/radio/now-playing/:service/:stationId", async (c) => {
   }
 });
 
+// =============================================================
+// 汎用プロキシ API（CORS 回避・SSRF 防止付き）
+// =============================================================
+
+app.get("/api/proxy", async (c) => {
+  const url = c.req.query("url");
+  if (!url) {
+    return c.json({ error: "url parameter is required" }, 400);
+  }
+  if (!isUrlAllowed(url)) {
+    return c.json({ error: "許可されていない URL です" }, 400);
+  }
+  try {
+    const MAX_BYTES = 5 * 1024 * 1024; // 5MB
+    const response = await fetch(url, {
+      headers: { "User-Agent": "esuna/1.0" },
+      redirect: "follow",
+      signal: AbortSignal.timeout(30_000),
+    });
+    // リダイレクト後の最終URLを再チェック（SSRF bypass 防止）
+    if (response.url && response.url !== url && !isUrlAllowed(response.url)) {
+      return c.json({ error: "リダイレクト先が許可されていません" }, 502);
+    }
+    const contentLength = response.headers.get("content-length");
+    if (contentLength && parseInt(contentLength, 10) > MAX_BYTES) {
+      return c.json({ error: "Response too large" }, 502);
+    }
+    const contentType = response.headers.get("content-type") || "text/plain";
+    const body = await response.arrayBuffer();
+    if (body.byteLength > MAX_BYTES) {
+      return c.json({ error: "Response too large" }, 502);
+    }
+    return new Response(body, {
+      status: response.status,
+      headers: { "content-type": contentType },
+    });
+  } catch (e) {
+    console.error("Error in proxy:", e);
+    return c.json({ error: String(e) }, 500);
+  }
+});
+
 // グローバルエラーハンドラー
 app.onError((err, c) => {
   console.error("Unhandled exception:", err);

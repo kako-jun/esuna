@@ -25,6 +25,11 @@ const ALLOWED_DOMAINS: string[] = [
   "rss.nikkei.com",
   "feeds.nhk.or.jp",
   "www3.nhk.or.jp",
+  // RSS ニュースフィード
+  "news.yahoo.co.jp",
+  "rss.itmedia.co.jp",
+  "jp.techcrunch.com",
+  "gigazine.net",
   // Mastodon instances
   "mastodon.social",
   "mastodon.jp",

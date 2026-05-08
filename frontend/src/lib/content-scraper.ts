@@ -1,3 +1,5 @@
+import { getApiBaseUrl } from './api-client'
+
 export interface ScrapedContent {
   title: string
   content: string
@@ -6,19 +8,16 @@ export interface ScrapedContent {
 }
 
 export class ContentScraper {
-  private corsProxy = 'https://api.allorigins.win/get?url='
-
   async scrapeWebsite(url: string): Promise<ScrapedContent> {
     try {
-      const proxyUrl = `${this.corsProxy}${encodeURIComponent(url)}`
+      const proxyUrl = `${getApiBaseUrl()}/api/proxy?url=${encodeURIComponent(url)}`
       const response = await fetch(proxyUrl)
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`)
       }
 
-      const data = await response.json()
-      const htmlContent = data.contents
+      const htmlContent = await response.text()
 
       return this.parseHtmlContent(htmlContent, url)
     } catch (error) {
@@ -96,8 +95,11 @@ export class ContentScraper {
   async getHatenaPopularEntries(): Promise<ScrapedContent[]> {
     try {
       const rssUrl = 'https://b.hatena.ne.jp/hotentry.rss'
-      const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(rssUrl)}`
+      const proxyUrl = `${getApiBaseUrl()}/api/proxy?url=${encodeURIComponent(rssUrl)}`
       const response = await fetch(proxyUrl)
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
       const xmlText = await response.text()
 
       const parser = new DOMParser()
