@@ -81,7 +81,7 @@ export default function HatenaCommentReader(props: HatenaCommentReaderProps) {
   };
 
   const actions = () => {
-    // 規約: 1=戻る 2=前 3=次 4=読上 5=主対象 6=主アクション 7=補助情報 8=停止 9=画面案内
+    // 規約: 1=戻る 2=前 3=次 4=リロード（はてな特例） 5=主対象 6=主アクション 7=補助情報 8=停止 9=画面案内
     const actionList = [
     { label: '戻る', action: () => { props.speech.stop(); props.onBack(); } },
     {

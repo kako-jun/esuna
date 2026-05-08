@@ -101,7 +101,7 @@ export default function SNSPostReader(props: SNSPostReaderProps) {
       },
       { label: `${store.state.currentSNSPostIndex + 1}/${store.state.snsPosts.length}`, action: () => props.speech.speak(`${store.state.snsPosts.length}件中、${store.state.currentSNSPostIndex + 1}件目です`) },
       { label: '停止', action: () => props.speech.stop() },
-      createGuideAction('公開投稿の試験表示', props.speech, () => actionList),
+      createGuideAction('SNS投稿一覧', props.speech, () => actionList),
     ];
 
     return actionList;

@@ -39,6 +39,12 @@ export default function RadioStationList(props: RadioStationListProps) {
     { label: '次の局', action: () => { if (currentIndex() < allStations.length - 1) { setCurrentIndex(currentIndex() + 1); setTimeout(() => { props.speech.speak(`${allStations[currentIndex()].name}`, { interrupt: true }); }, 100); } else { props.speech.speak('最後のラジオ局です'); } } },
     { label: '読み上げ', action: speakStation },
     {
+      label: allStations[currentIndex()]
+        ? `${allStations[currentIndex()].name}`
+        : '',
+      action: speakStation,
+    },
+    {
       label: allStations[currentIndex()]?.service === 'radiko' ? '再生\n未対応' : '再生',
       status: allStations[currentIndex()]?.service === 'radiko' ? 'unimplemented' : 'default',
       action: () => {
