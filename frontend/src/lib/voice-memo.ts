@@ -26,7 +26,12 @@ export function getAllMemos(): VoiceMemo[] {
   }
 }
 
-export function saveMemo(memo: Omit<VoiceMemo, 'id' | 'createdAt'>): VoiceMemo {
+export type SaveMemoResult =
+  | { ok: true }
+  | { ok: false; reason: 'quota_exceeded' }
+  | { ok: false; reason: 'unknown' }
+
+export function saveMemo(memo: Omit<VoiceMemo, 'id' | 'createdAt'>): { memo: VoiceMemo; result: SaveMemoResult } {
   const allMemos = getAllMemos()
 
   const newMemo: VoiceMemo = {
@@ -41,15 +46,21 @@ export function saveMemo(memo: Omit<VoiceMemo, 'id' | 'createdAt'>): VoiceMemo {
 
   try {
     setSubKey('voiceMemos', limited)
+    return { memo: newMemo, result: { ok: true } }
   } catch (error) {
     console.error('Failed to save voice memo:', error)
     if (error instanceof Error && error.name === 'QuotaExceededError') {
-      const reduced = allMemos.slice(0, 50)
-      setSubKey('voiceMemos', reduced)
+      try {
+        // 古いメモを削って再試行
+        const reduced = allMemos.slice(0, 50)
+        setSubKey('voiceMemos', reduced)
+        return { memo: newMemo, result: { ok: false, reason: 'quota_exceeded' } }
+      } catch {
+        return { memo: newMemo, result: { ok: false, reason: 'quota_exceeded' } }
+      }
     }
+    return { memo: newMemo, result: { ok: false, reason: 'unknown' } }
   }
-
-  return newMemo
 }
 
 export function deleteMemo(id: string): void {

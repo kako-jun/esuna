@@ -64,8 +64,14 @@ export default function VoiceMemoRecorder(props: VoiceMemoRecorderProps) {
         const base64Data = await blobToBase64(audioBlob);
         const finalDuration = recordingTimeRef;
         const now = new Date();
-        saveMemo({ title: `音声メモ ${now.toLocaleString('ja-JP')}`, audioData: base64Data, duration: finalDuration, tags: [] });
-        props.speech.speak(`音声メモを保存しました。長さは${finalDuration}秒です`);
+        const { result } = saveMemo({ title: `音声メモ ${now.toLocaleString('ja-JP')}`, audioData: base64Data, duration: finalDuration, tags: [] });
+        if (result.ok) {
+          props.speech.speak(`音声メモを保存しました。長さは${finalDuration}秒です`);
+        } else if (result.reason === 'quota_exceeded') {
+          props.speech.speak(`音声メモを保存しましたが、容量が超過したため古いメモを一部削除しました。長さは${finalDuration}秒です。不要なメモは削除してください。`);
+        } else {
+          props.speech.speak('音声メモの保存に失敗しました。1番で戻るか、4番でもう一度試せます。');
+        }
         loadMemos();
         stream.getTracks().forEach((track) => track.stop());
       };
@@ -128,8 +134,8 @@ export default function VoiceMemoRecorder(props: VoiceMemoRecorderProps) {
   const actions = () => {
     const actionList: GridAction[] = [
       { label: '戻る', action: () => { props.speech.stop(); if (isRecording()) { stopRecording(); } if (isPlaying()) { audioRef?.pause(); } props.onBack(); } },
-      { label: '前のメモ', action: () => { if (currentIndex() > 0) { setCurrentIndex(currentIndex() - 1); setTimeout(speakMemo, 100); } else { props.speech.speak('最初のメモです'); } } },
-      { label: '次のメモ', action: () => { if (currentIndex() < memos().length - 1) { setCurrentIndex(currentIndex() + 1); setTimeout(speakMemo, 100); } else { props.speech.speak('最後のメモです'); } } },
+      { label: '前のメモ', action: () => { if (currentIndex() > 0) { setCurrentIndex(currentIndex() - 1); speakMemo(); } else { props.speech.speak('最初のメモです'); } } },
+      { label: '次のメモ', action: () => { if (currentIndex() < memos().length - 1) { setCurrentIndex(currentIndex() + 1); speakMemo(); } else { props.speech.speak('最後のメモです'); } } },
       { label: '情報', action: speakMemo },
       { label: isRecording() ? '録音停止' : '録音開始', action: isRecording() ? stopRecording : startRecording },
       { label: isPlaying() ? '再生停止' : '再生', action: playMemo },
