@@ -1,5 +1,6 @@
 import { createSignal, onMount, onCleanup, For, Show } from 'solid-js';
 import { SpeechManager } from '../lib/speech';
+import { useAppStore } from '../lib/store';
 
 export interface GridAction {
   label: string;
@@ -19,6 +20,7 @@ export default function GridSystem(props: GridSystemProps) {
   const [selectedIndex, setSelectedIndex] = createSignal<number | null>(null);
   const [isKeyboardMode, setIsKeyboardMode] = createSignal(false);
   const gridId = `grid-${++gridIdCounter}`;
+  const store = useAppStore();
 
   onMount(() => {
     if (props.onInit) {
@@ -42,6 +44,14 @@ export default function GridSystem(props: GridSystemProps) {
 
   const executeItem = (action: GridAction, index: number) => {
     setSelectedIndex(index);
+    // タップ起点（キーボードモードでない）かつ設定 ON のときのみ短く振動
+    if (!isKeyboardMode() && store.state.vibrationEnabled && typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+      try {
+        navigator.vibrate(30);
+      } catch {
+        // 一部ブラウザでは vibrate がエラーを投げることがあるので無視
+      }
+    }
     action.action();
   };
 

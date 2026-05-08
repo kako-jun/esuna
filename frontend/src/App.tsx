@@ -65,6 +65,7 @@ export default function App() {
     });
 
     store.setAutoNavigation(settings.ui.autoNavigation);
+    store.setVibration(settings.ui.vibration);
     setSpeechManager(manager);
 
     setTimeout(async () => {
@@ -154,7 +155,15 @@ export default function App() {
     { label: 'ピッチ：低', action: () => { updateSetting('speech', { pitch: 0.7 }); speechManager()?.setDefaults({ pitch: 0.7 }); speechManager()?.speak('ピッチを低くしました。設定を保存しました'); } },
     { label: 'ピッチ：標準', action: () => { updateSetting('speech', { pitch: 1.0 }); speechManager()?.setDefaults({ pitch: 1.0 }); speechManager()?.speak('ピッチを標準にしました。設定を保存しました'); } },
     { label: 'ピッチ：高', action: () => { updateSetting('speech', { pitch: 1.5 }); speechManager()?.setDefaults({ pitch: 1.5 }); speechManager()?.speak('ピッチを高くしました。設定を保存しました'); } },
-    { label: '', action: () => {} },
+    {
+      label: store.state.vibrationEnabled ? '振動OFF' : '振動ON',
+      action: () => {
+        const newValue = !store.state.vibrationEnabled;
+        store.setVibration(newValue);
+        updateSetting('ui', { vibration: newValue });
+        speechManager()?.speak(newValue ? 'タップ時の振動フィードバックを有効にしました' : 'タップ時の振動フィードバックを無効にしました');
+      },
+    },
     {
       label: store.state.autoNavigationEnabled ? '自動OFF' : '自動ON',
       action: () => {
@@ -329,7 +338,7 @@ export default function App() {
           }} /></main>
         </Match>
         <Match when={currentPage() === 'settings'}>
-          <main><GridSystem actions={settingsActions()} speech={speechManager()!} onInit={() => speechManager()?.speak('設定画面です。速度設定、ピッチ、音量、自動ナビゲーションを変更できます')} /></main>
+          <main><GridSystem actions={settingsActions()} speech={speechManager()!} onInit={() => speechManager()?.speak('設定画面です。速度設定、ピッチ、音量、振動フィードバック、自動ナビゲーションを変更できます')} /></main>
         </Match>
         <Match when={currentPage() === 'settings-speech'}>
           <main><GridSystem actions={speechSettingsActions()} speech={speechManager()!} onInit={() => speechManager()?.speak('読み上げ速度設定です。0.5倍から2.0倍の5段階から選択してください')} /></main>

@@ -52,6 +52,9 @@ interface AppState {
 
   // 自動ナビゲーション
   autoNavigationEnabled: boolean;
+
+  // タップ時の振動フィードバック
+  vibrationEnabled: boolean;
 }
 
 const initialState: AppState = {
@@ -83,6 +86,8 @@ const initialState: AppState = {
   currentEpisodeIndex: 0,
 
   autoNavigationEnabled: false,
+
+  vibrationEnabled: true,
 };
 
 // createRoot で reactive context を作る（コンポーネント外からもアクセス可能にする）
@@ -273,6 +278,11 @@ function createAppStore() {
     // 自動ナビゲーション
     setAutoNavigation(enabled: boolean) {
       setState('autoNavigationEnabled', enabled);
+    },
+
+    // タップ時の振動フィードバック
+    setVibration(enabled: boolean) {
+      setState('vibrationEnabled', enabled);
     },
 
     // リセット
