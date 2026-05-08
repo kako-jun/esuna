@@ -93,10 +93,10 @@ export const RADIKO_STATIONS: RadioStation[] = [
 export const OTHER_STATIONS: RadioStation[] = [
   {
     id: 'nhk-world',
-    name: 'NHK WORLD RADIO JAPAN',
-    description: '英語による日本のニュース',
+    name: 'NHK WORLD RADIO JAPAN（未対応）',
+    description: '英語による日本のニュース。配信URLが変わったため現在未対応',
     service: 'other',
-    streamUrl: 'https://nhkworld.webcdn.stream.ne.jp/www11/radiojapan/all/263944/live.m3u8',
+    streamUrl: '',
   },
 ];
 
