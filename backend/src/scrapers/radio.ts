@@ -8,25 +8,38 @@
  */
 import type { RadioStreamData, NowPlayingData } from "../types";
 
-/** NHKらじるらじるのストリーミングURL */
+/**
+ * NHKらじるらじるのストリーミングURL（東京エリア）
+ *
+ * 旧 `radio-stream.nhk.jp` ホストは 2026 年時点で NXDOMAIN になっており、
+ * 公式 config XML (https://www.nhk.or.jp/radio/config/config_web.xml) では
+ * `simul.drdi.st.nhk` への移行が反映されている。
+ *
+ * URL は将来また変わる可能性があるので、動的取得（config XML を fetch して
+ * parse）に切り替える余地あり。CORS は `Access-Control-Allow-Origin: *` で
+ * フロントから hls.js で直接読みに行ける。
+ */
 const NHK_STREAM_URLS: Record<string, string> = {
-  "nhk-r1":
-    "https://radio-stream.nhk.jp/hls/live/2023229/nhkradiruakr1/master.m3u8",
-  "nhk-r2":
-    "https://radio-stream.nhk.jp/hls/live/2023507/nhkradiruakr2/master.m3u8",
-  "nhk-fm":
-    "https://radio-stream.nhk.jp/hls/live/2023507/nhkradiruakfm/master.m3u8",
+  "nhk-r1": "https://simul.drdi.st.nhk/live/3/joined/master.m3u8",
+  "nhk-r2": "https://simul.drdi.st.nhk/live/4/joined/master.m3u8",
+  "nhk-fm": "https://simul.drdi.st.nhk/live/5/joined/master.m3u8",
 };
 
-/** NHK WORLD (英語放送、認証不要) */
-const NHK_WORLD_URL =
-  "https://nhkworld.webcdn.stream.ne.jp/www11/radiojapan/all/263944/live.m3u8";
+/**
+ * NHK WORLD (英語放送)
+ * 旧 nhkworld.webcdn.stream.ne.jp の固定 URL は 404。
+ * 現在の URL を確定できないため一旦 null とし、UI 側でも未対応扱いにする。
+ */
+const NHK_WORLD_URL: string | null = null;
 
 /**
  * NHKらじるらじるのストリーミングURLを取得
  */
 function getNhkStreamUrl(stationId: string): string {
   if (stationId === "nhk-world") {
+    if (!NHK_WORLD_URL) {
+      throw new Error("NHK WORLD のストリーミング URL が未確定です。現在は未対応");
+    }
     return NHK_WORLD_URL;
   }
 
