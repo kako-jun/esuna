@@ -56,7 +56,8 @@ export function saveMemo(memo: Omit<VoiceMemo, 'id' | 'createdAt'>): { memo: Voi
         setSubKey('voiceMemos', reduced)
         return { memo: newMemo, result: { ok: false, reason: 'quota_exceeded' } }
       } catch {
-        return { memo: newMemo, result: { ok: false, reason: 'quota_exceeded' } }
+        // 再試行も失敗 — 新メモは保存されていない
+        return { memo: newMemo, result: { ok: false, reason: 'unknown' } }
       }
     }
     return { memo: newMemo, result: { ok: false, reason: 'unknown' } }
