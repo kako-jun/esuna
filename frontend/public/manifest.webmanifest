@@ -1,0 +1,26 @@
+{
+  "name": "Esuna",
+  "short_name": "Esuna",
+  "description": "視覚障害者向けアクセシブルWebアプリ。はてなブックマーク・SNS・ラジオ・小説・Podcastを音声で利用できます。",
+  "lang": "ja",
+  "theme_color": "#1a1a2e",
+  "background_color": "#1a1a2e",
+  "display": "standalone",
+  "orientation": "portrait",
+  "scope": "/",
+  "start_url": "/",
+  "icons": [
+    {
+      "src": "/pwa-icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/pwa-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}
