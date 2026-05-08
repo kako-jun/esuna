@@ -3,6 +3,7 @@ import { getAllStations, RadioStation } from '../lib/radio';
 import { SpeechManager } from '../lib/speech';
 import GridSystem from './GridSystem';
 import { FORMAL_SERVICE_NAMES } from '../lib/service-copy';
+import { createGuideAction } from '../lib/grid-guide';
 
 interface RadioStationListProps {
   speech: SpeechManager;
@@ -31,7 +32,8 @@ export default function RadioStationList(props: RadioStationListProps) {
     switch (service) { case 'nhk': return 'NHKらじるらじる'; case 'radiko': return 'radiko'; case 'other': return 'その他'; default: return service; }
   };
 
-  const actions = () => [
+  const actions = () => {
+    const actionList = [
     { label: '戻る', action: () => { props.speech.stop(); props.onBack(); } },
     { label: '前の局', action: () => { if (currentIndex() > 0) { setCurrentIndex(currentIndex() - 1); setTimeout(() => { props.speech.speak(`${allStations[currentIndex()].name}`, { interrupt: true }); }, 100); } else { props.speech.speak('最初のラジオ局です'); } } },
     { label: '次の局', action: () => { if (currentIndex() < allStations.length - 1) { setCurrentIndex(currentIndex() + 1); setTimeout(() => { props.speech.speak(`${allStations[currentIndex()].name}`, { interrupt: true }); }, 100); } else { props.speech.speak('最後のラジオ局です'); } } },
@@ -52,8 +54,11 @@ export default function RadioStationList(props: RadioStationListProps) {
     { label: '局情報', action: () => { const s = allStations[currentIndex()]; props.speech.speak(`ラジオ局番号 ${currentIndex() + 1}。名前：${s.name}。サービス：${getServiceName(s.service)}。説明：${s.description}`); } },
     { label: '局数', action: () => { props.speech.speak(`全${allStations.length}局中、${currentIndex() + 1}番目のラジオ局です`); } },
     { label: '停止', action: () => { props.speech.stop(); } },
-    { label: '先頭', action: () => { setCurrentIndex(0); setTimeout(() => { props.speech.speak(`最初のラジオ局に戻りました。${allStations[0].name}`, { interrupt: true }); }, 100); } },
+    createGuideAction('ラジオ局一覧', props.speech, () => actionList),
   ];
+
+    return actionList;
+  };
 
   return <GridSystem actions={actions()} speech={props.speech} />;
 }

@@ -2,6 +2,7 @@ import { createSignal, onMount, onCleanup, Show } from 'solid-js';
 import { generateRandomPlaylist, loadAutoplaySettings, AutoplayItem, getContentTypeName } from '../lib/autoplay';
 import { SpeechManager } from '../lib/speech';
 import GridSystem from './GridSystem';
+import { createGuideAction } from '../lib/grid-guide';
 
 interface AutoplayPlayerProps {
   speech: SpeechManager;
@@ -88,17 +89,20 @@ export default function AutoplayPlayer(props: AutoplayPlayerProps) {
         <div class="grid-item" style={{ "grid-column": '1 / -1', "grid-row": '1 / -1' }}>プレイリストが空です</div>
       </div>
     }>
-      <GridSystem actions={[
-        { label: '戻る', action: () => { setIsPlaying(false); props.speech.stop(); props.onBack(); } },
-        { label: '前へ', action: prevContent },
-        { label: '次へ', action: nextContent },
-        { label: isPlaying() ? '一時停止' : '再生', action: () => { setIsPlaying(!isPlaying()); props.speech.speak(isPlaying() ? '一時停止しました' : '再生を再開しました'); } },
-        { label: '開く', action: () => { const item = currentItem(); if (item) { props.speech.speak(`${item.title} を開きます`); props.onNavigateToContent(item); } } },
-        { label: '現在の情報', action: () => { const item = currentItem()!; props.speech.speak(`現在：${getContentTypeName(item.type)}、${item.title}。${item.description}。残り時間：${fmtTime(timeRemaining())}。プレイリスト：${currentIndex() + 1}/${playlist().length}`); } },
-        { label: 'プレイリスト', action: () => { props.speech.speak(`プレイリスト：全${playlist().length}個のコンテンツ。現在は${currentIndex() + 1}番目です`); } },
-        { label: '停止', action: () => { props.speech.stop(); } },
-        { label: '残り時間', action: () => { props.speech.speak(`残り時間：${fmtTime(timeRemaining())}`); } },
-      ]} speech={props.speech} />
+      <GridSystem actions={(() => {
+        const actionList = [
+          { label: '戻る', action: () => { setIsPlaying(false); props.speech.stop(); props.onBack(); } },
+          { label: '前へ', action: prevContent },
+          { label: '次へ', action: nextContent },
+          { label: '現在の情報', action: () => { const item = currentItem()!; props.speech.speak(`現在：${getContentTypeName(item.type)}、${item.title}。${item.description}。残り時間：${fmtTime(timeRemaining())}。プレイリスト：${currentIndex() + 1}/${playlist().length}`); } },
+          { label: currentItem() ? `${getContentTypeName(currentItem()!.type)}\n${currentItem()!.title}` : '再生中', action: () => { const item = currentItem(); if (item) props.speech.speak(`${getContentTypeName(item.type)}、${item.title}`); } },
+          { label: '開く', action: () => { const item = currentItem(); if (item) { props.speech.speak(`${item.title} を開きます`); props.onNavigateToContent(item); } } },
+          { label: `残り：${fmtTime(timeRemaining())}`, action: () => { props.speech.speak(`残り時間：${fmtTime(timeRemaining())}`); } },
+          { label: isPlaying() ? '一時停止' : '再生', action: () => { setIsPlaying(!isPlaying()); props.speech.speak(isPlaying() ? '一時停止しました' : '再生を再開しました'); } },
+          createGuideAction('おまかせモード', props.speech, () => actionList),
+        ];
+        return actionList;
+      })()} speech={props.speech} />
     </Show>
   );
 }
