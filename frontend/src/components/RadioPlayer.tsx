@@ -53,12 +53,25 @@ export default function RadioPlayer(props: RadioPlayerProps) {
           }
           if (!mounted) return
           setIsLoading(false)
-          setError(
-            'HLS ストリーミングの読み込みに失敗しました。この局は現在利用できないか、ネットワークの問題かもしれません。',
-          )
-          props.speech.speak(
-            'ストリーミングの読み込みに失敗しました。1番で戻って別の局を試してください。',
-          )
+          // NHK ラジオ第2 等は時間帯によって放送休止する。
+          // hls.js が media playlist 取得で 4xx を受けた場合は壊れているのではなく
+          // オフエア中の可能性が高いので、そう案内する。
+          const httpCode = (data as { response?: { code?: number } }).response?.code
+          if (httpCode && httpCode >= 400 && httpCode < 500) {
+            setError(
+              `${props.station.name} は現在放送休止中の可能性があります。時間帯によっては聴けない番組があります。`,
+            )
+            props.speech.speak(
+              `${props.station.name} は現在放送休止中の可能性があります。時間帯によっては聴けない番組があります。少し時間を置いて試すか、1番で戻って別の局を選んでください。`,
+            )
+          } else {
+            setError(
+              'HLS ストリーミングの読み込みに失敗しました。この局は現在利用できないか、ネットワークの問題かもしれません。',
+            )
+            props.speech.speak(
+              'ストリーミングの読み込みに失敗しました。1番で戻って別の局を試してください。',
+            )
+          }
         })
         // hls.js では MANIFEST_PARSED 後に canplay が発火しない場合があるため
         // MANIFEST_PARSED でも再生開始を試みる
