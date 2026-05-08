@@ -25,6 +25,14 @@ const ALLOWED_DOMAINS: string[] = [
   "rss.nikkei.com",
   "feeds.nhk.or.jp",
   "www3.nhk.or.jp",
+  // frontend/src/lib/podcasts.ts の curated リストに合わせて追加
+  "rebuild.fm",
+  "researchat.fm",
+  "backspace.fm",
+  "mozaic.fm",
+  "soussune.com",
+  "yatteiki.fm",
+  "misreading.chat",
   // RSS ニュースフィード
   "news.yahoo.co.jp",
   "rss.itmedia.co.jp",
