@@ -17,7 +17,7 @@ export function buildGridGuide(pageName: string, actions: GridAction[]): string 
     if (index === 4) {
       // 中央セルはページごとに動的な本文・タイトル・プレビュー等を載せていることが多く、
       // 案内で全文を読むと長すぎる。レイアウト把握のための案内なので抽象化する。
-      parts.push('中央は内容です。');
+      parts.push('5 はコンテンツです。');
     } else {
       parts.push(`${index + 1} は ${normalizeLabel(action.label)}。`);
     }
