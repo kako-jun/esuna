@@ -69,23 +69,21 @@ export default function HatenaCommentReader(props: HatenaCommentReaderProps) {
     delay: 3000,
   });
 
+  const reload = () => {
+    const entry = store.getCurrentEntry();
+    if (entry && entry.comments_url) {
+      setLoading(true);
+      fetchHatenaComments(entry.comments_url)
+        .then((comments) => { store.setHatenaComments(comments); props.speech.speak(`${comments.length}件のコメントを再読み込みしました`); })
+        .catch(() => { props.speech.speak('再読み込みに失敗しました'); })
+        .finally(() => setLoading(false));
+    }
+  };
+
   const actions = () => {
+    // 規約: 1=戻る 2=前 3=次 4=読上 5=主対象 6=主アクション 7=補助情報 8=停止 9=画面案内
     const actionList = [
     { label: '戻る', action: () => { props.speech.stop(); props.onBack(); } },
-    {
-      label: 'リロード',
-      action: () => {
-        const entry = store.getCurrentEntry();
-        if (entry && entry.comments_url) {
-          setLoading(true);
-          fetchHatenaComments(entry.comments_url)
-            .then((comments) => { store.setHatenaComments(comments); props.speech.speak(`${comments.length}件のコメントを再読み込みしました`); })
-            .catch(() => { props.speech.speak('再読み込みに失敗しました'); })
-            .finally(() => setLoading(false));
-        }
-      },
-    },
-    { label: '未実装', action: () => props.speech.speak('この枠の機能はまだありません') },
     {
       label: '前のコメント',
       action: () => {
@@ -94,6 +92,14 @@ export default function HatenaCommentReader(props: HatenaCommentReaderProps) {
       },
     },
     {
+      label: '次のコメント',
+      action: () => {
+        if (store.state.currentCommentIndex < store.state.hatenaComments.length - 1) { store.nextComment(); setTimeout(speakComment, 100); }
+        else { props.speech.speak('最後のコメントです'); }
+      },
+    },
+    { label: 'リロード', action: reload },
+    {
       label: loading()
         ? '取得中'
         : store.getCurrentComment()
@@ -101,15 +107,8 @@ export default function HatenaCommentReader(props: HatenaCommentReaderProps) {
           : 'コメントなし',
       action: speakComment,
     },
-    {
-      label: '次のコメント',
-      action: () => {
-        if (store.state.currentCommentIndex < store.state.hatenaComments.length - 1) { store.nextComment(); setTimeout(speakComment, 100); }
-        else { props.speech.speak('最後のコメントです'); }
-      },
-    },
+    { label: '全文\n読み上げ', action: speakComment },
     { label: `${store.state.currentCommentIndex + 1}/${store.state.hatenaComments.length}`, action: () => props.speech.speak(`${store.state.hatenaComments.length}件中、${store.state.currentCommentIndex + 1}件目です`) },
-    { label: '全文読み上げ', action: speakComment },
     { label: '停止', action: () => props.speech.stop() },
     createGuideAction('はてなブックマークコメント一覧', props.speech, () => actionList),
   ];
