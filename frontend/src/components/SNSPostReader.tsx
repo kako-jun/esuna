@@ -58,6 +58,20 @@ export default function SNSPostReader(props: SNSPostReaderProps) {
     const actionList = [
       { label: '戻る', action: () => { props.speech.stop(); props.onBack(); } },
       {
+        label: '前の投稿',
+        action: () => {
+          if (store.state.currentSNSPostIndex > 0) { store.prevSNSPost(); setTimeout(speakPost, 100); }
+          else { props.speech.speak('最初の投稿です'); }
+        },
+      },
+      {
+        label: '次の投稿',
+        action: () => {
+          if (store.state.currentSNSPostIndex < store.state.snsPosts.length - 1) { store.nextSNSPost(); setTimeout(speakPost, 100); }
+          else { props.speech.speak('最後の投稿です'); }
+        },
+      },
+      {
         label: 'リロード',
         action: () => {
           setLoading(true);
@@ -65,23 +79,6 @@ export default function SNSPostReader(props: SNSPostReaderProps) {
             .then((posts) => { store.setSNSPosts(posts); props.speech.speak(`${posts.length}件の投稿を再読み込みしました`); })
             .catch(() => { props.speech.speak('再読み込みに失敗しました'); })
             .finally(() => setLoading(false));
-        },
-      },
-      {
-        label: '切替',
-        action: () => {
-          const platforms: Array<'mastodon' | 'bluesky'> = ['mastodon', 'bluesky'];
-          const currentIndex = platforms.indexOf(platform());
-          const nextPlatform = platforms[(currentIndex + 1) % platforms.length];
-          setPlatform(nextPlatform);
-          props.speech.speak(`${nextPlatform === 'mastodon' ? 'Mastodon' : 'Bluesky'} に切り替えました。現在は試験表示です。X には未対応です。`);
-        },
-      },
-      {
-        label: '前の投稿',
-        action: () => {
-          if (store.state.currentSNSPostIndex > 0) { store.prevSNSPost(); setTimeout(speakPost, 100); }
-          else { props.speech.speak('最初の投稿です'); }
         },
       },
       {
@@ -93,10 +90,13 @@ export default function SNSPostReader(props: SNSPostReaderProps) {
         action: speakPost,
       },
       {
-        label: '次の投稿',
+        label: '切替',
         action: () => {
-          if (store.state.currentSNSPostIndex < store.state.snsPosts.length - 1) { store.nextSNSPost(); setTimeout(speakPost, 100); }
-          else { props.speech.speak('最後の投稿です'); }
+          const platforms: Array<'mastodon' | 'bluesky'> = ['mastodon', 'bluesky'];
+          const currentIndex = platforms.indexOf(platform());
+          const nextPlatform = platforms[(currentIndex + 1) % platforms.length];
+          setPlatform(nextPlatform);
+          props.speech.speak(`${nextPlatform === 'mastodon' ? 'Mastodon' : 'Bluesky'} に切り替えました。現在は試験表示です。X には未対応です。`);
         },
       },
       { label: `${store.state.currentSNSPostIndex + 1}/${store.state.snsPosts.length}`, action: () => props.speech.speak(`${store.state.snsPosts.length}件中、${store.state.currentSNSPostIndex + 1}件目です`) },
