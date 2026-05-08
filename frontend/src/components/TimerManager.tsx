@@ -99,7 +99,7 @@ export default function TimerManager(props: TimerManagerProps) {
         },
       },
       { label: 'プリセット', action: () => { setMode('preset'); props.speech.speak('プリセットタイマー選択モードに切り替えました'); setTimeout(speakPreset, 1000); } },
-      { label: '停止音声', action: () => { props.speech.stop(); } },
+      { label: '停止', action: () => { props.speech.stop(); } },
       createGuideAction('タイマー一覧', props.speech, () => actionList),
     ];
 
