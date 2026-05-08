@@ -21,8 +21,8 @@ function parseHatenaRss(xmlContent: string): HatenaEntry[] {
 
       // はてなブックマーク独自の要素
       const commentsUrl =
-        $item.find("bookmarkCommentListPageUrl").text() || "";
-      const bookmarkCountText = $item.find("bookmarkcount").text();
+        $item.find("hatena\\:bookmarkCommentListPageUrl").text() || "";
+      const bookmarkCountText = $item.find("hatena\\:bookmarkcount").text();
       const bookmarkCount = bookmarkCountText
         ? parseInt(bookmarkCountText, 10) || 0
         : 0;
