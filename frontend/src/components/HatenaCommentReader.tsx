@@ -25,7 +25,7 @@ export default function HatenaCommentReader(props: HatenaCommentReaderProps) {
   const loadComments = async () => {
     const entry = store.getCurrentEntry();
     if (!entry || !entry.comments_url) {
-      props.speech.speak('コメントURLが見つかりません');
+      props.speech.speak('コメントのURLが見つかりません。1番で戻ってください。');
       return;
     }
 
@@ -40,7 +40,7 @@ export default function HatenaCommentReader(props: HatenaCommentReaderProps) {
       }
     } catch (err) {
       console.error('Failed to load comments:', err);
-      props.speech.speak('コメントの読み込みに失敗しました');
+      props.speech.speak('はてなブックマークのコメントを取得できませんでした。外部サービスへの接続に失敗しました。1番で戻るか、4番でもう一度試せます。');
     } finally {
       setLoading(false);
     }
@@ -75,7 +75,7 @@ export default function HatenaCommentReader(props: HatenaCommentReaderProps) {
       setLoading(true);
       fetchHatenaComments(entry.comments_url)
         .then((comments) => { store.setHatenaComments(comments); props.speech.speak(`${comments.length}件のコメントを再読み込みしました`); })
-        .catch(() => { props.speech.speak('再読み込みに失敗しました'); })
+        .catch(() => { props.speech.speak('はてなブックマークのコメントを再取得できませんでした。外部サービスへの接続に失敗しました。1番で戻ってください。'); })
         .finally(() => setLoading(false));
     }
   };
@@ -101,7 +101,7 @@ export default function HatenaCommentReader(props: HatenaCommentReaderProps) {
     { label: 'リロード', action: reload },
     {
       label: loading()
-        ? '取得中'
+        ? 'コメント\n取得中…'
         : store.getCurrentComment()
           ? `${store.getCurrentComment()!.user_name}\n${previewText(store.getCurrentComment()!.text, 58)}`
           : 'コメントなし',

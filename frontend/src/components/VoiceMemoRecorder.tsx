@@ -79,7 +79,7 @@ export default function VoiceMemoRecorder(props: VoiceMemoRecorderProps) {
       }, 1000);
     } catch (error) {
       console.error('Failed to start recording:', error);
-      props.speech.speak('録音の開始に失敗しました。マイクの許可を確認してください');
+      props.speech.speak('録音の開始に失敗しました。マイクへのアクセスが許可されていません。ブラウザの設定でマイクを許可してから再試行してください。');
     }
   };
 
@@ -110,7 +110,7 @@ export default function VoiceMemoRecorder(props: VoiceMemoRecorderProps) {
       props.speech.speak('再生を開始します');
     } catch (error) {
       console.error('Failed to play memo:', error);
-      props.speech.speak('再生に失敗しました');
+      props.speech.speak('音声メモの再生に失敗しました。データが壊れている可能性があります。');
     }
   };
 

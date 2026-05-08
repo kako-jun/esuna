@@ -34,7 +34,7 @@ export default function HatenaEntryReader(props: HatenaEntryReaderProps) {
       props.speech.speak(`${entries.length}件のエントリーを読み込みました`);
     } catch (err) {
       console.error('Failed to load entries:', err);
-      props.speech.speak('エントリーの読み込みに失敗しました');
+      props.speech.speak('はてなブックマークのエントリーを取得できませんでした。外部サービスへの接続に失敗しました。1番で戻るか、4番でもう一度試せます。');
     } finally {
       setLoading(false);
     }
@@ -117,14 +117,14 @@ export default function HatenaEntryReader(props: HatenaEntryReaderProps) {
             props.speech.speak(`${entries.length}件のエントリーを再読み込みしました`);
           })
           .catch(() => {
-            props.speech.speak('再読み込みに失敗しました');
+            props.speech.speak('はてなブックマークのエントリーを再取得できませんでした。外部サービスへの接続に失敗しました。1番で戻ってください。');
           })
           .finally(() => setLoading(false));
       },
     },
     {
       label: loading()
-        ? '取得中'
+        ? 'エントリー\n取得中…'
         : store.getCurrentEntry()
           ? `${store.getCurrentEntry()!.title}\n${previewText(store.getCurrentEntry()!.description, 56)}`
           : 'エントリーなし',

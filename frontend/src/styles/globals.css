@@ -229,3 +229,43 @@ body {
   margin-top: 16px;
   color: var(--ff-text-dim);
 }
+
+/* 状態種別ラベル（弱視・介助者向けの視覚ヒント） */
+.status-message__type-label {
+  margin-bottom: 8px;
+  font-size: clamp(0.65rem, 1.3vw, 0.85rem);
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--ff-text-dim);
+}
+
+/* 取得中：枠線を点滅させて待機中であることを示す */
+.status-message--loading .status-message__panel {
+  border-color: var(--ff-accent, #4a90e2);
+  animation: pulse-border 1.4s ease-in-out infinite;
+}
+.status-message--loading .status-message__type-label {
+  color: var(--ff-accent, #4a90e2);
+}
+
+/* 失敗：警告色で原因と次の行動を強調 */
+.status-message--failure .status-message__panel {
+  border-color: var(--ff-error, #c0392b);
+}
+.status-message--failure .status-message__type-label {
+  color: var(--ff-error, #c0392b);
+}
+
+/* 機能未成立：控えめな警告色（失敗より落ち着いたトーン） */
+.status-message--blocked .status-message__panel {
+  border-color: var(--ff-warn, #e67e22);
+}
+.status-message--blocked .status-message__type-label {
+  color: var(--ff-warn, #e67e22);
+}
+
+@keyframes pulse-border {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.45; }
+}

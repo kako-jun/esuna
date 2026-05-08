@@ -31,7 +31,7 @@ export default function SNSPostReader(props: SNSPostReaderProps) {
       props.speech.speak(`${platform() === 'mastodon' ? 'Mastodon' : 'Bluesky'} の投稿を${posts.length}件読み込みました。現在は試験表示です。`);
     } catch (err) {
       console.error('Failed to load posts:', err);
-      props.speech.speak(`${platform() === 'mastodon' ? 'Mastodon' : 'Bluesky'} の投稿を取得できませんでした。現在この機能は試験中です。`);
+      props.speech.speak(`${platform() === 'mastodon' ? 'Mastodon' : 'Bluesky'} の投稿を取得できませんでした。現在この機能は整備中です。1番で戻るか、4番でもう一度試せます。`);
     } finally {
       setLoading(false);
     }
@@ -77,13 +77,13 @@ export default function SNSPostReader(props: SNSPostReaderProps) {
           setLoading(true);
           fetchSNSPosts(platform(), undefined, 20)
             .then((posts) => { store.setSNSPosts(posts); props.speech.speak(`${posts.length}件の投稿を再読み込みしました`); })
-            .catch(() => { props.speech.speak('再読み込みに失敗しました'); })
+            .catch(() => { props.speech.speak('SNSの投稿を再取得できませんでした。外部サービスへの接続に失敗しました。1番で戻ってください。'); })
             .finally(() => setLoading(false));
         },
       },
       {
         label: loading()
-          ? '取得中'
+          ? `${platform() === 'mastodon' ? 'Mastodon' : 'Bluesky'}\n取得中…`
           : store.getCurrentSNSPost()
             ? `${store.getCurrentSNSPost()!.author}\n${previewText(store.getCurrentSNSPost()!.text, 58)}`
             : '投稿なし',
