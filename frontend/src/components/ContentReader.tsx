@@ -1,4 +1,4 @@
-import { createSignal, onMount, For, Show } from 'solid-js';
+import { createSignal, onMount, For } from 'solid-js';
 import { RSSReader, RSSItem } from '../lib/rss';
 import { ContentScraper, ScrapedContent } from '../lib/content-scraper';
 import { triggerTapVibration } from '../lib/vibration';
@@ -58,6 +58,16 @@ export default function ContentReader(props: ContentReaderProps) {
   const getGridItems = () => {
     const gridItems: { id: number; label: string; ariaLabel: string; action: () => void }[] = [];
     gridItems.push({ id: 1, label: '戻る', ariaLabel: '1番、前のページに戻る', action: () => { props.onBack(); } });
+    if (loading()) {
+      // 読み込み中も grid を残し、戻る (1) を含む操作を維持する。中央 (5) に状況を表示。
+      gridItems[4] = {
+        id: 5,
+        label: '読み込み中…',
+        ariaLabel: 'コンテンツを読み込んでいます。1番で戻れます',
+        action: () => { props.onSpeak('読み込み中です。しばらくお待ちください。1番で戻れます。'); },
+      };
+      return gridItems;
+    }
     for (let i = 0; i < 8 && i < items().length; i++) {
       const item = items()[currentIndex() + i];
       if (item) {
@@ -109,32 +119,26 @@ export default function ContentReader(props: ContentReaderProps) {
   };
 
   return (
-    <Show when={!loading()} fallback={
-      <div class="grid-container" role="status" aria-live="polite">
-        <div class="grid-item" style={{ "grid-column": '1 / -1', "grid-row": '1 / -1' }}>読み込み中...</div>
-      </div>
-    }>
-      <div class="grid-container" onKeyDown={handleKeyDown} tabIndex={0} role="application" aria-label={`${props.type === 'news' ? 'ニュース' : 'SNS'}コンテンツリーダー`}>
-        <For each={Array.from({ length: 9 }, (_, i) => i)}>
-          {(index) => {
-            const gridItems = getGridItems();
-            const item = () => gridItems[index];
-            return (
-              <div
-                class={`grid-item ${selectedIndex() === index ? 'active' : ''} ${!item() ? 'opacity-50' : ''}`}
-                onClick={() => { const it = item(); if (it) { triggerTapVibration(); setSelectedIndex(index); it.action(); } }}
-                role="button"
-                tabIndex={-1}
-                aria-label={item() ? item()!.ariaLabel : `空のセル ${index + 1}`}
-                aria-disabled={!item()}
-              >
-                {item() ? item()!.label : ''}
-                <span class="sr-only">{selectedIndex() === index ? '選択中' : ''}</span>
-              </div>
-            );
-          }}
-        </For>
-      </div>
-    </Show>
+    <div class="grid-container" onKeyDown={handleKeyDown} tabIndex={0} role="application" aria-label={`${props.type === 'news' ? 'ニュース' : 'SNS'}コンテンツリーダー`}>
+      <For each={Array.from({ length: 9 }, (_, i) => i)}>
+        {(index) => {
+          const gridItems = getGridItems();
+          const item = () => gridItems[index];
+          return (
+            <div
+              class={`grid-item ${selectedIndex() === index ? 'active' : ''} ${!item() ? 'opacity-50' : ''}`}
+              onClick={() => { const it = item(); if (it) { triggerTapVibration(); setSelectedIndex(index); it.action(); } }}
+              role="button"
+              tabIndex={-1}
+              aria-label={item() ? item()!.ariaLabel : `空のセル ${index + 1}`}
+              aria-disabled={!item()}
+            >
+              {item() ? item()!.label : ''}
+              <span class="sr-only">{selectedIndex() === index ? '選択中' : ''}</span>
+            </div>
+          );
+        }}
+      </For>
+    </div>
   );
 }

@@ -1,9 +1,8 @@
-import { createSignal, onMount, Show } from 'solid-js';
+import { createSignal, onMount } from 'solid-js';
 import { RSSReader, RSSItem } from '../lib/rss';
 import { SpeechManager } from '../lib/speech';
 import { useAutoNavigation } from '../lib/useAutoNavigation';
 import GridSystem, { GridAction } from './GridSystem';
-import StatusMessage from './StatusMessage';
 import { FORMAL_SERVICE_NAMES, previewText, loadingMessage, failureSpeech } from '../lib/service-copy';
 import { createGuideAction } from '../lib/grid-guide';
 
@@ -69,18 +68,34 @@ export default function RSSArticleReader(props: RSSArticleReaderProps) {
     delay: 2000,
   });
 
+  const centerCell = (): GridAction => {
+    if (loading()) {
+      return {
+        label: `取得中…\n${feedName() || FORMAL_SERVICE_NAMES.rss}`,
+        action: () => props.speech.speak(`${loadingMessage(feedName() ? `${feedName()}の記事` : `${FORMAL_SERVICE_NAMES.rss}の記事`)}。外部ニュースサイトから記事一覧を取得しています。しばらく待っても進まない場合は、1番で戻って別のサイトを試してください。`),
+      };
+    }
+    if (error()) {
+      return {
+        label: `取得失敗\n${feedName() || FORMAL_SERVICE_NAMES.rss}`,
+        action: () => props.speech.speak(`${error()!} 1番で戻り、別のニュースサイトを試してください。`),
+      };
+    }
+    return {
+      label: articles()[currentIndex()]
+        ? `${articles()[currentIndex()]!.title}\n${previewText(articles()[currentIndex()]!.description || articles()[currentIndex()]!.content, 58)}`
+        : '記事なし',
+      action: speakArticle,
+    };
+  };
+
   const actions = () => {
     const actionList: GridAction[] = [
       { label: '戻る', action: () => { props.speech.stop(); props.onBack(); } },
       { label: '前の記事', action: () => { if (currentIndex() > 0) { setCurrentIndex(currentIndex() - 1); speakArticle(); } else { props.speech.speak('最初の記事です'); } } },
       { label: '次の記事', action: () => { if (currentIndex() < articles().length - 1) { setCurrentIndex(currentIndex() + 1); speakArticle(); } else { props.speech.speak('最後の記事です'); } } },
       { label: '本文', action: () => { const a = articles()[currentIndex()]; if (a?.content) { props.speech.speak(`本文。${a.content}`, { interrupt: true }); } else { props.speech.speak('本文が取得できませんでした。見出しと概要のみです。'); } } },
-      {
-        label: articles()[currentIndex()]
-          ? `${articles()[currentIndex()]!.title}\n${previewText(articles()[currentIndex()]!.description || articles()[currentIndex()]!.content, 58)}`
-          : '記事なし',
-        action: speakArticle,
-      },
+      centerCell(),
       { label: '位置', action: () => { props.speech.speak(`全${articles().length}記事中、${currentIndex() + 1}番目の記事です`); } },
       { label: '日時', action: () => { const a = articles()[currentIndex()]; if (a) { props.speech.speak(`公開日時：${a.pubDate}`); } } },
       { label: '停止', action: () => { props.speech.stop(); } },
@@ -90,32 +105,6 @@ export default function RSSArticleReader(props: RSSArticleReaderProps) {
     return actionList;
   };
 
-  return (
-    <Show
-      when={!loading()}
-      fallback={
-        <StatusMessage
-          type="loading"
-          title={loadingMessage(feedName() ? `${feedName()}の記事` : `${FORMAL_SERVICE_NAMES.rss}の記事`)}
-          message="外部ニュースサイトから記事一覧を取得しています。"
-          hint="しばらく待っても進まない場合は、1番で戻って別のサイトを試してください。"
-        />
-      }
-    >
-      <Show
-        when={!error()}
-        fallback={
-          <StatusMessage
-            type="failure"
-            title={`${feedName() || FORMAL_SERVICE_NAMES.rss}の記事を開けませんでした`}
-            message={error()!}
-            hint="1番で戻り、別のニュースサイトを試してください。"
-          />
-        }
-      >
-        <GridSystem actions={actions()} speech={props.speech} />
-      </Show>
-    </Show>
-  );
+  return <GridSystem actions={actions()} speech={props.speech} />;
 }
 

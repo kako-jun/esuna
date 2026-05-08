@@ -1,10 +1,9 @@
-import { createSignal, onMount, Show } from 'solid-js';
+import { createSignal, onMount } from 'solid-js';
 import { useAppStore } from '../lib/store';
 import { fetchNovelContent } from '../lib/api-client';
 import { SpeechManager } from '../lib/speech';
 import { useAutoNavigation } from '../lib/useAutoNavigation';
 import GridSystem, { GridAction } from './GridSystem';
-import StatusMessage from './StatusMessage';
 import { FORMAL_SERVICE_NAMES, previewText, loadingMessage, failureSpeech, retryFailureSpeech } from '../lib/service-copy';
 import { createGuideAction } from '../lib/grid-guide';
 
@@ -71,18 +70,34 @@ export default function NovelReader(props: NovelReaderProps) {
     delay: 2000,
   });
 
+  const centerCell = (): GridAction => {
+    if (loading()) {
+      return {
+        label: `取得中…\n${store.state.selectedNovel?.title ?? '作品'}`,
+        action: () => props.speech.speak(`${loadingMessage(`${FORMAL_SERVICE_NAMES.aozora} の「${store.state.selectedNovel?.title ?? '作品'}」`)}。外部サイトから本文を取得しています。しばらく待っても進まない場合は、1番で戻って別の作品を試してください。`),
+      };
+    }
+    if (error()) {
+      return {
+        label: `取得失敗\n${store.state.selectedNovel?.title ?? '作品'}`,
+        action: () => props.speech.speak(`${error()!} 1番で戻り、別の作品を試してください。 7番でリロードもできます。`),
+      };
+    }
+    return {
+      label: store.getCurrentSection()
+        ? `${store.getCurrentSection()!.title || `区切り ${store.state.currentSectionIndex + 1}`}\n${previewText(store.getCurrentSection()!.content, 58)}`
+        : '本文なし',
+      action: () => speakSection(),
+    };
+  };
+
   const actions = () => {
     const actionList: GridAction[] = [
       { label: '戻る', action: () => { props.speech.stop(); store.setNovelContent(null); props.onBack(); } },
       { label: '前のセクション', action: () => { if (store.state.currentSectionIndex > 0) { store.prevSection(); setTimeout(speakSection, 100); } else { props.speech.speak('最初のセクションです'); } } },
       { label: '次のセクション', action: () => { if (store.state.novelContent && store.state.currentSectionIndex < store.state.novelContent.sections.length - 1) { store.nextSection(); setTimeout(speakSection, 100); } else { props.speech.speak('最後のセクションです'); } } },
       { label: '位置', action: () => { if (store.state.novelContent) { props.speech.speak(`全${store.state.novelContent.sections.length}セクション中、${store.state.currentSectionIndex + 1}番目のセクションです`); } } },
-      {
-        label: store.getCurrentSection()
-          ? `${store.getCurrentSection()!.title || `区切り ${store.state.currentSectionIndex + 1}`}\n${previewText(store.getCurrentSection()!.content, 58)}`
-          : '本文なし',
-        action: () => speakSection(),
-      },
+      centerCell(),
       { label: '作品情報', action: () => { if (store.state.novelContent && store.state.selectedNovel) { props.speech.speak(`タイトル：${store.state.novelContent.title}。著者：${store.state.novelContent.author}。全${store.state.novelContent.sections.length}セクション`); } } },
       {
         label: 'リロード',
@@ -106,31 +121,5 @@ export default function NovelReader(props: NovelReaderProps) {
     return actionList;
   };
 
-  return (
-    <Show
-      when={!loading()}
-      fallback={
-        <StatusMessage
-          type="loading"
-          title={loadingMessage(`${FORMAL_SERVICE_NAMES.aozora} の「${store.state.selectedNovel?.title || '作品'}」`)}
-          message="外部サイトから本文を取得しています。作品によっては時間がかかります。"
-          hint="しばらく待っても進まない場合は、1番で戻って別の作品を試してください。"
-        />
-      }
-    >
-      <Show
-        when={!error()}
-        fallback={
-          <StatusMessage
-            type="failure"
-            title={`${FORMAL_SERVICE_NAMES.aozora} の「${store.state.selectedNovel?.title || '作品'}」を開けませんでした`}
-            message={error()!}
-            hint="1番で戻り、別の作品を試してください。"
-          />
-        }
-      >
-        <GridSystem actions={actions()} speech={props.speech} />
-      </Show>
-    </Show>
-  );
+  return <GridSystem actions={actions()} speech={props.speech} />;
 }

@@ -3,8 +3,6 @@ import Hls from 'hls.js';
 import { RadioStation, getStreamUrl } from '../lib/radio';
 import { SpeechManager } from '../lib/speech';
 import GridSystem, { GridAction } from './GridSystem';
-import StatusMessage from './StatusMessage';
-import { loadingMessage } from '../lib/service-copy';
 import { createGuideAction } from '../lib/grid-guide';
 
 interface RadioPlayerProps {
@@ -125,13 +123,32 @@ export default function RadioPlayer(props: RadioPlayerProps) {
     props.speech.speak(`音量を${Math.round(newVolume * 100)}パーセントに設定しました`);
   };
 
+  const centerCell = (): GridAction => {
+    if (isLoading()) {
+      return {
+        label: `準備中…\n${props.station.name}`,
+        action: () => props.speech.speak(`${props.station.name} のストリーミングを準備しています。ブラウザや局の都合で失敗する場合があります。しばらく待っても始まらない場合は、1番で戻って別の局を試してください。`),
+      };
+    }
+    if (error()) {
+      return {
+        label: `再生不可\n${props.station.name}`,
+        action: () => props.speech.speak(`${props.station.name} を再生できません。${error()!} 1番で戻って別の局を試してください。「radiko」と書かれた局はまだ未対応です。`),
+      };
+    }
+    return {
+      label: `${props.station.name}\n${isPlaying() ? '再生中' : '一時停止中'}`,
+      action: () => { props.speech.speak(`${props.station.name}。${isPlaying() ? '再生中' : '一時停止中'}`); },
+    };
+  };
+
   const actions = () => {
     const actionList: GridAction[] = [
       { label: '戻る', action: () => { if (audioRef) { audioRef.pause(); } props.speech.stop(); props.onBack(); } },
       { label: '', action: () => {} },
       { label: '', action: () => {} },
       { label: '局情報', action: () => { props.speech.speak(`現在再生中：${props.station.name}。${props.station.description}。状態：${isPlaying() ? '再生中' : '一時停止中'}`); } },
-      { label: `${props.station.name}\n${isPlaying() ? '再生中' : '一時停止中'}`, action: () => { props.speech.speak(`${props.station.name}。${isPlaying() ? '再生中' : '一時停止中'}`); } },
+      centerCell(),
       { label: isPlaying() ? '一時停止' : '再生', action: togglePlay },
       { label: `${props.station.name}`, action: () => { props.speech.speak(`${props.station.name}。${props.station.description}`); } },
       { label: '停止', action: () => { props.speech.stop(); } },
@@ -140,28 +157,6 @@ export default function RadioPlayer(props: RadioPlayerProps) {
 
     return actionList;
   };
-
-  if (isLoading()) {
-    return (
-      <StatusMessage
-        type="loading"
-        title={loadingMessage(props.station.name)}
-        message="ストリーミングの準備をしています。ブラウザや局の都合で失敗する場合があります。"
-        hint="しばらく待っても始まらない場合は、1番で戻って別の局を試してください。"
-      />
-    );
-  }
-
-  if (error()) {
-    return (
-      <StatusMessage
-        type="failure"
-        title={`${props.station.name} を再生できません`}
-        message={error()!}
-        hint="1番で戻って別の局を試してください。「radiko」と書かれた局はまだ未対応です。"
-      />
-    );
-  }
 
   return <GridSystem actions={actions()} speech={props.speech} />;
 }
