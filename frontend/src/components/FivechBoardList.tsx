@@ -55,6 +55,20 @@ export default function FivechBoardList(props: FivechBoardListProps) {
     const actionList = [
     { label: '戻る', action: () => { props.speech.stop(); props.onBack(); } },
     {
+      label: '前の板',
+      action: () => {
+        if (store.state.currentBoardIndex > 0) { store.prevBoard(); setTimeout(speakBoard, 100); }
+        else { props.speech.speak('最初の板です'); }
+      },
+    },
+    {
+      label: '次の板',
+      action: () => {
+        if (store.state.currentBoardIndex < store.state.fivechBoards.length - 1) { store.nextBoard(); setTimeout(speakBoard, 100); }
+        else { props.speech.speak('最後の板です'); }
+      },
+    },
+    {
       label: 'リロード',
       action: () => {
         setLoading(true);
@@ -62,14 +76,6 @@ export default function FivechBoardList(props: FivechBoardListProps) {
           .then((boards) => { store.set5chBoards(boards); props.speech.speak(`${boards.length}個の板を再読み込みしました`); })
           .catch(() => { props.speech.speak('再読み込みに失敗しました'); })
           .finally(() => setLoading(false));
-      },
-    },
-    { label: '未実装', status: 'unimplemented', action: () => props.speech.speak('この枠の機能はまだありません') },
-    {
-      label: '前の板',
-      action: () => {
-        if (store.state.currentBoardIndex > 0) { store.prevBoard(); setTimeout(speakBoard, 100); }
-        else { props.speech.speak('最初の板です'); }
       },
     },
     {
@@ -81,14 +87,6 @@ export default function FivechBoardList(props: FivechBoardListProps) {
       action: speakBoard,
     },
     {
-      label: '次の板',
-      action: () => {
-        if (store.state.currentBoardIndex < store.state.fivechBoards.length - 1) { store.nextBoard(); setTimeout(speakBoard, 100); }
-        else { props.speech.speak('最後の板です'); }
-      },
-    },
-    { label: `${store.state.currentBoardIndex + 1}/${store.state.fivechBoards.length}`, action: () => props.speech.speak(`${store.state.fivechBoards.length}個中、${store.state.currentBoardIndex + 1}個目です`) },
-    {
       label: 'スレッド一覧\n未対応',
       status: 'unimplemented',
       action: () => {
@@ -97,6 +95,7 @@ export default function FivechBoardList(props: FivechBoardListProps) {
         } else { props.speech.speak('板を選択してください'); }
       },
     },
+    { label: `${store.state.currentBoardIndex + 1}/${store.state.fivechBoards.length}`, action: () => props.speech.speak(`${store.state.fivechBoards.length}個中、${store.state.currentBoardIndex + 1}個目です`) },
     { label: '停止', action: () => props.speech.stop() },
     createGuideAction('5ちゃんねる板名一覧', props.speech, () => actionList),
   ];
