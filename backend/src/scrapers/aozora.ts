@@ -52,8 +52,15 @@ export async function fetchNovelContent(
 ): Promise<NovelContent> {
   const url = `https://www.aozora.gr.jp/cards/${authorId}/files/${fileId}.html`;
 
+  // 青空文庫は Cloudflare Worker のデフォルト UA だと 522 (origin 接続失敗) になりやすい。
+  // ブラウザ UA を渡すと数百ms で 200 が返る。同じ事象でレート制限/CDN ルーティングが
+  // 切り替わっていると思われる。
   const response = await fetch(url, {
     signal: AbortSignal.timeout(30_000),
+    headers: {
+      "User-Agent":
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+    },
   });
   if (!response.ok) {
     throw new Error(`HTTP ${response.status}: ${response.statusText}`);

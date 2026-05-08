@@ -52,6 +52,10 @@ export async function fetchPodcastEpisodes(
   const response = await fetch(feedUrl, {
     signal: AbortSignal.timeout(30_000),
     redirect: "follow",
+    headers: {
+      "User-Agent":
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+    },
   });
   if (!response.ok) {
     throw new Error(`HTTP ${response.status}: ${response.statusText}`);
