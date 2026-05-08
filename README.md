@@ -1,4 +1,4 @@
-# Esuna
+# esuna
 
 **A voice-first web app for the visually impaired**
 
@@ -6,8 +6,8 @@
 
 ---
 
-Esuna lets you enjoy news, radio, podcasts, social media, and more — entirely through voice and a simple 9-grid interface.  
-Named after the Final Fantasy recovery spell, Esuna is designed so that losing your sight doesn't mean losing your hobbies.
+esuna lets you enjoy news, radio, podcasts, social media, and more — entirely through voice and a simple 9-grid interface.  
+Named after the Final Fantasy recovery spell, esuna is designed so that losing your sight doesn't mean losing your hobbies.
 
 ## Features
 
