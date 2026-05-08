@@ -17,6 +17,7 @@ export function useAutoNavigation(props: UseAutoNavigationProps) {
   let timerId: ReturnType<typeof setInterval> | null = null;
   let delayTimer: ReturnType<typeof setTimeout> | null = null;
   let lastSpeakingState = false;
+  let disposed = false;
 
   const cleanup = () => {
     if (timerId) {
@@ -50,7 +51,7 @@ export function useAutoNavigation(props: UseAutoNavigationProps) {
       // 読み上げ中から停止に変わった瞬間を検知
       if (lastSpeakingState && !isSpeaking) {
         delayTimer = setTimeout(() => {
-          props.onNext();
+          if (!disposed) props.onNext();
         }, transitionDelay);
       }
 
@@ -58,7 +59,10 @@ export function useAutoNavigation(props: UseAutoNavigationProps) {
     }, checkInterval);
   });
 
-  onCleanup(cleanup);
+  onCleanup(() => {
+    disposed = true;
+    cleanup();
+  });
 
   // 手動でタイマーをキャンセルする関数
   const cancel = () => {

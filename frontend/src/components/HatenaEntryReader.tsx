@@ -44,20 +44,14 @@ export default function HatenaEntryReader(props: HatenaEntryReaderProps) {
     const currentEntry = store.getCurrentEntry();
     if (!currentEntry) return;
 
-    props.speech.speak(currentEntry.title, { interrupt: true });
-
+    const texts: string[] = [currentEntry.title];
     if (currentEntry.description) {
-      setTimeout(() => {
-        const description = currentEntry.description.slice(0, 200);
-        props.speech.speak(description);
-      }, 1500);
+      texts.push(currentEntry.description.slice(0, 200));
     }
-
     if (currentEntry.bookmark_count > 0) {
-      setTimeout(() => {
-        props.speech.speak(`${currentEntry.bookmark_count}ブックマーク`);
-      }, currentEntry.description ? 3000 : 1500);
+      texts.push(`${currentEntry.bookmark_count}ブックマーク`);
     }
+    props.speech.speakQueue(texts);
   };
 
   useAutoNavigation({

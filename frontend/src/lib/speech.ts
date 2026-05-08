@@ -79,6 +79,32 @@ export class SpeechManager {
     this.synthesis.speak(utterance)
   }
 
+  speakQueue(texts: string[], options?: {
+    rate?: number
+    pitch?: number
+    volume?: number
+  }) {
+    const { rate = 1.0, pitch = 1.0, volume = 1.0 } = options || {}
+    this.synthesis.cancel()
+
+    const speakNext = (index: number) => {
+      if (index >= texts.length) return
+      const utterance = new SpeechSynthesisUtterance(texts[index])
+      if (this.currentVoice) utterance.voice = this.currentVoice
+      utterance.rate = rate
+      utterance.pitch = pitch
+      utterance.volume = volume
+      utterance.lang = 'ja-JP'
+      utterance.onerror = (event) => {
+        console.error('Speech synthesis error:', event.error)
+      }
+      utterance.onend = () => speakNext(index + 1)
+      this.synthesis.speak(utterance)
+    }
+
+    speakNext(0)
+  }
+
   stop() {
     this.synthesis.cancel()
   }
