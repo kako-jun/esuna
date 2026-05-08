@@ -129,8 +129,10 @@ export default function GridSystem(props: GridSystemProps) {
 
   onMount(() => {
     const handleTouchStart = () => {
-      setIsKeyboardMode(false);
-      setSelectedIndex(null);
+      if (isKeyboardMode()) {
+        setIsKeyboardMode(false);
+        setSelectedIndex(null);
+      }
     };
 
     document.addEventListener('touchstart', handleTouchStart);
