@@ -213,8 +213,8 @@
 - **対処法**: `frontend/src/lib/radio.ts` のURLを更新
 
 **2. radikoは未対応**
-- **確認方法**: radiko局を選択
-- **対処法**: 現在radiko未対応、NHK局を使用
+- **確認方法**: radiko局を選ぶと再生前に未対応と表示される、または API が `501 Not Implemented` を返す
+- **対処法**: 現在の Esuna では radiko は使えない。NHK局を使用
 
 **3. ブラウザがHLS再生に対応していない**
 - **確認方法**: Safariでは再生できるがChromeでできない
