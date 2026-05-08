@@ -3,7 +3,7 @@ import { useAppStore } from '../lib/store';
 import { fetch5chBoards } from '../lib/api-client';
 import { SpeechManager } from '../lib/speech';
 import { useAutoNavigation } from '../lib/useAutoNavigation';
-import GridSystem from './GridSystem';
+import GridSystem, { GridAction } from './GridSystem';
 import { previewText } from '../lib/service-copy';
 import { createGuideAction } from '../lib/grid-guide';
 
@@ -52,7 +52,7 @@ export default function FivechBoardList(props: FivechBoardListProps) {
   });
 
   const actions = () => {
-    const actionList = [
+    const actionList: GridAction[] = [
     { label: '戻る', action: () => { props.speech.stop(); props.onBack(); } },
     {
       label: '前の板',

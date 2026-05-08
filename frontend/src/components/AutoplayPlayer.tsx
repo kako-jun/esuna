@@ -1,7 +1,7 @@
 import { createSignal, onMount, onCleanup, Show } from 'solid-js';
 import { generateRandomPlaylist, loadAutoplaySettings, AutoplayItem, getContentTypeName } from '../lib/autoplay';
 import { SpeechManager } from '../lib/speech';
-import GridSystem from './GridSystem';
+import GridSystem, { GridAction } from './GridSystem';
 import { createGuideAction } from '../lib/grid-guide';
 
 interface AutoplayPlayerProps {
@@ -90,7 +90,7 @@ export default function AutoplayPlayer(props: AutoplayPlayerProps) {
       </div>
     }>
       <GridSystem actions={(() => {
-        const actionList = [
+        const actionList: GridAction[] = [
           { label: '戻る', action: () => { setIsPlaying(false); props.speech.stop(); props.onBack(); } },
           { label: '前へ', action: prevContent },
           { label: '次へ', action: nextContent },

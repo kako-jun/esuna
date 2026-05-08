@@ -1,7 +1,7 @@
 import { createSignal, onMount, onCleanup } from 'solid-js';
 import { RadioStation, getStreamUrl } from '../lib/radio';
 import { SpeechManager } from '../lib/speech';
-import GridSystem from './GridSystem';
+import GridSystem, { GridAction } from './GridSystem';
 import StatusMessage from './StatusMessage';
 import { FORMAL_SERVICE_NAMES } from '../lib/service-copy';
 import { createGuideAction } from '../lib/grid-guide';
@@ -58,7 +58,7 @@ export default function RadioPlayer(props: RadioPlayerProps) {
   };
 
   const actions = () => {
-    const actionList = [
+    const actionList: GridAction[] = [
       { label: '戻る', action: () => { if (audioRef) { audioRef.pause(); } props.speech.stop(); props.onBack(); } },
       { label: '', action: () => {} },
       { label: '', action: () => {} },

@@ -1,7 +1,7 @@
 import { createSignal, onMount } from 'solid-js';
 import { SpeechManager } from '../lib/speech';
 import { getFavorites, removeFavorite, Favorite, FavoriteType } from '../lib/favorites';
-import GridSystem from './GridSystem';
+import GridSystem, { GridAction } from './GridSystem';
 import { getFormalProgressTypeName, previewText } from '../lib/service-copy';
 import { createGuideAction } from '../lib/grid-guide';
 
@@ -43,7 +43,7 @@ export default function FavoritesList(props: FavoritesListProps) {
   };
 
   const actions = () => {
-    const actionList = [
+    const actionList: GridAction[] = [
       { label: '戻る', action: () => { props.speech.stop(); props.onBack(); } },
       { label: '前', action: () => { if (currentIndex() > 0) { setCurrentIndex(currentIndex() - 1); setTimeout(speakFavorite, 100); } else { props.speech.speak('最初のお気に入りです'); } } },
       { label: '次', action: () => { if (currentIndex() < favorites().length - 1) { setCurrentIndex(currentIndex() + 1); setTimeout(speakFavorite, 100); } else { props.speech.speak('最後のお気に入りです'); } } },

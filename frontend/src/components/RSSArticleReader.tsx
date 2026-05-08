@@ -2,7 +2,7 @@ import { createSignal, onMount, Show } from 'solid-js';
 import { RSSReader, RSSItem } from '../lib/rss';
 import { SpeechManager } from '../lib/speech';
 import { useAutoNavigation } from '../lib/useAutoNavigation';
-import GridSystem from './GridSystem';
+import GridSystem, { GridAction } from './GridSystem';
 import StatusMessage from './StatusMessage';
 import { FORMAL_SERVICE_NAMES, previewText } from '../lib/service-copy';
 import { createGuideAction } from '../lib/grid-guide';
@@ -60,7 +60,7 @@ export default function RSSArticleReader(props: RSSArticleReaderProps) {
   });
 
   const actions = () => {
-    const actionList = [
+    const actionList: GridAction[] = [
       { label: '戻る', action: () => { props.speech.stop(); props.onBack(); } },
       { label: '前の記事', action: () => { if (currentIndex() > 0) { setCurrentIndex(currentIndex() - 1); setTimeout(speakArticle, 100); } else { props.speech.speak('最初の記事です'); } } },
       { label: '次の記事', action: () => { if (currentIndex() < articles().length - 1) { setCurrentIndex(currentIndex() + 1); setTimeout(speakArticle, 100); } else { props.speech.speak('最後の記事です'); } } },

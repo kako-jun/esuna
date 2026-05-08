@@ -3,7 +3,7 @@ import { useAppStore } from '../lib/store';
 import { fetchHatenaHot, fetchHatenaLatest } from '../lib/api-client';
 import { SpeechManager } from '../lib/speech';
 import { useAutoNavigation } from '../lib/useAutoNavigation';
-import GridSystem from './GridSystem';
+import GridSystem, { GridAction } from './GridSystem';
 import { previewText } from '../lib/service-copy';
 import { createGuideAction } from '../lib/grid-guide';
 
@@ -76,7 +76,7 @@ export default function HatenaEntryReader(props: HatenaEntryReaderProps) {
 
   const actions = () => {
     const pageName = props.type === 'hot' ? 'はてなブックマーク 人気エントリー' : 'はてなブックマーク 新着エントリー';
-    const actionList = [
+    const actionList: GridAction[] = [
     {
       label: '戻る',
       action: () => {

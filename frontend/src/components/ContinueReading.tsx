@@ -1,8 +1,8 @@
 import { createSignal, onMount } from 'solid-js';
 import { SpeechManager } from '../lib/speech';
 import { getRecentProgress, removeProgress, Progress, ProgressType } from '../lib/progress';
-import GridSystem from './GridSystem';
-import { getFormalProgressTypeName, previewText } from '../lib/service-copy';
+import GridSystem, { GridAction } from './GridSystem';
+import { getFormalProgressTypeName } from '../lib/service-copy';
 import { createGuideAction } from '../lib/grid-guide';
 
 interface ContinueReadingProps {
@@ -36,14 +36,14 @@ export default function ContinueReading(props: ContinueReadingProps) {
   };
 
   const actions = () => {
-    const actionList = [
+    const actionList: GridAction[] = [
       { label: '戻る', action: () => { props.speech.stop(); props.onBack(); } },
       { label: '前', action: () => { if (currentIndex() > 0) { setCurrentIndex(currentIndex() - 1); setTimeout(speakProgress, 100); } else { props.speech.speak('最初の進捗です'); } } },
       { label: '次', action: () => { if (currentIndex() < progressList().length - 1) { setCurrentIndex(currentIndex() + 1); setTimeout(speakProgress, 100); } else { props.speech.speak('最後の進捗です'); } } },
       { label: '読み上げ', action: speakProgress },
       {
         label: progressList()[currentIndex()]
-          ? `${progressList()[currentIndex()]!.title}\n${previewText(progressList()[currentIndex()]!.description, 58)}`
+          ? `${progressList()[currentIndex()]!.title}`
           : '進捗なし',
         action: () => { const p = progressList()[currentIndex()]; if (!p) { props.speech.speak('進捗がありません'); return; } props.speech.speak(`${p.title} の続きから再生します`); props.onSelectProgress(p); },
       },

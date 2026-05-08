@@ -3,7 +3,7 @@ import { useAppStore } from '../lib/store';
 import { fetchHatenaComments } from '../lib/api-client';
 import { SpeechManager } from '../lib/speech';
 import { useAutoNavigation } from '../lib/useAutoNavigation';
-import GridSystem from './GridSystem';
+import GridSystem, { GridAction } from './GridSystem';
 import { previewText } from '../lib/service-copy';
 import { createGuideAction } from '../lib/grid-guide';
 
@@ -82,7 +82,7 @@ export default function HatenaCommentReader(props: HatenaCommentReaderProps) {
 
   const actions = () => {
     // 規約: 1=戻る 2=前 3=次 4=リロード（はてな特例） 5=主対象 6=主アクション 7=補助情報 8=停止 9=画面案内
-    const actionList = [
+    const actionList: GridAction[] = [
     { label: '戻る', action: () => { props.speech.stop(); props.onBack(); } },
     {
       label: '前のコメント',

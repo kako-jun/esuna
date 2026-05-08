@@ -2,7 +2,7 @@ import { createSignal, onMount } from 'solid-js';
 import { useAppStore } from '../lib/store';
 import { POPULAR_PODCASTS } from '../lib/podcasts';
 import { SpeechManager } from '../lib/speech';
-import GridSystem from './GridSystem';
+import GridSystem, { GridAction } from './GridSystem';
 import { FORMAL_SERVICE_NAMES, previewText } from '../lib/service-copy';
 import { createGuideAction } from '../lib/grid-guide';
 
@@ -30,7 +30,7 @@ export default function PodcastList(props: PodcastListProps) {
   };
 
   const actions = () => {
-    const actionList = [
+    const actionList: GridAction[] = [
       { label: '戻る', action: () => { props.speech.stop(); props.onBack(); } },
       {
         label: '前の番組',

@@ -1,7 +1,7 @@
 import { createSignal, onMount } from 'solid-js';
 import { getAllStations, RadioStation } from '../lib/radio';
 import { SpeechManager } from '../lib/speech';
-import GridSystem from './GridSystem';
+import GridSystem, { GridAction } from './GridSystem';
 import { FORMAL_SERVICE_NAMES } from '../lib/service-copy';
 import { createGuideAction } from '../lib/grid-guide';
 
@@ -34,7 +34,7 @@ export default function RadioStationList(props: RadioStationListProps) {
 
   const actions = () => {
     // 規約: 1=戻る 2=前 3=次 4=局情報 5=主対象 6=再生 7=局数 8=停止 9=画面案内
-    const actionList = [
+    const actionList: GridAction[] = [
     { label: '戻る', action: () => { props.speech.stop(); props.onBack(); } },
     { label: '前の局', action: () => { if (currentIndex() > 0) { setCurrentIndex(currentIndex() - 1); setTimeout(() => { props.speech.speak(`${allStations[currentIndex()].name}`, { interrupt: true }); }, 100); } else { props.speech.speak('最初のラジオ局です'); } } },
     { label: '次の局', action: () => { if (currentIndex() < allStations.length - 1) { setCurrentIndex(currentIndex() + 1); setTimeout(() => { props.speech.speak(`${allStations[currentIndex()].name}`, { interrupt: true }); }, 100); } else { props.speech.speak('最後のラジオ局です'); } } },
