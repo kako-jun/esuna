@@ -4,6 +4,7 @@ import { SpeechManager } from '../lib/speech';
 interface GridAction {
   label: string;
   action: () => void;
+  status?: 'default' | 'unimplemented';
 }
 
 interface GridSystemProps {
@@ -27,7 +28,7 @@ export default function GridSystem(props: GridSystemProps) {
 
   const announceItem = (action: GridAction, index: number) => {
     setSelectedIndex(index);
-    props.speech.speak(`${index + 1}番、${action.label}`);
+    props.speech.speak(`${index + 1}、${action.label}`);
   };
 
   const executeItem = (action: GridAction, index: number) => {
@@ -141,11 +142,12 @@ export default function GridSystem(props: GridSystemProps) {
           const action = () => props.actions[index];
           const isEmpty = () => !action() || action()?.label === '';
           const isSelected = () => selectedIndex() === index;
+          const isUnimplemented = () => action()?.status === 'unimplemented';
 
           return (
             <div
               id={`${gridId}-cell-${index}`}
-              class={`grid-item ${isSelected() ? 'active' : ''} ${isEmpty() ? 'opacity-50' : ''}`}
+              class={`grid-item ${isSelected() ? 'active' : ''} ${isEmpty() ? 'opacity-50' : ''} ${isUnimplemented() ? 'grid-item-unimplemented' : ''}`}
               onClick={() => {
                 const a = action();
                 if (a && !isEmpty()) {
@@ -154,7 +156,7 @@ export default function GridSystem(props: GridSystemProps) {
               }}
               role="gridcell"
               tabIndex={-1}
-              aria-label={!isEmpty() ? `${index + 1}番、${action()!.label}` : `空のセル ${index + 1}`}
+              aria-label={!isEmpty() ? `${index + 1}、${action()!.label}${isUnimplemented() ? '、未対応' : ''}` : `空のセル ${index + 1}`}
               aria-disabled={isEmpty()}
               aria-selected={isSelected()}
             >

@@ -15,7 +15,7 @@ export function getFeatureStatusSummary(key: keyof typeof FORMAL_SERVICE_NAMES):
     case 'sns':
       return '現在は試験表示です。Xには未対応で、Mastodon と Bluesky を整備中です。';
     case 'fivech':
-      return '板、スレッド、レスを取得します。取得に失敗する場合があります。';
+      return '現在未対応です。板名の確認までで、スレッド一覧とレス取得は使えません。';
     case 'rss':
       return '外部ニュースサイトの RSS を読み込みます。取得先によって失敗する場合があります。';
     case 'aozora':

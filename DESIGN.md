@@ -35,15 +35,15 @@ Contrast ratio: ~14:1 (WCAG AAA). Navy on white is the entire palette.
 
 | Context | Family                                             |
 | ------- | -------------------------------------------------- |
-| All     | `"Press Start 2P", "Courier New", Courier, monospace` |
+| All     | `"BIZ UDGothic", "Hiragino Sans", "Yu Gothic", sans-serif` |
 
-Press Start 2P loaded from Google Fonts. Pixel font everywhere.
+BIZ UDGothic loaded from Google Fonts. Use a readable Japanese UD font everywhere.
 
 ### Type Scale
 
 | Element       | Size                           | Notes                |
 | ------------- | ------------------------------ | -------------------- |
-| Grid items    | `clamp(0.6rem, 1.4vw, 1rem)`  | Fluid scaling        |
+| Grid items    | `clamp(1rem, 2.1vw, 1.5rem)` | Fluid scaling        |
 | Body          | `14px`                         | Base size            |
 | Status bar    | `0.7rem`                       |                      |
 | Cursor marker | `0.7em`                        | Relative to parent   |
@@ -139,7 +139,7 @@ None. Sharp rectangles everywhere — pixel-accurate to FC FF.
 
 ### Do
 
-- Use `Press Start 2P` pixel font everywhere
+- Use `BIZ UDGothic` everywhere
 - Keep the grid flush with the viewport edges
 - Make the center cell larger than the surrounding cells
 - Use `step-end` timing for all animations — no smooth transitions
@@ -155,7 +155,7 @@ None. Sharp rectangles everywhere — pixel-accurate to FC FF.
 - Use border-radius on any element
 - Add colors outside the navy/white/blue palette
 - Create scrollable content — everything fits in viewport
-- Use non-pixel fonts unless the accessibility direction changes
+- Do not use decorative pixel fonts
 - Add shadows or gradients
 
 ### Animations
@@ -171,7 +171,7 @@ Step-end only. No easing. No smooth fades.
 
 No traditional breakpoints. The design uses:
 
-- `clamp(0.6rem, 1.4vw, 1rem)` for fluid font scaling
+- `clamp(1rem, 2.1vw, 1.5rem)` for fluid font scaling
 - `100vw / 100vh` for full-screen fill
 - Equal `1fr` distribution handles all screen sizes
 
@@ -196,7 +196,7 @@ Audio-first means responsive design focuses on touch targets and screen reader c
 ### When generating UI for this project
 
 - Full-screen 3x3 grid. No other layout structure
-- Press Start 2P pixel font. No sans-serif
+- BIZ UDGothic. Prefer readability over retro styling
 - Double-border on everything (white outer, blue inner)
 - `step-end` animations only. No smooth transitions
 - Navy/white/blue palette exclusively. No warm colors, no grays

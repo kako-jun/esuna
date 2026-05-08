@@ -1,22 +1,20 @@
-/* Press Start 2P — pixel font for Famicom FF aesthetic */
-
 /* ============================================================
-   Famicom Final Fantasy (FC FF) Aesthetic
-   Deep navy blue background, white text, pixel-style borders
+   Accessibility-first 3x3 interface
+   Deep navy blue background, high-contrast borders, readable text
    ============================================================ */
 
 :root {
-  /* FF Famicom color palette */
-  --ff-bg:          #000080;   /* Deep navy — classic FC FF menu background */
-  --ff-panel:       #0000AA;   /* Slightly lighter blue for panels */
-  --ff-panel-dark:  #000066;   /* Darker blue for depth */
+  /* Quiet navy palette */
+  --ff-bg:          #05070c;   /* Near-black navy */
+  --ff-panel:       #0b1220;   /* Calm dark blue panel */
+  --ff-panel-dark:  #070d18;   /* Darker blue for depth */
   --ff-border:      #ffffff;   /* White border (outer) */
   --ff-border-inner:#aaaaff;   /* Soft blue-white for inner border line */
   --ff-text:        #ffffff;   /* Pure white text */
   --ff-text-dim:    #aaaaff;   /* Dimmed text / empty cells */
   --ff-cursor:      #ffffff;   /* Cursor / selected indicator */
-  --ff-selected-bg: #0000CC;   /* Selected cell background */
-  --ff-gap:         #000044;   /* Grid gap — near-black navy */
+  --ff-selected-bg: #13233c;   /* Selected cell background */
+  --ff-gap:         #03060b;   /* Grid gap — near-black navy */
 }
 
 /* Reset */
@@ -34,8 +32,8 @@ html, body, #app {
 body {
   color: var(--ff-text);
   background: var(--ff-bg);
-  /* Press Start 2P for pixel look; fall back to monospace */
-  font-family: 'Press Start 2P', 'Courier New', Courier, monospace;
+  font-family: 'BIZ UDGothic', 'Hiragino Sans', 'Yu Gothic', sans-serif;
+  font-weight: 700;
   font-size: 14px;
   margin: 0;
   padding: 0;
@@ -62,8 +60,8 @@ body {
    ============================================================ */
 .grid-container {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1.8fr) minmax(0, 1fr);
-  grid-template-rows: minmax(0, 1fr) minmax(0, 1.8fr) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 0.72fr) minmax(0, 2.56fr) minmax(0, 0.72fr);
+  grid-template-rows: minmax(0, 0.72fr) minmax(0, 2.56fr) minmax(0, 0.72fr);
   height: 100vh;
   width: 100vw;
   gap: 1px;
@@ -88,9 +86,10 @@ body {
   justify-content: center;
   text-align: center;
 
-  font-family: 'Press Start 2P', 'Courier New', Courier, monospace;
-  font-size: clamp(0.6rem, 1.4vw, 1rem);
-  line-height: 1.6;
+  font-family: 'BIZ UDGothic', 'Hiragino Sans', 'Yu Gothic', sans-serif;
+  font-weight: 700;
+  font-size: clamp(1rem, 2.1vw, 1.5rem);
+  line-height: 1.45;
   white-space: pre-wrap;
   word-break: break-word;
   min-width: 0;
@@ -120,6 +119,18 @@ body {
 .grid-item.active {
   background: var(--ff-selected-bg);
   color: var(--ff-cursor);
+}
+
+.grid-item-unimplemented {
+  background: #22141a;
+  color: #ffd7dc;
+}
+
+.grid-item-unimplemented:hover,
+.grid-item-unimplemented:focus,
+.grid-item-unimplemented.active {
+  background: #3a1e28;
+  color: #fff0f2;
 }
 
 /* FF-style cursor arrow before active item text */
@@ -164,8 +175,9 @@ body {
   outline: 2px solid var(--ff-border-inner);
   outline-offset: -3px;
   padding: 6px 16px;
-  font-family: 'Press Start 2P', 'Courier New', Courier, monospace;
-  font-size: 0.7rem;
+  font-family: 'BIZ UDGothic', 'Hiragino Sans', 'Yu Gothic', sans-serif;
+  font-weight: 700;
+  font-size: 0.95rem;
   z-index: 1000;
   white-space: nowrap;
 }
