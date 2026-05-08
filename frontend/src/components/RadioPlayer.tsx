@@ -244,7 +244,7 @@ export default function RadioPlayer(props: RadioPlayerProps) {
       centerCell(),
       { label: isPlaying() ? '一時停止' : '再生', action: togglePlay },
       {
-        label: `${props.station.name}`,
+        label: '位置',
         action: () => {
           props.speech.speak(`${props.station.name}。${props.station.description}`)
         },

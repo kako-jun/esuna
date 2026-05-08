@@ -198,7 +198,15 @@ export default function PodcastPlayer(props: PodcastPlayerProps) {
           }
         },
       },
-      { label: '読み上げ', action: speakEpisode },
+      {
+        label: 'リロード',
+        action: () => {
+          props.speech.speak('再読み込みします')
+          releaseAudio()
+          store.setPodcastEpisodes([])
+          loadEpisodes()
+        },
+      },
       centerCell(),
       { label: isPlaying() ? '一時停止' : '再生', action: playAudio },
       {

@@ -177,13 +177,13 @@ export default function NovelReader(props: NovelReaderProps) {
         },
       },
       centerCell(),
-      { label: '本文を\n読み上げ', action: () => speakSection() },
+      { label: '読み上げ', action: () => speakSection() },
       {
-        label: '作品情報',
+        label: '位置',
         action: () => {
           if (store.state.novelContent && store.state.selectedNovel) {
             props.speech.speak(
-              `タイトル：${store.state.novelContent.title}。著者：${store.state.novelContent.author}。全${store.state.novelContent.sections.length}セクション中、${store.state.currentSectionIndex + 1}番目のセクションです`,
+              `全${store.state.novelContent.sections.length}セクション中、${store.state.currentSectionIndex + 1}番目のセクションです。タイトル：${store.state.novelContent.title}。著者：${store.state.novelContent.author}`,
             )
           }
         },
