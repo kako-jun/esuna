@@ -1,5 +1,6 @@
 import { createSignal, onMount, onCleanup, For, Show } from 'solid-js';
 import { SpeechManager } from '../lib/speech';
+import { triggerTapVibration } from '../lib/vibration';
 
 export interface GridAction {
   label: string;
@@ -47,6 +48,7 @@ export default function GridSystem(props: GridSystemProps) {
 
   const handleItemClick = (action: GridAction, index: number) => {
     if (selectedIndex() === index) {
+      triggerTapVibration();
       executeItem(action, index);
       return;
     }

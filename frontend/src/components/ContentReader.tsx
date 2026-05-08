@@ -1,6 +1,7 @@
 import { createSignal, onMount, For, Show } from 'solid-js';
 import { RSSReader, RSSItem } from '../lib/rss';
 import { ContentScraper, ScrapedContent } from '../lib/content-scraper';
+import { triggerTapVibration } from '../lib/vibration';
 
 interface ContentReaderProps {
   onSpeak: (text: string) => void;
@@ -121,7 +122,7 @@ export default function ContentReader(props: ContentReaderProps) {
             return (
               <div
                 class={`grid-item ${selectedIndex() === index ? 'active' : ''} ${!item() ? 'opacity-50' : ''}`}
-                onClick={() => { const it = item(); if (it) { setSelectedIndex(index); it.action(); } }}
+                onClick={() => { const it = item(); if (it) { triggerTapVibration(); setSelectedIndex(index); it.action(); } }}
                 role="button"
                 tabIndex={-1}
                 aria-label={item() ? item()!.ariaLabel : `空のセル ${index + 1}`}

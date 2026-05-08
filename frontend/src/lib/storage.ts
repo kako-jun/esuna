@@ -20,6 +20,7 @@ export interface AppSettings {
     autoNavigation: boolean // 自動ナビゲーション有効化
     speakTimeOnStart: boolean // 起動時に時刻を読み上げ
     speakWeatherOnStart: boolean // 起動時に天気予報を読み上げ
+    vibration: boolean // タップ時の振動フィードバック
   }
   // 天気予報設定
   weather: {
@@ -41,6 +42,7 @@ const DEFAULT_SETTINGS: AppSettings = {
     autoNavigation: false,
     speakTimeOnStart: true,
     speakWeatherOnStart: true,
+    vibration: true,
   },
   weather: {
     city: 'Tokyo',
