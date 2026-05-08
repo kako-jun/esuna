@@ -8,6 +8,24 @@ import type { HatenaEntry, HatenaComment } from "../types";
  * はてなブックマークRSSをパース
  * cheerio で XML を処理する
  */
+// 名前空間付き要素 (`hatena:bookmarkcount` 等) は CSS セレクタの `\\:` エスケープが
+// 環境（workerd runtime と node）で解釈差を起こす。子要素を直接走査して tagName で
+// 振り分ければ namespace の有無に依存せず取れる。
+function findChildText(
+  $: cheerio.CheerioAPI,
+  $item: cheerio.Cheerio<any>,
+  tagName: string,
+): string {
+  let value = "";
+  $item.children().each((_, child) => {
+    if (value) return;
+    if ((child as { tagName?: string }).tagName === tagName) {
+      value = $(child).text();
+    }
+  });
+  return value;
+}
+
 function parseHatenaRss(xmlContent: string): HatenaEntry[] {
   const $ = cheerio.load(xmlContent, { xmlMode: true });
   const entries: HatenaEntry[] = [];
@@ -15,14 +33,12 @@ function parseHatenaRss(xmlContent: string): HatenaEntry[] {
   $("item").each((_, item) => {
     try {
       const $item = $(item);
-      const title = $item.find("title").text() || "";
-      const description = $item.find("description").text() || "";
-      const url = $item.find("link").text() || "";
+      const title = findChildText($, $item, "title");
+      const description = findChildText($, $item, "description");
+      const url = findChildText($, $item, "link");
 
-      // はてなブックマーク独自の要素
-      const commentsUrl =
-        $item.find("hatena\\:bookmarkCommentListPageUrl").text() || "";
-      const bookmarkCountText = $item.find("hatena\\:bookmarkcount").text();
+      const commentsUrl = findChildText($, $item, "hatena:bookmarkCommentListPageUrl");
+      const bookmarkCountText = findChildText($, $item, "hatena:bookmarkcount");
       const bookmarkCount = bookmarkCountText
         ? parseInt(bookmarkCountText, 10) || 0
         : 0;
