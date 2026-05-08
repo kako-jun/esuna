@@ -3,6 +3,7 @@ import { RSSReader } from '../lib/rss';
 import { SpeechManager } from '../lib/speech';
 import GridSystem from './GridSystem';
 import { FORMAL_SERVICE_NAMES } from '../lib/service-copy';
+import { createGuideAction } from '../lib/grid-guide';
 
 interface RSSFeedListProps {
   speech: SpeechManager;
@@ -28,40 +29,41 @@ export default function RSSFeedList(props: RSSFeedListProps) {
     props.speech.speak(`${feed.name}。フィード番号 ${currentIndex() + 1}`, { interrupt: true });
   };
 
-  const actions = () => [
-    { label: '戻る', action: () => { props.speech.stop(); props.onBack(); } },
-    {
-      label: '前のフィード',
-      action: () => {
-        if (currentIndex() > 0) { setCurrentIndex(currentIndex() - 1); setTimeout(() => { props.speech.speak(`${defaultFeeds[currentIndex()].name}`, { interrupt: true }); }, 100); }
-        else { props.speech.speak('最初のフィードです'); }
+  const actions = () => {
+    const actionList = [
+      { label: '戻る', action: () => { props.speech.stop(); props.onBack(); } },
+      {
+        label: '前のフィード',
+        action: () => {
+          if (currentIndex() > 0) { setCurrentIndex(currentIndex() - 1); setTimeout(() => { props.speech.speak(`${defaultFeeds[currentIndex()].name}`, { interrupt: true }); }, 100); }
+          else { props.speech.speak('最初のフィードです'); }
+        },
       },
-    },
-    {
-      label: '次のフィード',
-      action: () => {
-        if (currentIndex() < defaultFeeds.length - 1) { setCurrentIndex(currentIndex() + 1); setTimeout(() => { props.speech.speak(`${defaultFeeds[currentIndex()].name}`, { interrupt: true }); }, 100); }
-        else { props.speech.speak('最後のフィードです'); }
+      {
+        label: '次のフィード',
+        action: () => {
+          if (currentIndex() < defaultFeeds.length - 1) { setCurrentIndex(currentIndex() + 1); setTimeout(() => { props.speech.speak(`${defaultFeeds[currentIndex()].name}`, { interrupt: true }); }, 100); }
+          else { props.speech.speak('最後のフィードです'); }
+        },
       },
-    },
-    { label: '読み上げ', action: speakFeed },
-    {
-      label: '記事一覧',
-      action: () => {
-        const feed = defaultFeeds[currentIndex()];
-        if (typeof window !== 'undefined') { sessionStorage.setItem('selectedRSSFeed', JSON.stringify(feed)); }
-        props.speech.speak(`${feed.name} の記事一覧を開いています。外部サイトから取得するため、少し待ってください。`);
-        props.onSelectFeed();
+      { label: '読み上げ', action: speakFeed },
+      {
+        label: '記事一覧',
+        action: () => {
+          const feed = defaultFeeds[currentIndex()];
+          if (typeof window !== 'undefined') { sessionStorage.setItem('selectedRSSFeed', JSON.stringify(feed)); }
+          props.speech.speak(`${feed.name} の記事一覧を開いています。外部サイトから取得するため、少し待ってください。`);
+          props.onSelectFeed();
+        },
       },
-    },
-    { label: 'フィード情報', action: () => { const feed = defaultFeeds[currentIndex()]; props.speech.speak(`フィード番号 ${currentIndex() + 1}。名前：${feed.name}。`); } },
-    { label: 'フィード数', action: () => { props.speech.speak(`全${defaultFeeds.length}フィード中、${currentIndex() + 1}番目のフィードです`); } },
-    { label: '停止', action: () => { props.speech.stop(); } },
-    {
-      label: '先頭',
-      action: () => { setCurrentIndex(0); setTimeout(() => { props.speech.speak(`最初のフィードに戻りました。${defaultFeeds[0].name}`, { interrupt: true }); }, 100); },
-    },
-  ];
+      { label: 'フィード情報', action: () => { const feed = defaultFeeds[currentIndex()]; props.speech.speak(`フィード番号 ${currentIndex() + 1}。名前：${feed.name}。`); } },
+      { label: 'フィード数', action: () => { props.speech.speak(`全${defaultFeeds.length}フィード中、${currentIndex() + 1}番目のフィードです`); } },
+      { label: '停止', action: () => { props.speech.stop(); } },
+      createGuideAction('RSSニュースフィード一覧', props.speech, () => actionList),
+    ];
+
+    return actionList;
+  };
 
   return <GridSystem actions={actions()} speech={props.speech} />;
 }

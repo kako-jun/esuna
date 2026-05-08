@@ -5,6 +5,7 @@ import { SpeechManager } from '../lib/speech';
 import { useAutoNavigation } from '../lib/useAutoNavigation';
 import GridSystem from './GridSystem';
 import { previewText } from '../lib/service-copy';
+import { createGuideAction } from '../lib/grid-guide';
 
 interface FivechBoardListProps {
   speech: SpeechManager;
@@ -50,7 +51,8 @@ export default function FivechBoardList(props: FivechBoardListProps) {
     delay: 3000,
   });
 
-  const actions = () => [
+  const actions = () => {
+    const actionList = [
     { label: '戻る', action: () => { props.speech.stop(); props.onBack(); } },
     {
       label: 'リロード',
@@ -96,7 +98,11 @@ export default function FivechBoardList(props: FivechBoardListProps) {
       },
     },
     { label: '停止', action: () => props.speech.stop() },
+    createGuideAction('5ちゃんねる板名一覧', props.speech, () => actionList),
   ];
+
+    return actionList;
+  };
 
   return (
     <div class="h-screen w-screen">

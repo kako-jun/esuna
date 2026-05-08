@@ -5,6 +5,7 @@ import { SpeechManager } from '../lib/speech';
 import { useAutoNavigation } from '../lib/useAutoNavigation';
 import GridSystem from './GridSystem';
 import { previewText } from '../lib/service-copy';
+import { createGuideAction } from '../lib/grid-guide';
 
 interface HatenaCommentReaderProps {
   speech: SpeechManager;
@@ -68,7 +69,8 @@ export default function HatenaCommentReader(props: HatenaCommentReaderProps) {
     delay: 3000,
   });
 
-  const actions = () => [
+  const actions = () => {
+    const actionList = [
     { label: '戻る', action: () => { props.speech.stop(); props.onBack(); } },
     {
       label: 'リロード',
@@ -109,7 +111,11 @@ export default function HatenaCommentReader(props: HatenaCommentReaderProps) {
     { label: `${store.state.currentCommentIndex + 1}/${store.state.hatenaComments.length}`, action: () => props.speech.speak(`${store.state.hatenaComments.length}件中、${store.state.currentCommentIndex + 1}件目です`) },
     { label: '全文読み上げ', action: speakComment },
     { label: '停止', action: () => props.speech.stop() },
+    createGuideAction('はてなブックマークコメント一覧', props.speech, () => actionList),
   ];
+
+    return actionList;
+  };
 
   return (
     <div class="h-screen w-screen">

@@ -1,7 +1,7 @@
 import { createSignal, onMount, onCleanup, For, Show } from 'solid-js';
 import { SpeechManager } from '../lib/speech';
 
-interface GridAction {
+export interface GridAction {
   label: string;
   action: () => void;
   status?: 'default' | 'unimplemented';
@@ -26,9 +26,18 @@ export default function GridSystem(props: GridSystemProps) {
     }
   });
 
+  const getAnnouncementText = (action: GridAction, index: number) => {
+    const normalizedLabel = action.label.replace(/\n/g, '、');
+    if (index === 4) {
+      return normalizedLabel;
+    }
+
+    return `${index + 1}、${normalizedLabel}`;
+  };
+
   const announceItem = (action: GridAction, index: number) => {
     setSelectedIndex(index);
-    props.speech.speak(`${index + 1}、${action.label}`);
+    props.speech.speak(getAnnouncementText(action, index));
   };
 
   const executeItem = (action: GridAction, index: number) => {
@@ -156,7 +165,7 @@ export default function GridSystem(props: GridSystemProps) {
               }}
               role="gridcell"
               tabIndex={-1}
-              aria-label={!isEmpty() ? `${index + 1}、${action()!.label}${isUnimplemented() ? '、未対応' : ''}` : `空のセル ${index + 1}`}
+              aria-label={!isEmpty() ? `${getAnnouncementText(action()!, index)}${isUnimplemented() ? '、未対応' : ''}` : `空のセル ${index + 1}`}
               aria-disabled={isEmpty()}
               aria-selected={isSelected()}
             >

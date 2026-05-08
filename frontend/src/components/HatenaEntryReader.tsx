@@ -5,6 +5,7 @@ import { SpeechManager } from '../lib/speech';
 import { useAutoNavigation } from '../lib/useAutoNavigation';
 import GridSystem from './GridSystem';
 import { previewText } from '../lib/service-copy';
+import { createGuideAction } from '../lib/grid-guide';
 
 interface HatenaEntryReaderProps {
   speech: SpeechManager;
@@ -73,7 +74,8 @@ export default function HatenaEntryReader(props: HatenaEntryReaderProps) {
     delay: 3000,
   });
 
-  const actions = () => [
+  const actions = () => {
+    const actionList = [
     {
       label: '戻る',
       action: () => {
@@ -151,7 +153,11 @@ export default function HatenaEntryReader(props: HatenaEntryReaderProps) {
       label: '停止',
       action: () => props.speech.stop(),
     },
-  ];
+    ];
+
+    actionList[8] = createGuideAction('はてなブックマーク人気エントリー', props.speech, () => actionList);
+    return actionList;
+  };
 
   return (
     <div class="h-screen w-screen">
