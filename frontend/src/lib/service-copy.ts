@@ -9,13 +9,8 @@
 //   blocked  … 機能未成立。戻ることだけを案内する
 //   retrying … 再試行中（loading のバリエーション）
 
-/** 待機中メッセージ（UI 表示用）*/
+/** 待機中メッセージ（UI 表示用・読み上げ用共通）*/
 export function loadingMessage(targetName: string): string {
-  return `${targetName}を開いています。少し待ってください。`;
-}
-
-/** 待機中メッセージ（読み上げ用）*/
-export function loadingSpeech(targetName: string): string {
   return `${targetName}を開いています。少し待ってください。`;
 }
 
