@@ -96,7 +96,7 @@ export default function AutoplayPlayer(props: AutoplayPlayerProps) {
           { label: '次へ', action: nextContent },
           { label: '現在の情報', action: () => { const item = currentItem()!; props.speech.speak(`現在：${getContentTypeName(item.type)}、${item.title}。${item.description}。残り時間：${fmtTime(timeRemaining())}。プレイリスト：${currentIndex() + 1}/${playlist().length}`); } },
           { label: currentItem() ? `${getContentTypeName(currentItem()!.type)}\n${currentItem()!.title}` : '再生中', action: () => { const item = currentItem(); if (item) props.speech.speak(`${getContentTypeName(item.type)}、${item.title}`); } },
-          { label: isPlaying() ? '一時停止' : '再生', action: () => { setIsPlaying(!isPlaying()); props.speech.speak(isPlaying() ? '一時停止しました' : '再生を再開しました'); } },
+          { label: isPlaying() ? '一時停止' : '再生', action: () => { const playing = isPlaying(); setIsPlaying(!playing); if (playing) { props.speech.stop(); props.speech.speak('一時停止しました'); } else { props.speech.speak('再生を再開しました'); } } },
           { label: `残り：${fmtTime(timeRemaining())}`, action: () => { props.speech.speak(`残り時間：${fmtTime(timeRemaining())}`); } },
           { label: '停止', action: () => { props.speech.stop(); } },
           createGuideAction('おまかせモード', props.speech, () => actionList),
