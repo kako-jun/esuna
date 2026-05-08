@@ -3,6 +3,8 @@ import { RSSReader, RSSItem } from '../lib/rss';
 import { SpeechManager } from '../lib/speech';
 import { useAutoNavigation } from '../lib/useAutoNavigation';
 import GridSystem from './GridSystem';
+import StatusMessage from './StatusMessage';
+import { FORMAL_SERVICE_NAMES, previewText } from '../lib/service-copy';
 
 interface RSSArticleReaderProps {
   speech: SpeechManager;
@@ -27,13 +29,13 @@ export default function RSSArticleReader(props: RSSArticleReaderProps) {
       const rssFeed = await rssReader.fetchRSS(feed.url);
       setArticles(rssFeed.items);
       setTimeout(() => {
-        props.speech.speak(`${feed.name}の記事、${rssFeed.items.length}件を読み込みました。最新の記事から読み上げます`);
+        props.speech.speak(`${feed.name} の記事を${rssFeed.items.length}件読み込みました。最新の記事から読み上げます`);
         setTimeout(() => speakArticle(), 2000);
       }, 500);
     } catch (err) {
       console.error('Failed to load RSS:', err);
-      setError('記事の読み込みに失敗しました');
-      props.speech.speak('記事の読み込みに失敗しました。戻ります');
+      setError(`${feed.name} の記事を取得できませんでした。外部サイトの都合で失敗する場合があります。前の画面に戻ります`);
+      props.speech.speak(`${feed.name} の記事を取得できませんでした。外部サイトの都合で失敗する場合があります。前の画面に戻ります`);
       setTimeout(props.onBack, 2000);
     } finally {
       setLoading(false);
@@ -60,8 +62,13 @@ export default function RSSArticleReader(props: RSSArticleReaderProps) {
     { label: '戻る', action: () => { props.speech.stop(); props.onBack(); } },
     { label: '前の記事', action: () => { if (currentIndex() > 0) { setCurrentIndex(currentIndex() - 1); setTimeout(speakArticle, 100); } else { props.speech.speak('最初の記事です'); } } },
     { label: '次の記事', action: () => { if (currentIndex() < articles().length - 1) { setCurrentIndex(currentIndex() + 1); setTimeout(speakArticle, 100); } else { props.speech.speak('最後の記事です'); } } },
-    { label: '読み上げ', action: speakArticle },
     { label: '本文', action: () => { const a = articles()[currentIndex()]; if (a?.content) { props.speech.speak(`本文。${a.content}`, { interrupt: true }); } else { props.speech.speak('本文が取得できませんでした'); } } },
+    {
+      label: articles()[currentIndex()]
+        ? `${articles()[currentIndex()]!.title}\n${previewText(articles()[currentIndex()]!.description || articles()[currentIndex()]!.content, 58)}`
+        : '記事なし',
+      action: speakArticle,
+    },
     { label: '位置', action: () => { props.speech.speak(`全${articles().length}記事中、${currentIndex() + 1}番目の記事です`); } },
     { label: '日時', action: () => { const a = articles()[currentIndex()]; if (a) { props.speech.speak(`公開日時：${a.pubDate}`); } } },
     { label: '停止', action: () => { props.speech.stop(); } },
@@ -69,7 +76,16 @@ export default function RSSArticleReader(props: RSSArticleReaderProps) {
   ];
 
   return (
-    <Show when={!loading()} fallback={<div class="p-4 text-center">記事を読み込んでいます...</div>}>
+    <Show
+      when={!loading()}
+      fallback={
+        <StatusMessage
+          title={`${FORMAL_SERVICE_NAMES.rss} を開いています`}
+          message="選択したニュースサイトの記事一覧を取得しています。外部サイトから読むため、失敗する場合があります。"
+          hint="しばらく待っても進まない場合は、前の画面に戻って別のニュースサイトを試してください。"
+        />
+      }
+    >
       <Show when={!error()} fallback={
         <div class="grid-container" role="alert" aria-live="assertive">
           <div class="grid-item" style={{ "grid-column": '1 / -1', "grid-row": '1 / -1' }}>エラー: {error()}</div>

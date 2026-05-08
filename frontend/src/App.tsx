@@ -28,6 +28,7 @@ import type { Favorite } from './lib/favorites';
 import type { Progress } from './lib/progress';
 import type { RadioStation } from './lib/radio';
 import type { AutoplayItem } from './lib/autoplay';
+import { FORMAL_SERVICE_NAMES, getFeatureStatusSummary } from './lib/service-copy';
 
 type Page = 'main' | 'news' | 'sns' | 'settings' | 'help' | 'tools' | 'audio' |
             'hatena-comments' | '5ch-boards' | '5ch-threads' | '5ch-posts' |
@@ -69,7 +70,10 @@ export default function App() {
         }
       }
 
-      message += 'キーボードの任意のキーを押してキーボードモードに切り替えるか、画面をタップして操作してください。';
+      message +=
+        `Esuna では、${FORMAL_SERVICE_NAMES.hatena}、${FORMAL_SERVICE_NAMES.rss}、${FORMAL_SERVICE_NAMES.fivech}、` +
+        `${FORMAL_SERVICE_NAMES.aozora}、${FORMAL_SERVICE_NAMES.podcast}、${FORMAL_SERVICE_NAMES.radio} を音声中心で利用できます。` +
+        'キーボードの任意のキーを押してキーボードモードに切り替えるか、画面をタップして操作してください。';
       manager.speak(message, {
         rate: settings.speech.rate,
         pitch: settings.speech.pitch,
@@ -88,13 +92,13 @@ export default function App() {
   };
 
   const mainMenuActions = () => [
-    { label: 'はてブ', action: () => { navigateTo('news'); store.setContentType('hatena-hot'); speechManager()?.speak('はてなブックマーク 人気エントリーに移動しました'); } },
-    { label: 'SNS', action: () => { navigateTo('sns'); store.setContentType('sns'); speechManager()?.speak('SNS投稿に移動しました'); } },
-    { label: '5ch', action: () => { navigateTo('5ch-boards'); speechManager()?.speak('5ちゃんねる 板一覧に移動しました'); } },
-    { label: 'ニュース', action: () => { navigateTo('rss-feeds'); speechManager()?.speak('RSSニュース フィード一覧に移動しました'); } },
-    { label: '小説', action: () => { navigateTo('novel-list'); store.setContentType('novel'); speechManager()?.speak('青空文庫 小説一覧に移動しました'); } },
-    { label: 'オーディオ', action: () => { navigateTo('audio'); speechManager()?.speak('オーディオメニューに移動しました。Podcastとラジオが利用できます'); } },
-    { label: 'ツール', action: () => { navigateTo('tools'); speechManager()?.speak('ツールメニューに移動しました。お気に入り、続きから再生、音声メモ、タイマーが利用できます'); } },
+    { label: 'はてな\nブックマーク', action: () => { navigateTo('news'); store.setContentType('hatena-hot'); speechManager()?.speak(`はてなブックマークへ移動しました。${getFeatureStatusSummary('hatena')}`); } },
+    { label: 'Mastodon /\nBluesky\n試験表示', action: () => { navigateTo('sns'); store.setContentType('sns'); speechManager()?.speak(`Mastodon と Bluesky の画面へ移動しました。${getFeatureStatusSummary('sns')}`); } },
+    { label: '5ちゃんねる', action: () => { navigateTo('5ch-boards'); speechManager()?.speak(`5ちゃんねるへ移動しました。${getFeatureStatusSummary('fivech')}`); } },
+    { label: 'RSS\nニュース', action: () => { navigateTo('rss-feeds'); speechManager()?.speak(`RSSニュースへ移動しました。${getFeatureStatusSummary('rss')}`); } },
+    { label: '青空文庫\n不安定', action: () => { navigateTo('novel-list'); store.setContentType('novel'); speechManager()?.speak(`青空文庫へ移動しました。${getFeatureStatusSummary('aozora')}`); } },
+    { label: 'Podcast /\nラジオ', action: () => { navigateTo('audio'); speechManager()?.speak(`音声番組メニューへ移動しました。${getFeatureStatusSummary('podcast')} ${getFeatureStatusSummary('radio')}`); } },
+    { label: '保存 / 補助', action: () => { navigateTo('tools'); speechManager()?.speak('保存と補助のメニューへ移動しました。お気に入り、続きから再開、音声メモ、タイマー、おまかせモードを使えます。'); } },
     { label: '設定', action: () => { navigateTo('settings'); speechManager()?.speak('設定ページに移動しました'); } },
     { label: '停止', action: () => { speechManager()?.stop(); } },
   ];
@@ -112,20 +116,21 @@ export default function App() {
       action: () => {
         speechManager()?.speak(
           'Esuna バージョン 0.6.0。視覚障害者向けアクセシブルWebアプリケーション。' +
-          'はてなブックマーク、SNS、5ちゃんねる、RSSニュース、青空文庫、Podcast、ラジオ、' +
-          'お気に入り、続きから再生、音声メモ、タイマー、おまかせモードが利用できます。'
+          `${FORMAL_SERVICE_NAMES.hatena}、${FORMAL_SERVICE_NAMES.sns}、${FORMAL_SERVICE_NAMES.fivech}、` +
+          `${FORMAL_SERVICE_NAMES.rss}、${FORMAL_SERVICE_NAMES.aozora}、${FORMAL_SERVICE_NAMES.podcast}、` +
+          `${FORMAL_SERVICE_NAMES.radio}、お気に入り、続きから再開、音声メモ、タイマー、おまかせモードが利用できます。`
         );
       },
     },
-    { label: '読み上げ', action: () => { speechManager()?.speak('ツールメニュー。お気に入り、続きから再生、音声メモ、タイマー、おまかせ、ヘルプ、情報、読み上げ、停止が利用できます'); } },
+    { label: '読み上げ', action: () => { speechManager()?.speak('保存と補助のメニューです。お気に入り、続きから再開、音声メモ、タイマー、おまかせモード、ヘルプ、情報、読み上げ、停止が利用できます。'); } },
     { label: '停止', action: () => { speechManager()?.stop(); } },
   ];
 
   const audioMenuActions = () => [
     { label: '戻る', action: () => { navigateTo('main'); speechManager()?.speak('メインメニューに戻りました'); } },
-    { label: 'Podcast', action: () => { navigateTo('podcast-list'); store.setContentType('podcast'); speechManager()?.speak('Podcast一覧に移動しました'); } },
-    { label: 'ラジオ', action: () => { navigateTo('radio-stations'); speechManager()?.speak('ラジオ局一覧に移動しました'); } },
-    { label: '読み上げ', action: () => { speechManager()?.speak('オーディオメニュー。Podcast、ラジオ、読み上げ、停止が利用できます'); } },
+    { label: 'Podcast', action: () => { navigateTo('podcast-list'); store.setContentType('podcast'); speechManager()?.speak(`Podcast 一覧へ移動しました。${getFeatureStatusSummary('podcast')}`); } },
+    { label: 'ラジオ', action: () => { navigateTo('radio-stations'); speechManager()?.speak(`ラジオ一覧へ移動しました。${getFeatureStatusSummary('radio')}`); } },
+    { label: '読み上げ', action: () => { speechManager()?.speak(`音声番組メニューです。Podcast とラジオを選べます。${getFeatureStatusSummary('radio')}`); } },
     { label: '停止', action: () => { speechManager()?.stop(); } },
     { label: '', action: () => {} },
     { label: '', action: () => {} },
@@ -156,7 +161,7 @@ export default function App() {
   const helpActions = () => [
     { label: '戻る', action: () => { navigateTo('main'); speechManager()?.speak('メインメニューに戻りました'); } },
     { label: '操作方法', action: () => { speechManager()?.speak('操作方法を説明します。画面は9つのエリアに分かれています。数字の1から9のキーで直接選択するか、矢印キーで移動してEnterキーで決定できます。Escapeキーで読み上げを停止できます。'); } },
-    { label: '機能説明', action: () => { speechManager()?.speak('利用可能な機能を説明します。はてブ：はてなブックマークの人気エントリーとコメントを閲覧できます。SNS：Twitter、Mastodon、Blueskyの投稿を閲覧できます。5ch：5ちゃんねるの板、スレッド、投稿を閲覧できます。'); } },
+    { label: '機能説明', action: () => { speechManager()?.speak(`利用可能な機能を説明します。${FORMAL_SERVICE_NAMES.hatena}では人気エントリーとコメントを確認できます。${FORMAL_SERVICE_NAMES.sns} は現在試験表示で、X には未対応です。${FORMAL_SERVICE_NAMES.fivech}では板、スレッド、レスを確認できます。${FORMAL_SERVICE_NAMES.aozora}は現在不安定です。`); } },
     { label: 'キーボード', action: () => { speechManager()?.speak('キーボード操作を説明します。1から9キー：各エリアを直接選択。矢印キー：エリア間を移動。Enterキー：選択したエリアを実行。Escapeキー：読み上げ停止または前のページに戻る。'); } },
     { label: 'タッチ', action: () => { speechManager()?.speak('タッチ操作を説明します。画面をタップ：そのエリアを選択して実行。ダブルタップ：再度実行。'); } },
     { label: '音声', action: () => { speechManager()?.speak('音声機能を説明します。すべての操作は音声でガイダンスされます。設定から読み上げ速度とピッチを調整できます。停止ボタンでいつでも読み上げを停止できます。'); } },
@@ -194,10 +199,10 @@ export default function App() {
           <main><NovelList speech={speechManager()!} onBack={() => { navigateTo('main'); speechManager()!.speak('メインメニューに戻りました'); }} onSelectNovel={() => { navigateTo('novel-content'); }} /></main>
         </Match>
         <Match when={currentPage() === 'novel-content'}>
-          <main><NovelReader speech={speechManager()!} onBack={() => { navigateTo('novel-list'); speechManager()!.speak('小説一覧に戻りました'); }} /></main>
+          <main><NovelReader speech={speechManager()!} onBack={() => { navigateTo('novel-list'); speechManager()!.speak('青空文庫の作品一覧に戻りました'); }} /></main>
         </Match>
         <Match when={currentPage() === 'podcast-list'}>
-          <main><PodcastList speech={speechManager()!} onBack={() => { navigateTo('audio'); speechManager()!.speak('オーディオメニューに戻りました'); }} onSelectPodcast={() => { navigateTo('podcast-episodes'); }} /></main>
+          <main><PodcastList speech={speechManager()!} onBack={() => { navigateTo('audio'); speechManager()!.speak('音声番組メニューに戻りました'); }} onSelectPodcast={() => { navigateTo('podcast-episodes'); }} /></main>
         </Match>
         <Match when={currentPage() === 'podcast-episodes'}>
           <main><PodcastPlayer speech={speechManager()!} onBack={() => { navigateTo('podcast-list'); speechManager()!.speak('Podcast一覧に戻りました'); }} /></main>
@@ -216,8 +221,8 @@ export default function App() {
                 else { navigateTo('podcast-list'); speechManager()!.speak('Podcast一覧に移動しました'); }
                 break;
               case 'novel':
-                if (favorite.data?.authorId && favorite.data?.fileId) { store.setSelectedNovel(favorite.data); navigateTo('novel-content'); speechManager()!.speak(`小説「${favorite.title}」を開きます`); }
-                else { navigateTo('novel-list'); speechManager()!.speak('小説一覧に移動しました'); }
+                if (favorite.data?.authorId && favorite.data?.fileId) { store.setSelectedNovel(favorite.data); navigateTo('novel-content'); speechManager()!.speak(`青空文庫の「${favorite.title}」を開きます。現在は取得が不安定です`); }
+                else { navigateTo('novel-list'); speechManager()!.speak('青空文庫の作品一覧に移動しました'); }
                 break;
               case 'rss-feed':
                 navigateTo('rss-articles'); speechManager()!.speak(`RSSフィード「${favorite.title}」を開きます`);
@@ -247,8 +252,8 @@ export default function App() {
                   store.setSelectedNovel(progress.data);
                   setTimeout(() => { store.setCurrentSectionIndex(progress.currentIndex); }, 100);
                   navigateTo('novel-content');
-                  speechManager()!.speak(`小説「${progress.title}」の続きから再生します。${progress.currentIndex + 1}番目のセクションからです`);
-                } else { navigateTo('novel-list'); speechManager()!.speak('小説一覧に移動しました'); }
+                  speechManager()!.speak(`青空文庫の「${progress.title}」を途中から開きます。${progress.currentIndex + 1}番目の区切りからです。現在は取得が不安定です`);
+                } else { navigateTo('novel-list'); speechManager()!.speak('青空文庫の作品一覧に移動しました'); }
                 break;
               case 'podcast':
                 if (progress.data?.feedUrl) {
@@ -286,7 +291,7 @@ export default function App() {
           <main><GridSystem actions={audioMenuActions()} speech={speechManager()!} /></main>
         </Match>
         <Match when={currentPage() === 'radio-stations'}>
-          <main><RadioStationList speech={speechManager()!} onBack={() => { navigateTo('audio'); speechManager()!.speak('オーディオメニューに戻りました'); }} onSelectStation={(station: RadioStation) => { setSelectedRadioStation(station); navigateTo('radio-player'); }} /></main>
+          <main><RadioStationList speech={speechManager()!} onBack={() => { navigateTo('audio'); speechManager()!.speak('音声番組メニューに戻りました'); }} onSelectStation={(station: RadioStation) => { setSelectedRadioStation(station); navigateTo('radio-player'); }} /></main>
         </Match>
         <Match when={currentPage() === 'radio-player'}>
           <Show when={selectedRadioStation()} fallback={null}>
@@ -294,7 +299,7 @@ export default function App() {
           </Show>
         </Match>
         <Match when={currentPage() === 'autoplay-settings'}>
-          <main><AutoplaySettings speech={speechManager()!} onBack={() => { navigateTo('tools'); speechManager()!.speak('ツールメニューに戻りました'); }} onStartAutoplay={() => { navigateTo('autoplay-player'); }} /></main>
+          <main><AutoplaySettings speech={speechManager()!} onBack={() => { navigateTo('tools'); speechManager()!.speak('保存と補助のメニューに戻りました'); }} onStartAutoplay={() => { navigateTo('autoplay-player'); }} /></main>
         </Match>
         <Match when={currentPage() === 'autoplay-player'}>
           <main><AutoplayPlayer speech={speechManager()!} onBack={() => { navigateTo('autoplay-settings'); speechManager()!.speak('おまかせ設定に戻りました'); }} onNavigateToContent={(item: AutoplayItem) => {

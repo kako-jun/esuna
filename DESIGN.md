@@ -4,7 +4,7 @@ esuna — Design System
 
 ## 1. Visual Theme & Atmosphere
 
-Famicom Final Fantasy menu UI. A full-screen 3x3 grid on deep navy, bordered by double white/blue lines, with pixel font text. Audio is the primary interface — visual design serves as secondary feedback for an accessibility-first tool. The retro game aesthetic is deliberate: it creates a recognizable, memorable identity while the high-contrast navy/white palette ensures readability for low-vision users.
+Audio-first 3x3 navigation UI. A full-screen grid on deep navy, with only 1px divider lines between cells and no outer frame or dead margin. The center cell is larger than the surrounding eight cells so that the main content preview is easier to hit and easier for a sighted helper to inspect. Audio is the primary interface, and the visual layer exists to expose current state and current content at a glance.
 
 Dark theme only. No light mode. No smooth transitions.
 
@@ -56,10 +56,10 @@ Line height: `1.6` in grid items. `white-space: pre-wrap`, `word-break: break-wo
 
 ```css
 display: grid;
-grid-template-columns: 1fr 1fr 1fr;
-grid-template-rows: 1fr 1fr 1fr;
-gap: 3px;    /* --ff-gap dark navy lines */
-padding: 8px;
+grid-template-columns: minmax(0, 1fr) minmax(0, 1.8fr) minmax(0, 1fr);
+grid-template-rows: minmax(0, 1fr) minmax(0, 1.8fr) minmax(0, 1fr);
+gap: 1px;
+padding: 0;
 ```
 
 Full viewport: `100vw × 100vh`, `overflow: hidden`.
@@ -80,11 +80,11 @@ Full viewport: `100vw × 100vh`, `overflow: hidden`.
 - Position: absolute left `6px`, vertically centered
 - Animation: `ff-blink 0.8s step-end infinite`
 
-### Double-Border Frame (Outer Container)
+### Outer Edge
 
-- Outer: `3px solid #ffffff`
-- Inner: `6px solid #000066` (outline with `-9px` offset)
-- Creates authentic FC FF double-line effect
+- No outer frame
+- No margin around the 3x3 grid
+- The grid should touch the viewport edges directly
 
 ### Status Bar
 
@@ -106,9 +106,9 @@ Full viewport: `100vw × 100vh`, `overflow: hidden`.
 
 ### Grid Sizing
 
-- All cells equal: `1fr × 1fr`
-- Gap: `3px` (dark navy separator)
-- Container padding: `8px`
+- Center cell is larger than the outer eight cells
+- Divider lines are `1px`
+- Container padding: `0`
 - No max-width constraint
 
 ### Spacing
@@ -116,7 +116,7 @@ Full viewport: `100vw × 100vh`, `overflow: hidden`.
 Minimal. The grid fills everything.
 
 - Status bar padding: `6px 16px`
-- Grid container padding: `8px`
+- Grid container padding: `0`
 
 ## 6. Depth & Elevation
 
@@ -140,7 +140,8 @@ None. Sharp rectangles everywhere — pixel-accurate to FC FF.
 ### Do
 
 - Use `Press Start 2P` pixel font everywhere
-- Apply double-border frame (white outer + blue inner) on containers
+- Keep the grid flush with the viewport edges
+- Make the center cell larger than the surrounding cells
 - Use `step-end` timing for all animations — no smooth transitions
 - Keep the 3x3 grid as the sole navigation structure
 - Map keyboard numbers 1-9 directly to grid cells
@@ -154,7 +155,7 @@ None. Sharp rectangles everywhere — pixel-accurate to FC FF.
 - Use border-radius on any element
 - Add colors outside the navy/white/blue palette
 - Create scrollable content — everything fits in viewport
-- Use non-pixel fonts
+- Use non-pixel fonts unless the accessibility direction changes
 - Add shadows or gradients
 
 ### Animations

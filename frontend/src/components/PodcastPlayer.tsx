@@ -3,6 +3,8 @@ import { useAppStore } from '../lib/store';
 import { fetchPodcastEpisodes } from '../lib/api-client';
 import { SpeechManager } from '../lib/speech';
 import GridSystem from './GridSystem';
+import StatusMessage from './StatusMessage';
+import { FORMAL_SERVICE_NAMES, previewText } from '../lib/service-copy';
 
 interface PodcastPlayerProps {
   speech: SpeechManager;
@@ -28,19 +30,19 @@ export default function PodcastPlayer(props: PodcastPlayerProps) {
 
   const loadEpisodes = async () => {
     const selectedPodcast = store.state.selectedPodcast;
-    if (!selectedPodcast) { props.speech.speak('Podcastが選択されていません'); props.onBack(); return; }
+    if (!selectedPodcast) { props.speech.speak(`${FORMAL_SERVICE_NAMES.podcast} が選択されていません`); props.onBack(); return; }
     setLoading(true); setError(null);
     try {
       const episodes = await fetchPodcastEpisodes(selectedPodcast.feedUrl, 10);
       store.setPodcastEpisodes(episodes);
       setTimeout(() => {
-        props.speech.speak(`${selectedPodcast.title}のエピソード、${episodes.length}件を読み込みました。最新のエピソードから説明します`);
+        props.speech.speak(`${selectedPodcast.title} のエピソードを${episodes.length}件読み込みました。最新のエピソードから説明します`);
         setTimeout(() => speakEpisode(), 2000);
       }, 500);
     } catch (err) {
       console.error('Failed to load episodes:', err);
-      setError('エピソードの読み込みに失敗しました');
-      props.speech.speak('エピソードの読み込みに失敗しました。戻ります');
+      setError(`${selectedPodcast.title} のエピソードを取得できませんでした。番組によっては失敗します。前の画面に戻ります`);
+      props.speech.speak(`${selectedPodcast.title} のエピソードを取得できませんでした。番組によっては失敗します。前の画面に戻ります`);
       setTimeout(props.onBack, 2000);
     } finally {
       setLoading(false);
@@ -74,8 +76,13 @@ export default function PodcastPlayer(props: PodcastPlayerProps) {
     { label: '戻る', action: () => { props.speech.stop(); stopAudio(); store.setPodcastEpisodes([]); props.onBack(); } },
     { label: '前のエピソード', action: () => { if (store.state.currentEpisodeIndex > 0) { stopAudio(); audioRef = null; store.prevEpisode(); setTimeout(speakEpisode, 100); } else { props.speech.speak('最初のエピソードです'); } } },
     { label: '次のエピソード', action: () => { if (store.state.currentEpisodeIndex < store.state.podcastEpisodes.length - 1) { stopAudio(); audioRef = null; store.nextEpisode(); setTimeout(speakEpisode, 100); } else { props.speech.speak('最後のエピソードです'); } } },
-    { label: '説明', action: speakEpisode },
     { label: isPlaying() ? '一時停止' : '再生', action: playAudio },
+    {
+      label: store.getCurrentEpisode()
+        ? `${store.getCurrentEpisode()!.title}\n${previewText(store.getCurrentEpisode()!.description, 58)}`
+        : 'エピソードなし',
+      action: speakEpisode,
+    },
     { label: '停止', action: stopAudio },
     { label: '位置', action: () => { props.speech.speak(`全${store.state.podcastEpisodes.length}エピソード中、${store.state.currentEpisodeIndex + 1}番目のエピソードです`); } },
     { label: '番組情報', action: () => { const p = store.state.selectedPodcast; if (p) { props.speech.speak(`番組名：${p.title}。カテゴリ：${p.category}。全${store.state.podcastEpisodes.length}エピソード`); } } },
@@ -83,7 +90,16 @@ export default function PodcastPlayer(props: PodcastPlayerProps) {
   ];
 
   return (
-    <Show when={!loading()} fallback={<div class="p-4 text-center">エピソードを読み込んでいます...</div>}>
+    <Show
+      when={!loading()}
+      fallback={
+        <StatusMessage
+          title={`${FORMAL_SERVICE_NAMES.podcast} を開いています`}
+          message={`${store.state.selectedPodcast?.title || '番組'} のエピソード一覧を取得しています。番組によっては取得に失敗します。`}
+          hint="しばらく待っても進まない場合は、前の画面に戻って別の番組を試してください。"
+        />
+      }
+    >
       <Show when={!error()} fallback={
         <div class="grid-container" role="alert" aria-live="assertive">
           <div class="grid-item" style={{ "grid-column": '1 / -1', "grid-row": '1 / -1' }}>エラー: {error()}</div>

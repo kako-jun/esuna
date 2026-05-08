@@ -62,17 +62,16 @@ body {
    ============================================================ */
 .grid-container {
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  grid-template-rows: 1fr 1fr 1fr;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.8fr) minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr) minmax(0, 1.8fr) minmax(0, 1fr);
   height: 100vh;
   width: 100vw;
-  gap: 3px;
-  background: var(--ff-gap);   /* narrow dark lines between cells */
-  padding: 8px;                /* outer margin — like an FF menu box */
-  /* Outer white border + inner blue-tint border = FF double-border */
-  border: 3px solid var(--ff-border);
-  outline: 6px solid var(--ff-panel-dark);
-  outline-offset: -9px;
+  gap: 1px;
+  background: var(--ff-border-inner);
+  padding: 0;
+  border: 0;
+  outline: 0;
+  touch-action: manipulation;
 }
 
 /* ============================================================
@@ -81,10 +80,8 @@ body {
 .grid-item {
   background: var(--ff-panel);
   color: var(--ff-text);
-  /* Double-border: outer white, inner blue-tint */
-  border: 2px solid var(--ff-border);
-  outline: 2px solid var(--ff-border-inner);
-  outline-offset: -4px;
+  border: 0;
+  outline: 0;
 
   display: flex;
   align-items: center;
@@ -96,6 +93,9 @@ body {
   line-height: 1.6;
   white-space: pre-wrap;
   word-break: break-word;
+  min-width: 0;
+  min-height: 0;
+  padding: 8px;
 
   cursor: pointer;
   position: relative;
@@ -113,9 +113,7 @@ body {
 /* Focus state — bright white focus indicator for keyboard navigation */
 .grid-item:focus {
   background: var(--ff-selected-bg);
-  box-shadow: inset 0 0 0 3px var(--ff-cursor);
-  outline: 2px solid var(--ff-border-inner);
-  outline-offset: -4px;
+  box-shadow: inset 0 0 0 2px var(--ff-cursor);
 }
 
 /* Active / selected state — like the FF cursor being on this item */
@@ -141,7 +139,6 @@ body {
   opacity: 1 !important;
   background: var(--ff-panel-dark);
   color: var(--ff-text-dim);
-  border-color: var(--ff-border-inner);
   cursor: default;
 }
 
@@ -183,3 +180,40 @@ body {
 .w-screen { width: 100vw; }
 .p-4 { padding: 1rem; }
 .text-center { text-align: center; }
+
+.status-message {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100vw;
+  height: 100vh;
+  padding: 24px;
+  background: var(--ff-bg);
+}
+
+.status-message__panel {
+  width: min(720px, 100%);
+  padding: 24px;
+  background: var(--ff-panel);
+  border: 2px solid var(--ff-border);
+  outline: 2px solid var(--ff-border-inner);
+  outline-offset: -4px;
+}
+
+.status-message__title {
+  margin-bottom: 16px;
+  font-size: clamp(1rem, 2vw, 1.4rem);
+  line-height: 1.6;
+}
+
+.status-message__body,
+.status-message__hint {
+  font-size: clamp(0.75rem, 1.6vw, 1rem);
+  line-height: 1.9;
+  white-space: pre-wrap;
+}
+
+.status-message__hint {
+  margin-top: 16px;
+  color: var(--ff-text-dim);
+}

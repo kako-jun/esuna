@@ -25,10 +25,23 @@ export default function GridSystem(props: GridSystemProps) {
     }
   });
 
-  const handleItemClick = (action: GridAction, index: number) => {
+  const announceItem = (action: GridAction, index: number) => {
     setSelectedIndex(index);
     props.speech.speak(`${index + 1}番、${action.label}`);
+  };
+
+  const executeItem = (action: GridAction, index: number) => {
+    setSelectedIndex(index);
     action.action();
+  };
+
+  const handleItemClick = (action: GridAction, index: number) => {
+    if (selectedIndex() === index) {
+      executeItem(action, index);
+      return;
+    }
+
+    announceItem(action, index);
   };
 
   const handleKeyDown = (event: KeyboardEvent) => {
@@ -47,7 +60,7 @@ export default function GridSystem(props: GridSystemProps) {
         if (currentIndex % 3 < 2 && currentIndex + 1 < props.actions.length) {
           const newIndex = currentIndex + 1;
           setSelectedIndex(newIndex);
-          props.speech.speak(`${newIndex + 1}番、${props.actions[newIndex].label}`);
+          announceItem(props.actions[newIndex], newIndex);
         }
         break;
       case 'ArrowLeft':
@@ -55,7 +68,7 @@ export default function GridSystem(props: GridSystemProps) {
         if (currentIndex % 3 > 0) {
           const newIndex = currentIndex - 1;
           setSelectedIndex(newIndex);
-          props.speech.speak(`${newIndex + 1}番、${props.actions[newIndex].label}`);
+          announceItem(props.actions[newIndex], newIndex);
         }
         break;
       case 'ArrowDown':
@@ -64,7 +77,7 @@ export default function GridSystem(props: GridSystemProps) {
           const newIndex = currentIndex + 3;
           if (newIndex < 9 && newIndex < props.actions.length) {
             setSelectedIndex(newIndex);
-            props.speech.speak(`${newIndex + 1}番、${props.actions[newIndex].label}`);
+            announceItem(props.actions[newIndex], newIndex);
           }
         }
         break;
@@ -73,7 +86,7 @@ export default function GridSystem(props: GridSystemProps) {
         if (currentIndex >= 3) {
           const newIndex = currentIndex - 3;
           setSelectedIndex(newIndex);
-          props.speech.speak(`${newIndex + 1}番、${props.actions[newIndex].label}`);
+          announceItem(props.actions[newIndex], newIndex);
         }
         break;
       case 'Enter':
@@ -82,7 +95,7 @@ export default function GridSystem(props: GridSystemProps) {
         {
           const sel = selectedIndex();
           if (sel !== null && props.actions[sel]) {
-            handleItemClick(props.actions[sel], sel);
+            executeItem(props.actions[sel], sel);
           }
         }
         break;
@@ -96,8 +109,8 @@ export default function GridSystem(props: GridSystemProps) {
         event.preventDefault();
         const numIndex = parseInt(event.key) - 1;
         if (props.actions[numIndex]) {
-          setSelectedIndex(numIndex);
-          handleItemClick(props.actions[numIndex], numIndex);
+          announceItem(props.actions[numIndex], numIndex);
+          executeItem(props.actions[numIndex], numIndex);
         }
         break;
       }
@@ -120,7 +133,7 @@ export default function GridSystem(props: GridSystemProps) {
       onKeyDown={handleKeyDown}
       tabIndex={0}
       role="grid"
-      aria-label="操作パネル（1〜9キーで直接選択、矢印キーで移動、Enterで実行、Escapeで停止）"
+      aria-label="操作パネル（タップで項目を確認、もう一度同じ場所をタップで実行。1〜9キーで直接選択、矢印キーで移動、Enterで実行、Escapeで停止）"
       aria-activedescendant={selectedIndex() !== null ? `${gridId}-cell-${selectedIndex()}` : undefined}
     >
       <For each={Array.from({ length: 9 }, (_, i) => i)}>

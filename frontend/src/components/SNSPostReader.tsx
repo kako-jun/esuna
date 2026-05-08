@@ -4,6 +4,7 @@ import { fetchSNSPosts } from '../lib/api-client';
 import { SpeechManager } from '../lib/speech';
 import { useAutoNavigation } from '../lib/useAutoNavigation';
 import GridSystem from './GridSystem';
+import { FORMAL_SERVICE_NAMES, previewText } from '../lib/service-copy';
 
 interface SNSPostReaderProps {
   speech: SpeechManager;
@@ -13,7 +14,7 @@ interface SNSPostReaderProps {
 export default function SNSPostReader(props: SNSPostReaderProps) {
   const store = useAppStore();
   const [loading, setLoading] = createSignal(false);
-  const [platform, setPlatform] = createSignal<'twitter' | 'mastodon' | 'bluesky'>('twitter');
+  const [platform, setPlatform] = createSignal<'mastodon' | 'bluesky'>('mastodon');
 
   onMount(() => {
     if (store.state.snsPosts.length === 0) {
@@ -26,10 +27,10 @@ export default function SNSPostReader(props: SNSPostReaderProps) {
     try {
       const posts = await fetchSNSPosts(platform(), undefined, 20);
       store.setSNSPosts(posts);
-      props.speech.speak(`${posts.length}件の投稿を読み込みました`);
+      props.speech.speak(`${platform() === 'mastodon' ? 'Mastodon' : 'Bluesky'} の投稿を${posts.length}件読み込みました。現在は試験表示です。`);
     } catch (err) {
       console.error('Failed to load posts:', err);
-      props.speech.speak('投稿の読み込みに失敗しました');
+      props.speech.speak(`${platform() === 'mastodon' ? 'Mastodon' : 'Bluesky'} の投稿を取得できませんでした。現在この機能は試験中です。`);
     } finally {
       setLoading(false);
     }
@@ -67,11 +68,11 @@ export default function SNSPostReader(props: SNSPostReaderProps) {
     {
       label: 'プラットフォーム切替',
       action: () => {
-        const platforms: Array<'twitter' | 'mastodon' | 'bluesky'> = ['twitter', 'mastodon', 'bluesky'];
+        const platforms: Array<'mastodon' | 'bluesky'> = ['mastodon', 'bluesky'];
         const currentIndex = platforms.indexOf(platform());
         const nextPlatform = platforms[(currentIndex + 1) % platforms.length];
         setPlatform(nextPlatform);
-        props.speech.speak(`${nextPlatform}に切り替えました`);
+        props.speech.speak(`${nextPlatform === 'mastodon' ? 'Mastodon' : 'Bluesky'} に切り替えました。現在は試験表示です。X には未対応です。`);
       },
     },
     {
@@ -81,7 +82,14 @@ export default function SNSPostReader(props: SNSPostReaderProps) {
         else { props.speech.speak('最初の投稿です'); }
       },
     },
-    { label: loading() ? '読み込み中...' : store.getCurrentSNSPost() ? `${store.getCurrentSNSPost()!.author}（サンプル）` : '投稿なし', action: speakPost },
+    {
+      label: loading()
+        ? '取得中'
+        : store.getCurrentSNSPost()
+          ? `${store.getCurrentSNSPost()!.author}\n${previewText(store.getCurrentSNSPost()!.text, 58)}`
+          : '投稿なし',
+      action: speakPost,
+    },
     {
       label: '次の投稿',
       action: () => {
@@ -97,7 +105,7 @@ export default function SNSPostReader(props: SNSPostReaderProps) {
   return (
     <div class="h-screen w-screen">
       <GridSystem actions={actions()} speech={props.speech} onInit={() => {
-        props.speech.speak(`SNS投稿 現在${platform()}を表示中。※現在はサンプルデータを表示しています`);
+        props.speech.speak(`${FORMAL_SERVICE_NAMES.sns} の画面です。現在は試験表示です。X には未対応です。`);
         if (store.state.snsPosts.length > 0) props.speech.speak(`${store.state.snsPosts.length}件の投稿があります`);
       }} />
     </div>

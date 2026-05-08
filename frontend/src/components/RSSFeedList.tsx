@@ -2,6 +2,7 @@ import { createSignal, onMount } from 'solid-js';
 import { RSSReader } from '../lib/rss';
 import { SpeechManager } from '../lib/speech';
 import GridSystem from './GridSystem';
+import { FORMAL_SERVICE_NAMES } from '../lib/service-copy';
 
 interface RSSFeedListProps {
   speech: SpeechManager;
@@ -16,7 +17,7 @@ export default function RSSFeedList(props: RSSFeedListProps) {
 
   onMount(() => {
     setTimeout(() => {
-      props.speech.speak(`RSSフィード、${defaultFeeds.length}個のニュースサイトを用意しています`);
+      props.speech.speak(`${FORMAL_SERVICE_NAMES.rss} の一覧です。${defaultFeeds.length}個のニュースサイトを並べています。外部サイトから取得するため、失敗する場合があります。`);
       setTimeout(speakFeed, 2000);
     }, 500);
   });
@@ -49,7 +50,7 @@ export default function RSSFeedList(props: RSSFeedListProps) {
       action: () => {
         const feed = defaultFeeds[currentIndex()];
         if (typeof window !== 'undefined') { sessionStorage.setItem('selectedRSSFeed', JSON.stringify(feed)); }
-        props.speech.speak(`${feed.name} の記事一覧を読み込んでいます`);
+        props.speech.speak(`${feed.name} の記事一覧を開いています。外部サイトから取得するため、少し待ってください。`);
         props.onSelectFeed();
       },
     },

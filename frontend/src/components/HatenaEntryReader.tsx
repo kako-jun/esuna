@@ -4,6 +4,7 @@ import { fetchHatenaHot, fetchHatenaLatest } from '../lib/api-client';
 import { SpeechManager } from '../lib/speech';
 import { useAutoNavigation } from '../lib/useAutoNavigation';
 import GridSystem from './GridSystem';
+import { previewText } from '../lib/service-copy';
 
 interface HatenaEntryReaderProps {
   speech: SpeechManager;
@@ -112,7 +113,11 @@ export default function HatenaEntryReader(props: HatenaEntryReaderProps) {
       },
     },
     {
-      label: loading() ? '読み込み中...' : store.getCurrentEntry() ? store.getCurrentEntry()!.title.slice(0, 15) : 'エントリーなし',
+      label: loading()
+        ? '取得中'
+        : store.getCurrentEntry()
+          ? `${store.getCurrentEntry()!.title}\n${previewText(store.getCurrentEntry()!.description, 56)}`
+          : 'エントリーなし',
       action: speakEntry,
     },
     {

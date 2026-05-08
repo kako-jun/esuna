@@ -4,6 +4,8 @@ import { fetchNovelContent } from '../lib/api-client';
 import { SpeechManager } from '../lib/speech';
 import { useAutoNavigation } from '../lib/useAutoNavigation';
 import GridSystem from './GridSystem';
+import StatusMessage from './StatusMessage';
+import { FORMAL_SERVICE_NAMES, previewText } from '../lib/service-copy';
 
 interface NovelReaderProps {
   speech: SpeechManager;
@@ -23,19 +25,19 @@ export default function NovelReader(props: NovelReaderProps) {
 
   const loadNovel = async () => {
     const selectedNovel = store.state.selectedNovel;
-    if (!selectedNovel) { props.speech.speak('小説が選択されていません'); props.onBack(); return; }
+    if (!selectedNovel) { props.speech.speak(`${FORMAL_SERVICE_NAMES.aozora} の作品が選択されていません`); props.onBack(); return; }
     setLoading(true); setError(null);
     try {
       const content = await fetchNovelContent(selectedNovel.authorId, selectedNovel.fileId);
       store.setNovelContent(content);
       setTimeout(() => {
-        props.speech.speak(`${content.title} を読み込みました。全${content.sections.length}セクションあります。最初のセクションから読み上げます`);
+        props.speech.speak(`${FORMAL_SERVICE_NAMES.aozora} の「${content.title}」を開きました。全${content.sections.length}個の区切りがあります。最初から読み上げます`);
         setTimeout(() => speakSection(), 2000);
       }, 500);
     } catch (err) {
       console.error('Failed to load novel:', err);
-      setError('小説の読み込みに失敗しました');
-      props.speech.speak('小説の読み込みに失敗しました。戻ります');
+      setError(`${FORMAL_SERVICE_NAMES.aozora} の取得に失敗しました。現在この機能は不安定です。前の画面に戻ります`);
+      props.speech.speak(`${FORMAL_SERVICE_NAMES.aozora} の取得に失敗しました。現在この機能は不安定です。前の画面に戻ります`);
       setTimeout(props.onBack, 2000);
     } finally {
       setLoading(false);
@@ -64,8 +66,13 @@ export default function NovelReader(props: NovelReaderProps) {
     { label: '戻る', action: () => { props.speech.stop(); store.setNovelContent(null); props.onBack(); } },
     { label: '前のセクション', action: () => { if (store.state.currentSectionIndex > 0) { store.prevSection(); setTimeout(speakSection, 100); } else { props.speech.speak('最初のセクションです'); } } },
     { label: '次のセクション', action: () => { if (store.state.novelContent && store.state.currentSectionIndex < store.state.novelContent.sections.length - 1) { store.nextSection(); setTimeout(speakSection, 100); } else { props.speech.speak('最後のセクションです'); } } },
-    { label: '読み上げ', action: () => speakSection() },
     { label: '位置', action: () => { if (store.state.novelContent) { props.speech.speak(`全${store.state.novelContent.sections.length}セクション中、${store.state.currentSectionIndex + 1}番目のセクションです`); } } },
+    {
+      label: store.getCurrentSection()
+        ? `${store.getCurrentSection()!.title || `区切り ${store.state.currentSectionIndex + 1}`}\n${previewText(store.getCurrentSection()!.content, 58)}`
+        : '本文なし',
+      action: () => speakSection(),
+    },
     { label: '作品情報', action: () => { if (store.state.novelContent && store.state.selectedNovel) { props.speech.speak(`タイトル：${store.state.novelContent.title}。著者：${store.state.novelContent.author}。全${store.state.novelContent.sections.length}セクション`); } } },
     {
       label: '先頭',
@@ -95,7 +102,16 @@ export default function NovelReader(props: NovelReaderProps) {
   ];
 
   return (
-    <Show when={!loading()} fallback={<div class="p-4 text-center">小説を読み込んでいます...</div>}>
+    <Show
+      when={!loading()}
+      fallback={
+        <StatusMessage
+          title={`${FORMAL_SERVICE_NAMES.aozora} を開いています`}
+          message={`${store.state.selectedNovel?.title || '作品'} を取得しています。現在この機能は不安定で、失敗する場合があります。`}
+          hint="しばらく待っても進まない場合は、前の画面に戻って別の作品を試してください。"
+        />
+      }
+    >
       <Show when={!error()} fallback={
         <div class="grid-container" role="alert" aria-live="assertive">
           <div class="grid-item" style={{ "grid-column": '1 / -1', "grid-row": '1 / -1' }}>

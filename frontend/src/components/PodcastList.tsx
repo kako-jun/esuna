@@ -3,6 +3,7 @@ import { useAppStore } from '../lib/store';
 import { POPULAR_PODCASTS } from '../lib/podcasts';
 import { SpeechManager } from '../lib/speech';
 import GridSystem from './GridSystem';
+import { FORMAL_SERVICE_NAMES, previewText } from '../lib/service-copy';
 
 interface PodcastListProps {
   speech: SpeechManager;
@@ -16,7 +17,7 @@ export default function PodcastList(props: PodcastListProps) {
 
   onMount(() => {
     setTimeout(() => {
-      props.speech.speak(`人気Podcast、${POPULAR_PODCASTS.length}番組を用意しています`);
+      props.speech.speak(`${FORMAL_SERVICE_NAMES.podcast} の番組一覧です。${POPULAR_PODCASTS.length}番組を並べています。番組によっては取得に失敗します。`);
       setTimeout(speakPodcast, 2000);
     }, 500);
   });
@@ -47,13 +48,18 @@ export default function PodcastList(props: PodcastListProps) {
         } else { props.speech.speak('最後の番組です'); }
       },
     },
-    { label: '読み上げ', action: speakPodcast },
     {
-      label: 'エピソード',
+      label: '説明',
+      action: speakPodcast,
+    },
+    {
+      label: POPULAR_PODCASTS[currentIndex()]
+        ? `${POPULAR_PODCASTS[currentIndex()].title}\n${previewText(POPULAR_PODCASTS[currentIndex()].description, 48)}`
+        : '番組なし',
       action: () => {
         const podcast = POPULAR_PODCASTS[currentIndex()];
         store.setSelectedPodcast(podcast);
-        props.speech.speak(`${podcast.title} のエピソード一覧を読み込んでいます`);
+        props.speech.speak(`${podcast.title} のエピソード一覧を開いています。外部配信を確認するため、少し待ってください。`);
         props.onSelectPodcast();
       },
     },

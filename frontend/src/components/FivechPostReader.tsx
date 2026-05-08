@@ -4,6 +4,7 @@ import { fetch5chPosts } from '../lib/api-client';
 import { SpeechManager } from '../lib/speech';
 import { useAutoNavigation } from '../lib/useAutoNavigation';
 import GridSystem from './GridSystem';
+import { previewText } from '../lib/service-copy';
 
 interface FivechPostReaderProps {
   speech: SpeechManager;
@@ -68,7 +69,14 @@ export default function FivechPostReader(props: FivechPostReaderProps) {
     },
     { label: '設定', action: () => props.speech.speak('設定画面は未実装です') },
     { label: '前のレス', action: () => { if (store.state.currentPostIndex > 0) { store.prevPost(); setTimeout(speakPost, 100); } else { props.speech.speak('最初のレスです'); } } },
-    { label: loading() ? '読み込み中...' : store.getCurrentPost() ? `${store.getCurrentPost()!.number}番` : 'レスなし', action: speakPost },
+    {
+      label: loading()
+        ? '取得中'
+        : store.getCurrentPost()
+          ? `${store.getCurrentPost()!.number}番\n${previewText(store.getCurrentPost()!.text, 58)}`
+          : 'レスなし',
+      action: speakPost,
+    },
     { label: '次のレス', action: () => { if (store.state.currentPostIndex < store.state.fivechPosts.length - 1) { store.nextPost(); setTimeout(speakPost, 100); } else { props.speech.speak('最後のレスです'); } } },
     { label: `${store.state.currentPostIndex + 1}/${store.state.fivechPosts.length}`, action: () => props.speech.speak(`${store.state.fivechPosts.length}件中、${store.state.currentPostIndex + 1}件目です`) },
     { label: '全文読み上げ', action: speakPost },

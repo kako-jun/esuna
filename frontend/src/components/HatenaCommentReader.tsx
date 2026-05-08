@@ -4,6 +4,7 @@ import { fetchHatenaComments } from '../lib/api-client';
 import { SpeechManager } from '../lib/speech';
 import { useAutoNavigation } from '../lib/useAutoNavigation';
 import GridSystem from './GridSystem';
+import { previewText } from '../lib/service-copy';
 
 interface HatenaCommentReaderProps {
   speech: SpeechManager;
@@ -90,7 +91,14 @@ export default function HatenaCommentReader(props: HatenaCommentReaderProps) {
         else { props.speech.speak('最初のコメントです'); }
       },
     },
-    { label: loading() ? '読み込み中...' : store.getCurrentComment() ? `${store.getCurrentComment()!.user_name}` : 'コメントなし', action: speakComment },
+    {
+      label: loading()
+        ? '取得中'
+        : store.getCurrentComment()
+          ? `${store.getCurrentComment()!.user_name}\n${previewText(store.getCurrentComment()!.text, 58)}`
+          : 'コメントなし',
+      action: speakComment,
+    },
     {
       label: '次のコメント',
       action: () => {
