@@ -83,7 +83,7 @@ export default function HatenaCommentReader(props: HatenaCommentReaderProps) {
         }
       },
     },
-    { label: '設定', action: () => props.speech.speak('設定画面は未実装です') },
+    { label: '未実装', action: () => props.speech.speak('この枠の機能はまだありません') },
     {
       label: '前のコメント',
       action: () => {

@@ -2,6 +2,7 @@ import { createSignal, onMount } from 'solid-js';
 import { SpeechManager } from '../lib/speech';
 import { getFavorites, removeFavorite, Favorite, FavoriteType } from '../lib/favorites';
 import GridSystem from './GridSystem';
+import { getFormalProgressTypeName, previewText } from '../lib/service-copy';
 
 interface FavoritesListProps {
   speech: SpeechManager;
@@ -23,7 +24,15 @@ export default function FavoritesList(props: FavoritesListProps) {
   });
 
   const getTypeText = (type: FavoriteType): string => {
-    switch (type) { case 'podcast': return 'Podcast'; case 'novel': return '小説'; case 'rss-feed': return 'RSSフィード'; case '5ch-board': return '5ちゃんねる 板'; case '5ch-thread': return '5ちゃんねる スレッド'; default: return 'コンテンツ'; }
+    switch (type) {
+      case 'rss-feed':
+        return 'RSSニュース';
+      case '5ch-board':
+      case '5ch-thread':
+        return getFormalProgressTypeName(type);
+      default:
+        return getFormalProgressTypeName(type);
+    }
   };
 
   const speakFavorite = () => {
@@ -37,7 +46,12 @@ export default function FavoritesList(props: FavoritesListProps) {
     { label: '前', action: () => { if (currentIndex() > 0) { setCurrentIndex(currentIndex() - 1); setTimeout(speakFavorite, 100); } else { props.speech.speak('最初のお気に入りです'); } } },
     { label: '次', action: () => { if (currentIndex() < favorites().length - 1) { setCurrentIndex(currentIndex() + 1); setTimeout(speakFavorite, 100); } else { props.speech.speak('最後のお気に入りです'); } } },
     { label: '読み上げ', action: speakFavorite },
-    { label: '開く', action: () => { const fav = favorites()[currentIndex()]; if (!fav) { props.speech.speak('お気に入りがありません'); return; } props.speech.speak(`${fav.title} を開きます`); props.onSelectFavorite(fav); } },
+    {
+      label: favorites()[currentIndex()]
+        ? `${favorites()[currentIndex()]!.title}\n${previewText(favorites()[currentIndex()]!.description, 58)}`
+        : 'お気に入りなし',
+      action: () => { const fav = favorites()[currentIndex()]; if (!fav) { props.speech.speak('お気に入りがありません'); return; } props.speech.speak(`${fav.title} を開きます`); props.onSelectFavorite(fav); },
+    },
     {
       label: '削除',
       action: () => {

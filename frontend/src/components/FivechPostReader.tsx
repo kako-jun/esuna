@@ -67,7 +67,7 @@ export default function FivechPostReader(props: FivechPostReaderProps) {
         }
       },
     },
-    { label: '設定', action: () => props.speech.speak('設定画面は未実装です') },
+    { label: '未実装', action: () => props.speech.speak('この枠の機能はまだありません') },
     { label: '前のレス', action: () => { if (store.state.currentPostIndex > 0) { store.prevPost(); setTimeout(speakPost, 100); } else { props.speech.speak('最初のレスです'); } } },
     {
       label: loading()

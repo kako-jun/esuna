@@ -4,6 +4,7 @@ import { fetch5chBoards } from '../lib/api-client';
 import { SpeechManager } from '../lib/speech';
 import { useAutoNavigation } from '../lib/useAutoNavigation';
 import GridSystem from './GridSystem';
+import { previewText } from '../lib/service-copy';
 
 interface FivechBoardListProps {
   speech: SpeechManager;
@@ -61,7 +62,7 @@ export default function FivechBoardList(props: FivechBoardListProps) {
           .finally(() => setLoading(false));
       },
     },
-    { label: '設定', action: () => props.speech.speak('設定画面は未実装です') },
+    { label: '未実装', action: () => props.speech.speak('この枠の機能はまだありません') },
     {
       label: '前の板',
       action: () => {
@@ -69,7 +70,14 @@ export default function FivechBoardList(props: FivechBoardListProps) {
         else { props.speech.speak('最初の板です'); }
       },
     },
-    { label: loading() ? '読み込み中...' : store.getCurrentBoard() ? store.getCurrentBoard()!.title : '板なし', action: speakBoard },
+    {
+      label: loading()
+        ? '取得中'
+        : store.getCurrentBoard()
+          ? `${store.getCurrentBoard()!.title}\n${previewText(store.getCurrentBoard()!.category, 58)}`
+          : '板なし',
+      action: speakBoard,
+    },
     {
       label: '次の板',
       action: () => {

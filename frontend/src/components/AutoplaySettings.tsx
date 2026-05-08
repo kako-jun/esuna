@@ -2,6 +2,7 @@ import { createSignal, onMount } from 'solid-js';
 import { loadAutoplaySettings, saveAutoplaySettings, AutoplaySettings, AutoplayContentType, getContentTypeName } from '../lib/autoplay';
 import { SpeechManager } from '../lib/speech';
 import GridSystem from './GridSystem';
+import { FORMAL_SERVICE_NAMES } from '../lib/service-copy';
 
 interface AutoplaySettingsProps {
   speech: SpeechManager;
@@ -15,7 +16,7 @@ export default function AutoplaySettingsComponent(props: AutoplaySettingsProps) 
   onMount(() => {
     setTimeout(() => {
       props.speech.speak(
-        'おまかせモード設定。再生するコンテンツの種類を選択してください。' +
+        'おまかせモード設定です。再生するサービスを選択してください。' +
         `現在、${settings().enabledTypes.length}種類が有効です`
       );
     }, 500);
@@ -44,11 +45,11 @@ export default function AutoplaySettingsComponent(props: AutoplaySettingsProps) 
 
   const actions = () => [
     { label: '戻る', action: props.onBack },
-    { label: '小説：' + (settings().enabledTypes.includes('novel') ? 'ON' : 'OFF'), action: () => toggleContentType('novel') },
+    { label: `${FORMAL_SERVICE_NAMES.aozora}：` + (settings().enabledTypes.includes('novel') ? 'ON' : 'OFF'), action: () => toggleContentType('novel') },
     { label: 'Podcast：' + (settings().enabledTypes.includes('podcast') ? 'ON' : 'OFF'), action: () => toggleContentType('podcast') },
     { label: 'ラジオ：' + (settings().enabledTypes.includes('radio') ? 'ON' : 'OFF'), action: () => toggleContentType('radio') },
-    { label: 'ニュース：' + (settings().enabledTypes.includes('rss-news') ? 'ON' : 'OFF'), action: () => toggleContentType('rss-news') },
-    { label: 'はてブ：' + (settings().enabledTypes.includes('hatena') ? 'ON' : 'OFF'), action: () => toggleContentType('hatena') },
+    { label: `${FORMAL_SERVICE_NAMES.rss}：` + (settings().enabledTypes.includes('rss-news') ? 'ON' : 'OFF'), action: () => toggleContentType('rss-news') },
+    { label: `${FORMAL_SERVICE_NAMES.hatena}：` + (settings().enabledTypes.includes('hatena') ? 'ON' : 'OFF'), action: () => toggleContentType('hatena') },
     { label: '時間：5分', action: () => setPlayDuration(5) },
     { label: '時間：10分', action: () => setPlayDuration(10) },
     {

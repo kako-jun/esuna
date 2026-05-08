@@ -4,6 +4,7 @@ import { fetch5chThreads } from '../lib/api-client';
 import { SpeechManager } from '../lib/speech';
 import { useAutoNavigation } from '../lib/useAutoNavigation';
 import GridSystem from './GridSystem';
+import { previewText } from '../lib/service-copy';
 
 interface FivechThreadListProps {
   speech: SpeechManager;
@@ -66,9 +67,16 @@ export default function FivechThreadList(props: FivechThreadListProps) {
         }
       },
     },
-    { label: '設定', action: () => props.speech.speak('設定画面は未実装です') },
+    { label: '未実装', action: () => props.speech.speak('この枠の機能はまだありません') },
     { label: '前のスレッド', action: () => { if (store.state.currentThreadIndex > 0) { store.prevThread(); setTimeout(speakThread, 100); } else { props.speech.speak('最初のスレッドです'); } } },
-    { label: loading() ? '読み込み中...' : store.getCurrentThread() ? store.getCurrentThread()!.title.slice(0, 20) : 'スレッドなし', action: speakThread },
+    {
+      label: loading()
+        ? '取得中'
+        : store.getCurrentThread()
+          ? `${store.getCurrentThread()!.title}\n${previewText(`レス数 ${store.getCurrentThread()!.response_count}`, 58)}`
+          : 'スレッドなし',
+      action: speakThread,
+    },
     { label: '次のスレッド', action: () => { if (store.state.currentThreadIndex < store.state.fivechThreads.length - 1) { store.nextThread(); setTimeout(speakThread, 100); } else { props.speech.speak('最後のスレッドです'); } } },
     { label: `${store.state.currentThreadIndex + 1}/${store.state.fivechThreads.length}`, action: () => props.speech.speak(`${store.state.fivechThreads.length}個中、${store.state.currentThreadIndex + 1}個目です`) },
     { label: 'レス表示', action: () => { if (store.getCurrentThread()) { props.speech.speak('レスを表示します'); props.onSelectThread(); } else { props.speech.speak('スレッドを選択してください'); } } },

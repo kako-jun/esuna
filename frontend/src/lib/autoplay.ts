@@ -107,7 +107,7 @@ function getRandomItemByType(type: AutoplayContentType): AutoplayItem | null {
       return {
         type: 'novel',
         title: novel.title,
-        description: `${novel.author} の小説`,
+        description: `青空文庫。${novel.author} の作品`,
         data: novel,
       }
     }
@@ -141,7 +141,7 @@ function getRandomItemByType(type: AutoplayContentType): AutoplayItem | null {
       return {
         type: 'rss-news',
         title: feed.name,
-        description: 'RSSニュースフィード',
+        description: 'RSSニュースのフィード',
         data: feed,
       }
     }
@@ -176,7 +176,7 @@ function shuffleArray<T>(array: T[]): void {
 export function getContentTypeName(type: AutoplayContentType): string {
   switch (type) {
     case 'novel':
-      return '小説'
+      return '青空文庫'
     case 'podcast':
       return 'Podcast'
     case 'radio':
