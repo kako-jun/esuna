@@ -48,14 +48,27 @@ export default function RadioPlayer(props: RadioPlayerProps) {
         hls.on(Hls.Events.ERROR, (_event, data) => {
           if (!data.fatal) return;
           if (!mediaErrorRecovered && data.type === Hls.ErrorTypes.MEDIA_ERROR) {
-            // MEDIA_ERROR は一度だけ回復を試みる
             mediaErrorRecovered = true;
             hls.recoverMediaError();
             return;
           }
+          if (!mounted) return;
           setIsLoading(false);
           setError('HLS ストリーミングの読み込みに失敗しました。この局は現在利用できないか、ネットワークの問題かもしれません。');
           props.speech.speak('ストリーミングの読み込みに失敗しました。1番で戻って別の局を試してください。');
+        });
+        // hls.js では MANIFEST_PARSED 後に canplay が発火しない場合があるため
+        // MANIFEST_PARSED でも再生開始を試みる
+        hls.on(Hls.Events.MANIFEST_PARSED, () => {
+          if (playStarted || !mounted) return;
+          playStarted = true;
+          setIsLoading(false);
+          props.speech.speak(`${props.station.name} の再生を開始します`);
+          audio.play().then(() => { setIsPlaying(true); }).catch((err) => {
+            console.error('Play error:', err);
+            setError('音声の再生に失敗しました。ブラウザの設定で自動再生が制限されている可能性があります。');
+            props.speech.speak('音声の再生に失敗しました。ブラウザの設定で自動再生が制限されている可能性があります。6番で再生を試みるか、1番で戻ってください。');
+          });
         });
       } else {
         // Safari（ネイティブ HLS: canPlayType 'application/vnd.apple.mpegurl'）または非 HLS URL
@@ -64,7 +77,7 @@ export default function RadioPlayer(props: RadioPlayerProps) {
 
       let playStarted = false;
       audio.addEventListener('canplay', () => {
-        if (playStarted) return;
+        if (playStarted || !mounted) return;
         playStarted = true;
         setIsLoading(false);
         props.speech.speak(`${props.station.name} の再生を開始します`);
@@ -75,6 +88,7 @@ export default function RadioPlayer(props: RadioPlayerProps) {
         });
       });
       audio.addEventListener('error', () => {
+        if (!mounted) return;
         setIsLoading(false);
         setError('ストリーミングの読み込みに失敗しました。この局は現在利用できないか、ブラウザが対応していません。');
         props.speech.speak('ストリーミングの読み込みに失敗しました。この局は現在利用できないか、ブラウザが対応していません。1番で戻って別の局を試してください。');
