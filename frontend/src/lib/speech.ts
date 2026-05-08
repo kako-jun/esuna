@@ -2,6 +2,9 @@ export class SpeechManager {
   private synthesis: SpeechSynthesis
   private voices: SpeechSynthesisVoice[] = []
   private currentVoice: SpeechSynthesisVoice | null = null
+  private defaultRate = 1.0
+  private defaultPitch = 1.0
+  private defaultVolume = 1.0
   // Queue of pending setVoiceByName calls that arrived before voices loaded
   private pendingVoiceName: string | null = null
   // Session ID to discard stale onend callbacks after cancel()
@@ -66,9 +69,9 @@ export class SpeechManager {
     interrupt?: boolean
   }) {
     const {
-      rate = 1.0,
-      pitch = 1.0,
-      volume = 1.0,
+      rate = this.defaultRate,
+      pitch = this.defaultPitch,
+      volume = this.defaultVolume,
       interrupt = true
     } = options || {}
 
@@ -86,7 +89,7 @@ export class SpeechManager {
     volume?: number
   }) {
     if (texts.length === 0) return
-    const { rate = 1.0, pitch = 1.0, volume = 1.0 } = options || {}
+    const { rate = this.defaultRate, pitch = this.defaultPitch, volume = this.defaultVolume } = options || {}
     const sessionId = ++this.queueSessionId
     this.synthesis.cancel()
 
@@ -135,6 +138,12 @@ export class SpeechManager {
       // Voices may not be loaded yet; store the name and apply once ready
       this.pendingVoiceName = voiceName
     }
+  }
+
+  setDefaults(options: { rate?: number; pitch?: number; volume?: number }) {
+    if (options.rate !== undefined) this.defaultRate = options.rate
+    if (options.pitch !== undefined) this.defaultPitch = options.pitch
+    if (options.volume !== undefined) this.defaultVolume = options.volume
   }
 
   isSpeaking(): boolean {

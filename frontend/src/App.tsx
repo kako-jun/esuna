@@ -30,7 +30,7 @@ import type { RadioStation } from './lib/radio';
 import type { AutoplayItem } from './lib/autoplay';
 import { FORMAL_SERVICE_NAMES, getFeatureStatusSummary } from './lib/service-copy';
 
-type Page = 'main' | 'news' | 'sns' | 'settings' | 'help' | 'tools' | 'audio' |
+type Page = 'main' | 'news' | 'sns' | 'settings' | 'settings-speech' | 'help' | 'tools' | 'audio' |
             'hatena-comments' | '5ch-boards' | '5ch-threads' | '5ch-posts' |
             'novel-list' | 'novel-content' | 'podcast-list' | 'podcast-episodes' |
             'rss-feeds' | 'rss-articles' | 'favorites' | 'continue-reading' |
@@ -50,6 +50,11 @@ export default function App() {
     if (settings.speech.voice) {
       manager.setVoiceByName(settings.speech.voice);
     }
+    manager.setDefaults({
+      rate: settings.speech.rate,
+      pitch: settings.speech.pitch,
+      volume: settings.speech.volume,
+    });
 
     store.setAutoNavigation(settings.ui.autoNavigation);
     setSpeechManager(manager);
@@ -74,11 +79,7 @@ export default function App() {
         `Esuna では、${FORMAL_SERVICE_NAMES.hatena}、${FORMAL_SERVICE_NAMES.rss}、${FORMAL_SERVICE_NAMES.fivech}、` +
         `${FORMAL_SERVICE_NAMES.aozora}、${FORMAL_SERVICE_NAMES.podcast}、${FORMAL_SERVICE_NAMES.radio} を音声中心で利用できます。` +
         'キーボードの任意のキーを押してキーボードモードに切り替えるか、画面をタップして操作してください。';
-      manager.speak(message, {
-        rate: settings.speech.rate,
-        pitch: settings.speech.pitch,
-        volume: settings.speech.volume,
-      });
+      manager.speak(message);
     }, 1000);
 
     onCleanup(() => {
@@ -140,13 +141,13 @@ export default function App() {
 
   const settingsActions = () => [
     { label: '戻る', action: () => { navigateTo('main'); speechManager()?.speak('メインメニューに戻りました'); } },
-    { label: '速度：遅', action: () => { updateSetting('speech', { rate: 0.7 }); speechManager()?.speak('読み上げ速度を遅くしました。設定を保存しました', { rate: 0.7 }); } },
-    { label: '速度：標準', action: () => { updateSetting('speech', { rate: 1.0 }); speechManager()?.speak('読み上げ速度を標準にしました。設定を保存しました', { rate: 1.0 }); } },
-    { label: '速度：速', action: () => { updateSetting('speech', { rate: 1.5 }); speechManager()?.speak('読み上げ速度を速くしました。設定を保存しました', { rate: 1.5 }); } },
-    { label: 'ピッチ：低', action: () => { updateSetting('speech', { pitch: 0.7 }); speechManager()?.speak('ピッチを低くしました。設定を保存しました', { pitch: 0.7 }); } },
-    { label: 'ピッチ：標準', action: () => { updateSetting('speech', { pitch: 1.0 }); speechManager()?.speak('ピッチを標準にしました。設定を保存しました', { pitch: 1.0 }); } },
-    { label: 'ピッチ：高', action: () => { updateSetting('speech', { pitch: 1.5 }); speechManager()?.speak('ピッチを高くしました。設定を保存しました', { pitch: 1.5 }); } },
-    { label: '音量：小', action: () => { updateSetting('speech', { volume: 0.5 }); speechManager()?.speak('音量を小さくしました。設定を保存しました', { volume: 0.5 }); } },
+    { label: '速度設定', action: () => { navigateTo('settings-speech'); speechManager()?.speak('読み上げ速度設定に移動しました'); } },
+    { label: '音量：標準', action: () => { updateSetting('speech', { volume: 1.0 }); speechManager()?.setDefaults({ volume: 1.0 }); speechManager()?.speak('音量を標準にしました。設定を保存しました'); } },
+    { label: '音量：小', action: () => { updateSetting('speech', { volume: 0.5 }); speechManager()?.setDefaults({ volume: 0.5 }); speechManager()?.speak('音量を小さくしました。設定を保存しました', { volume: 0.5 }); } },
+    { label: 'ピッチ：低', action: () => { updateSetting('speech', { pitch: 0.7 }); speechManager()?.setDefaults({ pitch: 0.7 }); speechManager()?.speak('ピッチを低くしました。設定を保存しました', { pitch: 0.7 }); } },
+    { label: 'ピッチ：標準', action: () => { updateSetting('speech', { pitch: 1.0 }); speechManager()?.setDefaults({ pitch: 1.0 }); speechManager()?.speak('ピッチを標準にしました。設定を保存しました', { pitch: 1.0 }); } },
+    { label: 'ピッチ：高', action: () => { updateSetting('speech', { pitch: 1.5 }); speechManager()?.setDefaults({ pitch: 1.5 }); speechManager()?.speak('ピッチを高くしました。設定を保存しました', { pitch: 1.5 }); } },
+    { label: '', action: () => {} },
     {
       label: store.state.autoNavigationEnabled ? '自動OFF' : '自動ON',
       action: () => {
@@ -156,6 +157,29 @@ export default function App() {
         speechManager()?.speak(newValue ? '自動ナビゲーションを有効にしました。音声読み上げ後、自動的に次のコンテンツに移動します' : '自動ナビゲーションを無効にしました');
       },
     },
+  ];
+
+  const SPEED_PRESETS = [
+    { rate: 0.5, label: '0.5倍（非常に遅い）' },
+    { rate: 0.7, label: '0.7倍（遅い）' },
+    { rate: 1.0, label: '1.0倍（標準）' },
+    { rate: 1.5, label: '1.5倍（速い）' },
+    { rate: 2.0, label: '2.0倍（非常に速い）' },
+  ] as const;
+
+  const speechSettingsActions = () => [
+    { label: '戻る', action: () => { navigateTo('settings'); speechManager()?.speak('設定に戻りました'); } },
+    ...SPEED_PRESETS.map(({ rate, label }) => ({
+      label: `${rate}倍速`,
+      action: () => {
+        updateSetting('speech', { rate });
+        speechManager()?.setDefaults({ rate });
+        speechManager()?.speak(`読み上げ速度を${label}に設定しました`, { rate });
+      },
+    })),
+    { label: '', action: () => {} },
+    { label: '', action: () => {} },
+    { label: '', action: () => {} },
   ];
 
   const helpActions = () => [
@@ -306,7 +330,10 @@ export default function App() {
           }} /></main>
         </Match>
         <Match when={currentPage() === 'settings'}>
-          <main><GridSystem actions={settingsActions()} speech={speechManager()!} /></main>
+          <main><GridSystem actions={settingsActions()} speech={speechManager()!} onInit={() => speechManager()?.speak('設定画面です。速度設定、ピッチ、音量、自動ナビゲーションを変更できます')} /></main>
+        </Match>
+        <Match when={currentPage() === 'settings-speech'}>
+          <main><GridSystem actions={speechSettingsActions()} speech={speechManager()!} onInit={() => speechManager()?.speak('読み上げ速度設定です。0.5倍から2.0倍の5段階から選択してください')} /></main>
         </Match>
         <Match when={currentPage() === 'help'}>
           <main><GridSystem actions={helpActions()} speech={speechManager()!} /></main>
