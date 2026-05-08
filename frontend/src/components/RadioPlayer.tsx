@@ -1,7 +1,7 @@
 import { createSignal, onMount, onCleanup } from 'solid-js';
 import { RadioStation, getStreamUrl } from '../lib/radio';
 import { SpeechManager } from '../lib/speech';
-import GridSystem from './GridSystem';
+import GridSystem, { GridAction } from './GridSystem';
 import StatusMessage from './StatusMessage';
 import { FORMAL_SERVICE_NAMES } from '../lib/service-copy';
 import { createGuideAction } from '../lib/grid-guide';
@@ -58,14 +58,14 @@ export default function RadioPlayer(props: RadioPlayerProps) {
   };
 
   const actions = () => {
-    const actionList = [
+    const actionList: GridAction[] = [
       { label: '戻る', action: () => { if (audioRef) { audioRef.pause(); } props.speech.stop(); props.onBack(); } },
+      { label: '', action: () => {} },
+      { label: '', action: () => {} },
+      { label: '局情報', action: () => { props.speech.speak(`現在再生中：${props.station.name}。${props.station.description}。状態：${isPlaying() ? '再生中' : '一時停止中'}`); } },
+      { label: `${props.station.name}\n${isPlaying() ? '再生中' : '一時停止中'}`, action: () => { props.speech.speak(`${props.station.name}。${isPlaying() ? '再生中' : '一時停止中'}`); } },
       { label: isPlaying() ? '一時停止' : '再生', action: togglePlay },
-      { label: '音量：大', action: () => changeVolume(1.0) },
-      { label: '音量：中', action: () => changeVolume(0.7) },
-      { label: '音量：小', action: () => changeVolume(0.4) },
-      { label: '音量：最小', action: () => changeVolume(0.1) },
-      { label: '局情報', action: () => { props.speech.speak(`現在再生中：${props.station.name}。${props.station.description}。状態：${isPlaying() ? '再生中' : '一時停止中'}。音量：${Math.round(volume() * 100)}パーセント`); } },
+      { label: `${props.station.name}`, action: () => { props.speech.speak(`${props.station.name}。${props.station.description}`); } },
       { label: '停止', action: () => { props.speech.stop(); } },
       createGuideAction('ラジオ再生画面', props.speech, () => actionList),
     ];

@@ -1,7 +1,7 @@
 import { createSignal, onMount, onCleanup, Show } from 'solid-js';
 import { SpeechManager } from '../lib/speech';
 import { saveMemo, getAllMemos, deleteMemo, VoiceMemo, blobToBase64, base64ToBlob } from '../lib/voice-memo';
-import GridSystem from './GridSystem';
+import GridSystem, { GridAction } from './GridSystem';
 import { createGuideAction } from '../lib/grid-guide';
 
 interface VoiceMemoRecorderProps {
@@ -126,7 +126,7 @@ export default function VoiceMemoRecorder(props: VoiceMemoRecorderProps) {
   };
 
   const actions = () => {
-    const actionList = [
+    const actionList: GridAction[] = [
       { label: '戻る', action: () => { props.speech.stop(); if (isRecording()) { stopRecording(); } if (isPlaying()) { audioRef?.pause(); } props.onBack(); } },
       { label: '前のメモ', action: () => { if (currentIndex() > 0) { setCurrentIndex(currentIndex() - 1); setTimeout(speakMemo, 100); } else { props.speech.speak('最初のメモです'); } } },
       { label: '次のメモ', action: () => { if (currentIndex() < memos().length - 1) { setCurrentIndex(currentIndex() + 1); setTimeout(speakMemo, 100); } else { props.speech.speak('最後のメモです'); } } },

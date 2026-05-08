@@ -3,7 +3,7 @@ import { useAppStore } from '../lib/store';
 import { fetchNovelContent } from '../lib/api-client';
 import { SpeechManager } from '../lib/speech';
 import { useAutoNavigation } from '../lib/useAutoNavigation';
-import GridSystem from './GridSystem';
+import GridSystem, { GridAction } from './GridSystem';
 import StatusMessage from './StatusMessage';
 import { FORMAL_SERVICE_NAMES, previewText } from '../lib/service-copy';
 import { createGuideAction } from '../lib/grid-guide';
@@ -64,7 +64,7 @@ export default function NovelReader(props: NovelReaderProps) {
   });
 
   const actions = () => {
-    const actionList = [
+    const actionList: GridAction[] = [
       { label: '戻る', action: () => { props.speech.stop(); store.setNovelContent(null); props.onBack(); } },
       { label: '前のセクション', action: () => { if (store.state.currentSectionIndex > 0) { store.prevSection(); setTimeout(speakSection, 100); } else { props.speech.speak('最初のセクションです'); } } },
       { label: '次のセクション', action: () => { if (store.state.novelContent && store.state.currentSectionIndex < store.state.novelContent.sections.length - 1) { store.nextSection(); setTimeout(speakSection, 100); } else { props.speech.speak('最後のセクションです'); } } },

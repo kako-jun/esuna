@@ -1,5 +1,5 @@
 import { createSignal, onMount, onCleanup, Show, Switch, Match } from 'solid-js';
-import GridSystem from './components/GridSystem';
+import GridSystem, { GridAction } from './components/GridSystem';
 import HatenaEntryReader from './components/HatenaEntryReader';
 import HatenaCommentReader from './components/HatenaCommentReader';
 import SNSPostReader from './components/SNSPostReader';
@@ -91,7 +91,7 @@ export default function App() {
     store.setPage(page as any);
   };
 
-  const mainMenuActions = () => [
+  const mainMenuActions = (): GridAction[] => [
     { label: 'はてな\nブックマーク', action: () => { navigateTo('news'); store.setContentType('hatena-hot'); speechManager()?.speak(`はてなブックマークへ移動しました。${getFeatureStatusSummary('hatena')}`); } },
     { label: 'Mastodon /\nBluesky\n試験表示', action: () => { navigateTo('sns'); store.setContentType('sns'); speechManager()?.speak(`Mastodon と Bluesky の画面へ移動しました。${getFeatureStatusSummary('sns')}`); } },
     { label: '5ちゃんねる\n未対応', status: 'unimplemented', action: () => { navigateTo('5ch-boards'); speechManager()?.speak(`5ちゃんねるへ移動しました。${getFeatureStatusSummary('fivech')}`); } },

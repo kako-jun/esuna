@@ -1,7 +1,7 @@
 import { createSignal, onMount, onCleanup } from 'solid-js';
 import { SpeechManager } from '../lib/speech';
 import { getAllTimers, createTimer, startTimer, pauseTimer, deleteTimer, updateTimerRemaining, Timer, formatTime } from '../lib/timer';
-import GridSystem from './GridSystem';
+import GridSystem, { GridAction } from './GridSystem';
 import { createGuideAction } from '../lib/grid-guide';
 
 interface TimerManagerProps {
@@ -70,7 +70,7 @@ export default function TimerManager(props: TimerManagerProps) {
   };
 
   const listActions = () => {
-    const actionList = [
+    const actionList: GridAction[] = [
       { label: '戻る', action: () => { props.speech.stop(); props.onBack(); } },
       { label: '前', action: () => { if (currentIndex() > 0) { setCurrentIndex(currentIndex() - 1); setTimeout(speakTimer, 100); } else { props.speech.speak('最初のタイマーです'); } } },
       { label: '次', action: () => { if (currentIndex() < timers().length - 1) { setCurrentIndex(currentIndex() + 1); setTimeout(speakTimer, 100); } else { props.speech.speak('最後のタイマーです'); } } },
@@ -107,7 +107,7 @@ export default function TimerManager(props: TimerManagerProps) {
   };
 
   const presetActions = () => {
-    const actionList = [
+    const actionList: GridAction[] = [
       { label: '戻る', action: () => { setMode('list'); props.speech.speak('タイマー一覧モードに切り替えました'); if (timers().length > 0) { setTimeout(speakTimer, 1000); } } },
       { label: '前', action: () => { if (presetIndex() > 0) { setPresetIndex(presetIndex() - 1); setTimeout(speakPreset, 100); } else { props.speech.speak('最初のプリセットです'); } } },
       { label: '次', action: () => { if (presetIndex() < PRESET_TIMERS.length - 1) { setPresetIndex(presetIndex() + 1); setTimeout(speakPreset, 100); } else { props.speech.speak('最後のプリセットです'); } } },

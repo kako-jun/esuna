@@ -3,7 +3,7 @@ import { useAppStore } from '../lib/store';
 import { fetchSNSPosts } from '../lib/api-client';
 import { SpeechManager } from '../lib/speech';
 import { useAutoNavigation } from '../lib/useAutoNavigation';
-import GridSystem from './GridSystem';
+import GridSystem, { GridAction } from './GridSystem';
 import { FORMAL_SERVICE_NAMES, previewText } from '../lib/service-copy';
 import { createGuideAction } from '../lib/grid-guide';
 
@@ -55,8 +55,22 @@ export default function SNSPostReader(props: SNSPostReaderProps) {
   });
 
   const actions = () => {
-    const actionList = [
+    const actionList: GridAction[] = [
       { label: '戻る', action: () => { props.speech.stop(); props.onBack(); } },
+      {
+        label: '前の投稿',
+        action: () => {
+          if (store.state.currentSNSPostIndex > 0) { store.prevSNSPost(); setTimeout(speakPost, 100); }
+          else { props.speech.speak('最初の投稿です'); }
+        },
+      },
+      {
+        label: '次の投稿',
+        action: () => {
+          if (store.state.currentSNSPostIndex < store.state.snsPosts.length - 1) { store.nextSNSPost(); setTimeout(speakPost, 100); }
+          else { props.speech.speak('最後の投稿です'); }
+        },
+      },
       {
         label: 'リロード',
         action: () => {
@@ -68,6 +82,14 @@ export default function SNSPostReader(props: SNSPostReaderProps) {
         },
       },
       {
+        label: loading()
+          ? '取得中'
+          : store.getCurrentSNSPost()
+            ? `${store.getCurrentSNSPost()!.author}\n${previewText(store.getCurrentSNSPost()!.text, 58)}`
+            : '投稿なし',
+        action: speakPost,
+      },
+      {
         label: '切替',
         action: () => {
           const platforms: Array<'mastodon' | 'bluesky'> = ['mastodon', 'bluesky'];
@@ -77,31 +99,9 @@ export default function SNSPostReader(props: SNSPostReaderProps) {
           props.speech.speak(`${nextPlatform === 'mastodon' ? 'Mastodon' : 'Bluesky'} に切り替えました。現在は試験表示です。X には未対応です。`);
         },
       },
-      {
-        label: '前の投稿',
-        action: () => {
-          if (store.state.currentSNSPostIndex > 0) { store.prevSNSPost(); setTimeout(speakPost, 100); }
-          else { props.speech.speak('最初の投稿です'); }
-        },
-      },
-      {
-        label: loading()
-          ? '取得中'
-          : store.getCurrentSNSPost()
-            ? `${store.getCurrentSNSPost()!.author}\n${previewText(store.getCurrentSNSPost()!.text, 58)}`
-            : '投稿なし',
-        action: speakPost,
-      },
-      {
-        label: '次の投稿',
-        action: () => {
-          if (store.state.currentSNSPostIndex < store.state.snsPosts.length - 1) { store.nextSNSPost(); setTimeout(speakPost, 100); }
-          else { props.speech.speak('最後の投稿です'); }
-        },
-      },
       { label: `${store.state.currentSNSPostIndex + 1}/${store.state.snsPosts.length}`, action: () => props.speech.speak(`${store.state.snsPosts.length}件中、${store.state.currentSNSPostIndex + 1}件目です`) },
       { label: '停止', action: () => props.speech.stop() },
-      createGuideAction('公開投稿の試験表示', props.speech, () => actionList),
+      createGuideAction('SNS投稿一覧', props.speech, () => actionList),
     ];
 
     return actionList;

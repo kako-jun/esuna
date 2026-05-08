@@ -28,24 +28,28 @@
 ### ディレクトリ構造
 ```
 esuna/
-├── frontend/              # Next.js フロントエンド
+├── frontend/              # Vite + SolidJS フロントエンド
 │   ├── src/
-│   │   ├── app/          # ページ
-│   │   ├── components/   # Reactコンポーネント
+│   │   ├── App.tsx       # ルートコンポーネント
+│   │   ├── index.tsx     # エントリポイント
+│   │   ├── components/   # SolidJS コンポーネント
 │   │   └── lib/          # ユーティリティ・ロジック
-│   ├── public/           # 静的ファイル
 │   └── package.json
-├── backend/              # FastAPI バックエンド
-│   ├── app/
-│   │   ├── main.py      # エントリポイント
+├── backend/              # Hono (Cloudflare Workers) バックエンド
+│   ├── src/
+│   │   ├── index.ts     # エントリポイント
+│   │   ├── types.ts     # 型定義
+│   │   ├── middleware/  # ミドルウェア
 │   │   └── scrapers/    # スクレイパー群
-│   └── pyproject.toml
+│   └── package.json
 ├── docs/                 # プロジェクト管理ドキュメント
 │   ├── architecture.md           # アーキテクチャ設計
-│   ├── roadmap.md                # ロードマップ・TODO・将来機能
 │   ├── development.md            # このファイル
-│   └── progress.md               # 実装進捗
-└── CLAUDE.md             # プロジェクト概要
+│   ├── features.md               # 機能一覧
+│   ├── grid-layout.md            # 9マスUI規約
+│   ├── overview.md               # 概要
+│   └── status-matrix.md          # 機能の成立状況
+└── CLAUDE.md             # プロジェクト概要・開発方針
 ```
 
 ---
@@ -55,8 +59,7 @@ esuna/
 ### フロントエンド
 
 #### 必要なもの
-- Node.js 18以上
-- npm または yarn
+- Node.js 20以上
 
 #### セットアップ
 ```bash
@@ -65,16 +68,11 @@ npm install
 npm run dev
 ```
 
-ブラウザで `http://localhost:3000` を開く
+ブラウザで `http://localhost:5173` を開く
 
 #### ビルド
 ```bash
 npm run build
-```
-
-#### リンター
-```bash
-npm run lint
 ```
 
 ---
@@ -82,30 +80,27 @@ npm run lint
 ### バックエンド
 
 #### 必要なもの
-- Python 3.11以上
-- pip
+- Node.js 20以上
 
 #### セットアップ
 ```bash
 cd backend
-pip install -e .
+npm install
+npm run dev
 ```
 
-#### 起動
+APIは `http://localhost:8787` で起動
+
+#### デプロイ
 ```bash
-python -m app.main
+npx wrangler deploy
 ```
-
-APIは `http://localhost:8000` で起動
-
-#### API ドキュメント
-`http://localhost:8000/docs` でSwagger UIを確認
 
 ---
 
 ## 📝 コーディング規約
 
-### TypeScript/React
+### TypeScript / SolidJS
 
 #### 命名規則
 - **コンポーネント**: PascalCase (`NovelReader`, `GridSystem`)
@@ -116,8 +111,8 @@ APIは `http://localhost:8000` で起動
 #### ファイル構成
 ```typescript
 // 1. import文
-import { useState } from 'react'
-import { SpeechManager } from '@/lib/speech'
+import { createSignal, onMount } from 'solid-js'
+import { SpeechManager } from '../lib/speech'
 
 // 2. 型定義
 interface ComponentProps {
@@ -126,14 +121,14 @@ interface ComponentProps {
 }
 
 // 3. コンポーネント
-export default function Component({ speech, onBack }: ComponentProps) {
-  // 3-1. State
-  const [state, setState] = useState(...)
+export default function Component(props: ComponentProps) {
+  // 3-1. シグナル
+  const [state, setState] = createSignal(...)
 
-  // 3-2. Effect
-  useEffect(() => {
+  // 3-2. ライフサイクル
+  onMount(() => {
     // ...
-  }, [])
+  })
 
   // 3-3. ハンドラー
   const handleClick = () => {
@@ -150,87 +145,36 @@ export default function Component({ speech, onBack }: ComponentProps) {
 2. **Props は必要最小限**: 不要なデータを渡さない
 3. **音声ガイダンスは必須**: すべてのアクションに音声フィードバック
 
-#### Hooksの使用ルール
-- `useState`: 画面の状態管理
-- `useEffect`: 副作用（API呼び出し、イベントリスナー）
-- `useCallback`: 関数のメモ化（パフォーマンス最適化）
-- `useMemo`: 計算結果のメモ化
-
----
-
-### Python/FastAPI
-
-#### 命名規則
-- **関数**: snake_case (`fetch_novel_content`, `get_stream_url`)
-- **クラス**: PascalCase (`HatenaScraper`, `RadioAPI`)
-- **定数**: UPPER_SNAKE_CASE (`NHK_STREAM_URLS`, `DEFAULT_LIMIT`)
-
-#### ファイル構成
-```python
-"""
-モジュールの説明
-"""
-
-# 1. 標準ライブラリ
-import logging
-from typing import Dict, Any
-
-# 2. サードパーティライブラリ
-from fastapi import HTTPException
-import httpx
-
-# 3. ローカルインポート
-from .utils import parse_html
-
-# 4. ロガー設定
-logger = logging.getLogger(__name__)
-
-# 5. 定数
-DEFAULT_TIMEOUT = 30
-
-# 6. 関数
-async def fetch_data(url: str) -> Dict[str, Any]:
-    """データを取得する"""
-    # ...
-```
-
-#### エラーハンドリング
-```python
-try:
-    result = await fetch_data()
-    return result
-except httpx.HTTPError as e:
-    logger.error(f"HTTP error: {e}")
-    raise HTTPException(status_code=500, detail="Failed to fetch data")
-except Exception as e:
-    logger.error(f"Unexpected error: {e}")
-    raise HTTPException(status_code=500, detail="Internal server error")
-```
+#### SolidJS の状態管理
+- `createSignal`: ローカルな状態管理
+- `createStore`: 複数フィールドの状態管理
+- `store.ts`: グローバル状態（SolidJS createSignal ベース）
 
 ---
 
 ## 🎨 UI/UX ガイドライン
 
-### 9グリッドレイアウト
+### 9グリッドレイアウト（正規配置）
 
-#### 基本ルール
 ```
 1  2  3
 4  5  6
 7  8  9
 ```
 
-| 位置 | 推奨用途 |
-|------|----------|
-| 1 | 戻る/キャンセル（最優先） |
-| 2-3 | ナビゲーション（前へ/次へ） |
-| 4-6 | 主要アクション |
-| 7-9 | 補助機能 |
+| 位置 | 役割 | 備考 |
+|------|------|------|
+| 1 | 戻る | 固定 |
+| 2 | 前の項目 | — |
+| 3 | 次の項目 | — |
+| 4 | 読み上げ / リロード / 情報 | — |
+| 5 | 主対象 | 固定 |
+| 6 | 主アクション（開く・再生・コメント等） | — |
+| 7 | 補助情報（件数・位置） | — |
+| 8 | 停止 | 固定 |
+| 9 | 画面案内 | 固定 |
 
-#### 必須要素
-- **戻るボタン**: 常に1番（左上）
-- **停止ボタン**: 8番または9番
-- **読み上げボタン**: 4番または5番
+詳細は `docs/grid-layout.md` を参照。
 
 ---
 
@@ -265,8 +209,7 @@ speech.speak('お気に入りに追加しました')
 
 // 悪い例
 speech.speak('移動') // 何に？
-speech.speak('OK') // 何が？
-speech.speak('完了') // 何が完了？
+speech.speak('OK')   // 何が？
 ```
 
 ---
@@ -279,26 +222,18 @@ speech.speak('完了') // 何が完了？
 - **Enter**: 実行
 - **Escape**: 停止または戻る
 
-#### 実装例
-```typescript
-<GridSystem
-  actions={actions}
-  speech={speech}
-/>
-```
-
-GridSystemが自動的にキーバインドを処理する
-
 ---
 
 ## 🔧 新機能の追加方法
 
-### Step 1: 設計
-1. `docs/roadmap.md` に機能案を追加
-2. `docs/roadmap.md` のTODOセクションにタスクを追加
-3. 必要に応じて `docs/architecture.md` を更新
+### Step 1: 成立状況の確認
+`docs/status-matrix.md` を確認し、未成立機能に UI を追加しないこと。
 
-### Step 2: データ層の実装
+### Step 2: 設計
+1. 必要に応じて `docs/architecture.md` を更新
+2. 9マス規約（`docs/grid-layout.md`）に従ったグリッド配置を設計
+
+### Step 3: データ層の実装
 1. `frontend/src/lib/` に新しいファイルを作成
 2. データ構造（interface）を定義
 3. LocalStorage操作関数を実装
@@ -320,62 +255,42 @@ export function addEvent(event: CalendarEvent): void {
 }
 ```
 
-### Step 3: コンポーネントの実装
-1. `frontend/src/components/` に新しいコンポーネントを作成
+### Step 4: コンポーネントの実装
+1. `frontend/src/components/` に新しいコンポーネントを作成（SolidJS）
 2. GridSystem を使用
 3. 音声ガイダンスを実装
+4. 正規配置（docs/grid-layout.md）に従うこと
 
 例: `frontend/src/components/CalendarView.tsx`
 ```typescript
-export default function CalendarView({ speech, onBack }) {
+import { SpeechManager } from '../lib/speech'
+import GridSystem from './GridSystem'
+
+interface Props {
+  speech: SpeechManager;
+  onBack: () => void;
+}
+
+export default function CalendarView(props: Props) {
   const actions = [
     {
       label: '戻る',
       action: () => {
-        speech.speak('メニューに戻りました')
-        onBack()
+        props.speech.speak('メニューに戻りました')
+        props.onBack()
       }
     },
     // ...
   ]
 
-  return <GridSystem actions={actions} speech={speech} />
+  return <GridSystem actions={actions} speech={props.speech} />
 }
 ```
 
-### Step 4: ルーティングへの統合
-1. `frontend/src/app/page.tsx` を編集
+### Step 5: App.tsx へのルーティング統合
+1. `frontend/src/App.tsx` を編集
 2. Page型に追加
-3. case文に追加
-
-```typescript
-type Page = '...' | 'calendar'
-
-// ...
-
-case 'calendar':
-  return (
-    <main>
-      <CalendarView
-        speech={speechManager}
-        onBack={() => navigateTo('main')}
-      />
-    </main>
-  )
-```
-
-### Step 5: メニューに追加
-1. `mainMenuActions` または適切なサブメニューに追加
-
-```typescript
-{
-  label: 'カレンダー',
-  action: () => {
-    navigateTo('calendar')
-    speechManager?.speak('カレンダーに移動しました')
-  }
-}
-```
+3. 条件分岐に追加
 
 ### Step 6: テスト
 1. 実際に操作してみる
@@ -384,9 +299,8 @@ case 'calendar':
 4. キーボード操作が正しく動くか確認
 
 ### Step 7: ドキュメント更新
-1. `docs/progress.md` に実装内容を追加
-2. `docs/roadmap.md` の該当タスクをチェック
-3. 必要に応じて `CLAUDE.md` を更新
+1. `docs/status-matrix.md` に成立状況を記録
+2. 必要に応じて `CLAUDE.md` を更新
 
 ---
 
@@ -395,67 +309,19 @@ case 'calendar':
 ### 手動テスト（必須）
 
 #### 音声テスト
-1. **すべてのボタンを押してみる**
-   - 音声ガイダンスが流れるか
-   - メッセージは適切か
-
-2. **エラーを発生させてみる**
-   - エラーメッセージが流れるか
-   - 音声で内容が分かるか
-
-3. **長文の読み上げをテスト**
-   - Escapeで停止できるか
-   - 次の音声で中断されるか
+1. すべてのボタンを押して音声ガイダンスを確認
+2. エラーを発生させて音声エラーメッセージを確認
+3. 長文読み上げを Escape で停止できるか確認
 
 #### キーボードテスト
-1. **1-9キーでナビゲーション**
-   - すべてのグリッドが選択できるか
-
-2. **矢印キーでナビゲーション**
-   - フォーカス移動が正しいか
-
-3. **Enterで実行**
-   - 選択中のアクションが実行されるか
-
-4. **Escapeで停止/戻る**
-   - 音声が停止するか
-   - 前の画面に戻るか
+1. 1-9キーでナビゲーション
+2. 矢印キーでフォーカス移動
+3. Enterで実行
+4. Escapeで停止/戻る
 
 #### アクセシビリティテスト
-1. **目をつぶって操作**
-   - 音声だけで操作できるか
-   - 迷わずに目的を達成できるか
-
-2. **スクリーンリーダーで確認**（可能なら）
-   - NVDA、JAWS等で動作確認
-
----
-
-### 自動テスト（今後導入）
-
-#### 単体テスト
-```typescript
-// 例: SpeechManager のテスト
-describe('SpeechManager', () => {
-  it('should speak text', () => {
-    const manager = new SpeechManager()
-    manager.speak('テスト')
-    expect(manager.isSpeaking()).toBe(true)
-  })
-})
-```
-
-#### 統合テスト
-```typescript
-// 例: コンポーネントのテスト
-describe('NovelReader', () => {
-  it('should render and speak on mount', () => {
-    const mockSpeech = { speak: jest.fn() }
-    render(<NovelReader speech={mockSpeech} />)
-    expect(mockSpeech.speak).toHaveBeenCalled()
-  })
-})
-```
+1. 目をつぶって操作 — 音声だけで目的を達成できるか
+2. スクリーンリーダーで確認（可能なら）
 
 ---
 
@@ -477,94 +343,57 @@ if (!speechManager) {
 ```
 
 #### 2. LocalStorage容量オーバー
-**原因**:
-- データが多すぎる
-- 音声メモの容量が大きい
-
 **対処**:
 ```typescript
 try {
   localStorage.setItem(key, value)
 } catch (e) {
   if (e.name === 'QuotaExceededError') {
-    // 古いデータを削除
     cleanupOldData()
   }
 }
 ```
 
 #### 3. GridSystemでキーが反応しない
-**原因**:
-- フォーカスが外れている
-- イベントリスナーが登録されていない
-
-**対処**:
 - GridSystemコンポーネントがマウントされているか確認
 - 他のイベントリスナーが干渉していないか確認
-
----
-
-### ログの活用
-
-#### 開発時のログ
-```typescript
-// 重要な処理の前後にログを入れる
-console.log('Fetching data...')
-const data = await fetchData()
-console.log('Data fetched:', data)
-```
-
-#### 本番環境のログ
-```typescript
-// エラーのみログに残す
-try {
-  // ...
-} catch (error) {
-  console.error('Error:', error)
-}
-```
 
 ---
 
 ## 📦 リリースフロー
 
 ### 1. 機能開発
-1. ブランチを作成 `git checkout -b feature/new-feature`
+1. ブランチを作成 `git checkout -b feat/new-feature`
 2. 開発・コミット
 3. テスト
 
 ### 2. プルリクエスト
 1. `main` ブランチにPR作成
-2. レビュー
-3. マージ
+2. CI（tsc + vite build）が通ることを確認
+3. マージ → CF Pages に自動デプロイ
 
-### 3. バージョンアップ
-1. `package.json` のバージョンを更新
-2. `docs/progress.md` を更新
-3. コミット
-
-### 4. デプロイ
-1. `npm run build`
-2. GitHub Pagesにデプロイ
+### 3. バックエンドデプロイ
+```bash
+cd backend
+npx wrangler deploy
+```
 
 ---
 
 ## 🎓 学習リソース
 
-### Next.js
-- [公式ドキュメント](https://nextjs.org/docs)
-- [Learn Next.js](https://nextjs.org/learn)
+### SolidJS
+- [公式ドキュメント](https://www.solidjs.com/docs/latest)
+- [SolidJS チュートリアル](https://www.solidjs.com/tutorial/introduction_basics)
 
-### React
-- [公式ドキュメント](https://react.dev/)
-- [Hooks入門](https://react.dev/learn/state-a-components-memory)
+### Hono
+- [公式ドキュメント](https://hono.dev/)
 
 ### TypeScript
 - [公式ハンドブック](https://www.typescriptlang.org/docs/handbook/intro.html)
 
-### FastAPI
-- [公式ドキュメント](https://fastapi.tiangolo.com/)
-- [チュートリアル](https://fastapi.tiangolo.com/tutorial/)
+### Cloudflare Workers
+- [公式ドキュメント](https://developers.cloudflare.com/workers/)
 
 ### Web Accessibility
 - [WCAG 2.1](https://www.w3.org/WAI/WCAG21/quickref/)
@@ -574,17 +403,13 @@ try {
 
 ## 💬 コミュニケーション
 
-### 質問・相談
-- GitHub Issuesで質問
-- 技術的な議論はDiscussion
-
 ### バグ報告
 1. Issue作成
 2. 再現手順を記載
 3. 環境情報を記載（OS、ブラウザ等）
 
 ### 機能提案
-1. `docs/roadmap.md` に追加
+1. `docs/status-matrix.md` で成立可能性を確認
 2. Issueで議論
 
 ---
@@ -598,7 +423,6 @@ try {
 
 ### 個人情報
 - LocalStorageには機密情報を保存しない
-- ユーザーデータは暗号化（将来的に）
 
 ### アクセシビリティ
 - WCAG 2.1 AA レベルを目指す

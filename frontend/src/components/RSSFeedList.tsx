@@ -1,7 +1,7 @@
 import { createSignal, onMount } from 'solid-js';
 import { RSSReader } from '../lib/rss';
 import { SpeechManager } from '../lib/speech';
-import GridSystem from './GridSystem';
+import GridSystem, { GridAction } from './GridSystem';
 import { FORMAL_SERVICE_NAMES } from '../lib/service-copy';
 import { createGuideAction } from '../lib/grid-guide';
 
@@ -30,7 +30,7 @@ export default function RSSFeedList(props: RSSFeedListProps) {
   };
 
   const actions = () => {
-    const actionList = [
+    const actionList: GridAction[] = [
       { label: '戻る', action: () => { props.speech.stop(); props.onBack(); } },
       {
         label: '前のフィード',
