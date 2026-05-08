@@ -4,7 +4,7 @@ import { SpeechManager } from '../lib/speech';
 import { useAutoNavigation } from '../lib/useAutoNavigation';
 import GridSystem, { GridAction } from './GridSystem';
 import StatusMessage from './StatusMessage';
-import { FORMAL_SERVICE_NAMES, previewText } from '../lib/service-copy';
+import { FORMAL_SERVICE_NAMES, previewText, loadingMessage, failureSpeech } from '../lib/service-copy';
 import { createGuideAction } from '../lib/grid-guide';
 
 interface RSSArticleReaderProps {
@@ -17,14 +17,20 @@ export default function RSSArticleReader(props: RSSArticleReaderProps) {
   const [currentIndex, setCurrentIndex] = createSignal(0);
   const [loading, setLoading] = createSignal(false);
   const [error, setError] = createSignal<string | null>(null);
+  const [feedName, setFeedName] = createSignal('');
   const rssReader = new RSSReader();
 
   onMount(() => { loadArticles(); });
 
   const loadArticles = async () => {
     const feedJson = typeof window !== 'undefined' ? sessionStorage.getItem('selectedRSSFeed') : null;
-    if (!feedJson) { props.speech.speak('フィードが選択されていません'); props.onBack(); return; }
+    if (!feedJson) {
+      props.speech.speak('フィードが選択されていません。1番で戻ってください。');
+      props.onBack();
+      return;
+    }
     const feed = JSON.parse(feedJson);
+    setFeedName(feed.name);
     setLoading(true); setError(null);
     try {
       const rssFeed = await rssReader.fetchRSS(feed.url);
@@ -35,9 +41,13 @@ export default function RSSArticleReader(props: RSSArticleReaderProps) {
       }, 500);
     } catch (err) {
       console.error('Failed to load RSS:', err);
-      setError(`${feed.name} の記事を取得できませんでした。外部サイトの都合で失敗する場合があります。前の画面に戻ります`);
-      props.speech.speak(`${feed.name} の記事を取得できませんでした。外部サイトの都合で失敗する場合があります。前の画面に戻ります`);
-      setTimeout(props.onBack, 2000);
+      const msg = failureSpeech(
+        `${feed.name}`,
+        '外部サイトの都合で取得に失敗することがあります。',
+        false,
+      );
+      setError(msg);
+      props.speech.speak(msg);
     } finally {
       setLoading(false);
     }
@@ -64,7 +74,7 @@ export default function RSSArticleReader(props: RSSArticleReaderProps) {
       { label: '戻る', action: () => { props.speech.stop(); props.onBack(); } },
       { label: '前の記事', action: () => { if (currentIndex() > 0) { setCurrentIndex(currentIndex() - 1); setTimeout(speakArticle, 100); } else { props.speech.speak('最初の記事です'); } } },
       { label: '次の記事', action: () => { if (currentIndex() < articles().length - 1) { setCurrentIndex(currentIndex() + 1); setTimeout(speakArticle, 100); } else { props.speech.speak('最後の記事です'); } } },
-      { label: '本文', action: () => { const a = articles()[currentIndex()]; if (a?.content) { props.speech.speak(`本文。${a.content}`, { interrupt: true }); } else { props.speech.speak('本文が取得できませんでした'); } } },
+      { label: '本文', action: () => { const a = articles()[currentIndex()]; if (a?.content) { props.speech.speak(`本文。${a.content}`, { interrupt: true }); } else { props.speech.speak('本文が取得できませんでした。見出しと概要のみです。'); } } },
       {
         label: articles()[currentIndex()]
           ? `${articles()[currentIndex()]!.title}\n${previewText(articles()[currentIndex()]!.description || articles()[currentIndex()]!.content, 58)}`
@@ -85,19 +95,27 @@ export default function RSSArticleReader(props: RSSArticleReaderProps) {
       when={!loading()}
       fallback={
         <StatusMessage
-          title={`${FORMAL_SERVICE_NAMES.rss} を開いています`}
-          message="選択したニュースサイトの記事一覧を取得しています。外部サイトから読むため、失敗する場合があります。"
-          hint="しばらく待っても進まない場合は、前の画面に戻って別のニュースサイトを試してください。"
+          type="loading"
+          title={loadingMessage(feedName() ? `${feedName()}の記事` : `${FORMAL_SERVICE_NAMES.rss}の記事`)}
+          message="外部ニュースサイトから記事一覧を取得しています。"
+          hint="しばらく待っても進まない場合は、1番で戻って別のサイトを試してください。"
         />
       }
     >
-      <Show when={!error()} fallback={
-        <div class="grid-container" role="alert" aria-live="assertive">
-          <div class="grid-item" style={{ "grid-column": '1 / -1', "grid-row": '1 / -1' }}>エラー: {error()}</div>
-        </div>
-      }>
+      <Show
+        when={!error()}
+        fallback={
+          <StatusMessage
+            type="failure"
+            title={`${feedName() || FORMAL_SERVICE_NAMES.rss}の記事を開けませんでした`}
+            message={error()!}
+            hint="1番で戻り、別のニュースサイトを試してください。"
+          />
+        }
+      >
         <GridSystem actions={actions()} speech={props.speech} />
       </Show>
     </Show>
   );
 }
+

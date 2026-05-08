@@ -1,3 +1,63 @@
+// ── 状態別メッセージ生成 ──────────────────────────────────────
+// 利用者が「いま何が起きているか」「次にどうすればよいか」を
+// 常に把握できるよう、状態ごとに文言を統一する。
+//
+// 5 状態モデル:
+//   loading  … 取得中。対象名つきで待機を促す
+//   success  … 成功。件数や作品名など結果を伝える
+//   failure  … 失敗。原因 + 次の行動（戻る/再試行）を案内する
+//   blocked  … 機能未成立。戻ることだけを案内する
+//   retrying … 再試行中（loading のバリエーション）
+
+/** 待機中メッセージ（UI 表示用）*/
+export function loadingMessage(targetName: string): string {
+  return `${targetName}を開いています。少し待ってください。`;
+}
+
+/** 待機中メッセージ（読み上げ用）*/
+export function loadingSpeech(targetName: string): string {
+  return `${targetName}を開いています。少し待ってください。`;
+}
+
+/** 失敗メッセージ（UI 表示用）*/
+export function failureMessage(targetName: string, cause: string): string {
+  return `${targetName}を取得できませんでした。${cause}`;
+}
+
+/** 失敗メッセージ（読み上げ用）。次の行動案内つき */
+export function failureSpeech(
+  targetName: string,
+  cause: string,
+  canRetry: boolean = true,
+): string {
+  const nav = canRetry
+    ? '1番で戻る、4番でもう一度試せます。'
+    : '1番で戻ってください。';
+  return `${targetName}を取得できませんでした。${cause}${nav}`;
+}
+
+/** 機能未成立メッセージ（UI 表示用）*/
+export function blockedMessage(targetName: string, reason: string): string {
+  return `${targetName}は現在使えません。${reason}`;
+}
+
+/** 機能未成立メッセージ（読み上げ用）*/
+export function blockedSpeech(targetName: string, reason: string): string {
+  return `${targetName}は現在使えません。${reason}1番で戻ってください。`;
+}
+
+/** 再試行中メッセージ（読み上げ用）*/
+export function retryingSpeech(targetName: string): string {
+  return `${targetName}をもう一度取得しています。少し待ってください。`;
+}
+
+/** 再試行失敗メッセージ（読み上げ用）*/
+export function retryFailureSpeech(targetName: string): string {
+  return `${targetName}を再取得できませんでした。1番で戻ってください。`;
+}
+
+// ──────────────────────────────────────────────────────────────
+
 export const FORMAL_SERVICE_NAMES = {
   hatena: 'はてなブックマーク',
   sns: 'Mastodon / Bluesky',

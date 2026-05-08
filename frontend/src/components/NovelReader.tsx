@@ -5,7 +5,7 @@ import { SpeechManager } from '../lib/speech';
 import { useAutoNavigation } from '../lib/useAutoNavigation';
 import GridSystem, { GridAction } from './GridSystem';
 import StatusMessage from './StatusMessage';
-import { FORMAL_SERVICE_NAMES, previewText } from '../lib/service-copy';
+import { FORMAL_SERVICE_NAMES, previewText, loadingMessage, failureSpeech, retryFailureSpeech } from '../lib/service-copy';
 import { createGuideAction } from '../lib/grid-guide';
 
 interface NovelReaderProps {
@@ -26,7 +26,11 @@ export default function NovelReader(props: NovelReaderProps) {
 
   const loadNovel = async () => {
     const selectedNovel = store.state.selectedNovel;
-    if (!selectedNovel) { props.speech.speak(`${FORMAL_SERVICE_NAMES.aozora} の作品が選択されていません`); props.onBack(); return; }
+    if (!selectedNovel) {
+      props.speech.speak(`${FORMAL_SERVICE_NAMES.aozora} の作品が選択されていません。1番で戻ってください。`);
+      props.onBack();
+      return;
+    }
     setLoading(true); setError(null);
     try {
       const content = await fetchNovelContent(selectedNovel.authorId, selectedNovel.fileId);
@@ -37,9 +41,13 @@ export default function NovelReader(props: NovelReaderProps) {
       }, 500);
     } catch (err) {
       console.error('Failed to load novel:', err);
-      setError(`${FORMAL_SERVICE_NAMES.aozora} の取得に失敗しました。現在この機能は不安定です。前の画面に戻ります`);
-      props.speech.speak(`${FORMAL_SERVICE_NAMES.aozora} の取得に失敗しました。現在この機能は不安定です。前の画面に戻ります`);
-      setTimeout(props.onBack, 2000);
+      const msg = failureSpeech(
+        `${FORMAL_SERVICE_NAMES.aozora} の「${selectedNovel.title}」`,
+        '外部サイトへの接続に失敗しました。',
+        false,
+      );
+      setError(msg);
+      props.speech.speak(msg);
     } finally {
       setLoading(false);
     }
@@ -86,7 +94,7 @@ export default function NovelReader(props: NovelReaderProps) {
             if (selectedNovel) {
               fetchNovelContent(selectedNovel.authorId, selectedNovel.fileId)
                 .then((content) => { store.setNovelContent(content); props.speech.speak('再読み込みしました'); })
-                .catch(() => { props.speech.speak('再読み込みに失敗しました'); });
+                .catch(() => { props.speech.speak(retryFailureSpeech(FORMAL_SERVICE_NAMES.aozora)); });
             }
           }, 500);
         },
@@ -103,19 +111,24 @@ export default function NovelReader(props: NovelReaderProps) {
       when={!loading()}
       fallback={
         <StatusMessage
-          title={`${FORMAL_SERVICE_NAMES.aozora} を開いています`}
-          message={`${store.state.selectedNovel?.title || '作品'} を取得しています。現在この機能は不安定で、失敗する場合があります。`}
-          hint="しばらく待っても進まない場合は、前の画面に戻って別の作品を試してください。"
+          type="loading"
+          title={loadingMessage(`${FORMAL_SERVICE_NAMES.aozora} の「${store.state.selectedNovel?.title || '作品'}」`)}
+          message="外部サイトから本文を取得しています。作品によっては時間がかかります。"
+          hint="しばらく待っても進まない場合は、1番で戻って別の作品を試してください。"
         />
       }
     >
-      <Show when={!error()} fallback={
-        <div class="grid-container" role="alert" aria-live="assertive">
-          <div class="grid-item" style={{ "grid-column": '1 / -1', "grid-row": '1 / -1' }}>
-            エラー: {error()}
-          </div>
-        </div>
-      }>
+      <Show
+        when={!error()}
+        fallback={
+          <StatusMessage
+            type="failure"
+            title={`${FORMAL_SERVICE_NAMES.aozora} の「${store.state.selectedNovel?.title || '作品'}」を開けませんでした`}
+            message={error()!}
+            hint="1番で戻り、別の作品を試してください。"
+          />
+        }
+      >
         <GridSystem actions={actions()} speech={props.speech} />
       </Show>
     </Show>

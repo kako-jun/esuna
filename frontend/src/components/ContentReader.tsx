@@ -48,7 +48,7 @@ export default function ContentReader(props: ContentReaderProps) {
       }
     } catch (error) {
       console.error('Content loading error:', error);
-      props.onSpeak('コンテンツの読み込みに失敗しました。');
+      props.onSpeak('コンテンツの読み込みに失敗しました。外部サービスへの接続に問題があります。1番で戻ってください。');
     } finally {
       setLoading(false);
     }

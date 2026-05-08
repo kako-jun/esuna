@@ -4,7 +4,7 @@ import { fetchPodcastEpisodes } from '../lib/api-client';
 import { SpeechManager } from '../lib/speech';
 import GridSystem, { GridAction } from './GridSystem';
 import StatusMessage from './StatusMessage';
-import { FORMAL_SERVICE_NAMES, previewText } from '../lib/service-copy';
+import { FORMAL_SERVICE_NAMES, previewText, loadingMessage, failureSpeech, retryFailureSpeech } from '../lib/service-copy';
 import { createGuideAction } from '../lib/grid-guide';
 
 interface PodcastPlayerProps {
@@ -31,7 +31,11 @@ export default function PodcastPlayer(props: PodcastPlayerProps) {
 
   const loadEpisodes = async () => {
     const selectedPodcast = store.state.selectedPodcast;
-    if (!selectedPodcast) { props.speech.speak(`${FORMAL_SERVICE_NAMES.podcast} が選択されていません`); props.onBack(); return; }
+    if (!selectedPodcast) {
+      props.speech.speak(`${FORMAL_SERVICE_NAMES.podcast} の番組が選択されていません。1番で戻ってください。`);
+      props.onBack();
+      return;
+    }
     setLoading(true); setError(null);
     try {
       const episodes = await fetchPodcastEpisodes(selectedPodcast.feedUrl, 10);
@@ -42,9 +46,13 @@ export default function PodcastPlayer(props: PodcastPlayerProps) {
       }, 500);
     } catch (err) {
       console.error('Failed to load episodes:', err);
-      setError(`${selectedPodcast.title} のエピソードを取得できませんでした。番組によっては失敗します。前の画面に戻ります`);
-      props.speech.speak(`${selectedPodcast.title} のエピソードを取得できませんでした。番組によっては失敗します。前の画面に戻ります`);
-      setTimeout(props.onBack, 2000);
+      const msg = failureSpeech(
+        `${selectedPodcast.title}`,
+        '番組によっては外部フィードの取得に失敗します。',
+        false,
+      );
+      setError(msg);
+      props.speech.speak(msg);
     } finally {
       setLoading(false);
     }
@@ -63,7 +71,7 @@ export default function PodcastPlayer(props: PodcastPlayerProps) {
     if (!audioRef) {
       audioRef = new Audio(ep.audio_url);
       audioRef.addEventListener('ended', () => { setIsPlaying(false); props.speech.speak('再生が終了しました'); });
-      audioRef.addEventListener('error', () => { setIsPlaying(false); props.speech.speak('音声の再生に失敗しました'); });
+      audioRef.addEventListener('error', () => { setIsPlaying(false); props.speech.speak('音声の再生に失敗しました。ファイル形式か接続に問題があります。'); });
     }
     if (isPlaying()) { audioRef.pause(); setIsPlaying(false); props.speech.speak('再生を一時停止しました'); }
     else { audioRef.play(); setIsPlaying(true); props.speech.speak('再生を開始します'); }
@@ -100,17 +108,24 @@ export default function PodcastPlayer(props: PodcastPlayerProps) {
       when={!loading()}
       fallback={
         <StatusMessage
-          title={`${FORMAL_SERVICE_NAMES.podcast} を開いています`}
-          message={`${store.state.selectedPodcast?.title || '番組'} のエピソード一覧を取得しています。番組によっては取得に失敗します。`}
-          hint="しばらく待っても進まない場合は、前の画面に戻って別の番組を試してください。"
+          type="loading"
+          title={loadingMessage(`${store.state.selectedPodcast?.title || '番組'}のエピソード`)}
+          message="外部の番組フィードを取得しています。番組によっては時間がかかります。"
+          hint="しばらく待っても進まない場合は、1番で戻って別の番組を試してください。"
         />
       }
     >
-      <Show when={!error()} fallback={
-        <div class="grid-container" role="alert" aria-live="assertive">
-          <div class="grid-item" style={{ "grid-column": '1 / -1', "grid-row": '1 / -1' }}>エラー: {error()}</div>
-        </div>
-      }>
+      <Show
+        when={!error()}
+        fallback={
+          <StatusMessage
+            type="failure"
+            title={`${store.state.selectedPodcast?.title || '番組'}のエピソードを開けませんでした`}
+            message={error()!}
+            hint="1番で戻り、別の番組を試してください。"
+          />
+        }
+      >
         <GridSystem actions={actions()} speech={props.speech} />
       </Show>
     </Show>

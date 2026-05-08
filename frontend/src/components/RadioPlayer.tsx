@@ -3,7 +3,7 @@ import { RadioStation, getStreamUrl } from '../lib/radio';
 import { SpeechManager } from '../lib/speech';
 import GridSystem, { GridAction } from './GridSystem';
 import StatusMessage from './StatusMessage';
-import { FORMAL_SERVICE_NAMES } from '../lib/service-copy';
+import { FORMAL_SERVICE_NAMES, loadingMessage } from '../lib/service-copy';
 import { createGuideAction } from '../lib/grid-guide';
 
 interface RadioPlayerProps {
@@ -30,14 +30,23 @@ export default function RadioPlayer(props: RadioPlayerProps) {
       audio.addEventListener('canplay', () => {
         setIsLoading(false);
         props.speech.speak(`${props.station.name} の再生を開始します`);
-        audio.play().then(() => { setIsPlaying(true); }).catch((err) => { console.error('Play error:', err); setError('再生に失敗しました'); props.speech.speak('再生に失敗しました'); });
+        audio.play().then(() => { setIsPlaying(true); }).catch((err) => {
+          console.error('Play error:', err);
+          setError('音声の再生に失敗しました。ブラウザの設定で自動再生が制限されている可能性があります。');
+          props.speech.speak('音声の再生に失敗しました。ブラウザの設定で自動再生が制限されている可能性があります。6番で再生を試みるか、1番で戻ってください。');
+        });
       });
-      audio.addEventListener('error', () => { setIsLoading(false); setError('ストリーミングの読み込みに失敗しました'); props.speech.speak('ストリーミングの読み込みに失敗しました'); });
+      audio.addEventListener('error', () => {
+        setIsLoading(false);
+        setError('ストリーミングの読み込みに失敗しました。この局は現在利用できないか、ブラウザが対応していません。');
+        props.speech.speak('ストリーミングの読み込みに失敗しました。この局は現在利用できないか、ブラウザが対応していません。1番で戻って別の局を試してください。');
+      });
       audio.addEventListener('ended', () => { setIsPlaying(false); });
     } catch (err) {
       console.error('Init error:', err);
-      setIsLoading(false); setError('ラジオ局への接続に失敗しました');
-      props.speech.speak('ラジオ局への接続に失敗しました。ブラウザや取得先の都合で再生できない場合があります');
+      setIsLoading(false);
+      setError('ラジオ局への接続に失敗しました。ブラウザや取得先の都合で再生できない場合があります。');
+      props.speech.speak('ラジオ局への接続に失敗しました。ブラウザや取得先の都合で再生できない場合があります。1番で戻って別の局を試してください。');
     }
   });
 
@@ -48,7 +57,11 @@ export default function RadioPlayer(props: RadioPlayerProps) {
   const togglePlay = () => {
     if (!audioRef) return;
     if (isPlaying()) { audioRef.pause(); setIsPlaying(false); props.speech.speak('一時停止しました'); }
-    else { audioRef.play().then(() => { setIsPlaying(true); props.speech.speak('再生を再開しました'); }).catch(() => { props.speech.speak('再生に失敗しました'); }); }
+    else {
+      audioRef.play()
+        .then(() => { setIsPlaying(true); props.speech.speak('再生を再開しました'); })
+        .catch(() => { props.speech.speak('再生に失敗しました。ブラウザの設定を確認するか、1番で戻って別の局を試してください。'); });
+    }
   };
 
   const changeVolume = (newVolume: number) => {
@@ -76,9 +89,10 @@ export default function RadioPlayer(props: RadioPlayerProps) {
   if (isLoading()) {
     return (
       <StatusMessage
-        title={`${FORMAL_SERVICE_NAMES.radio} を開いています`}
-        message={`${props.station.name} の再生準備をしています。ブラウザや取得先の都合で失敗する場合があります。`}
-        hint="しばらく待っても始まらない場合は、前の画面に戻って別の局を試してください。"
+        type="loading"
+        title={loadingMessage(props.station.name)}
+        message="ストリーミングの準備をしています。ブラウザや局の都合で失敗する場合があります。"
+        hint="しばらく待っても始まらない場合は、1番で戻って別の局を試してください。"
       />
     );
   }
@@ -86,9 +100,10 @@ export default function RadioPlayer(props: RadioPlayerProps) {
   if (error()) {
     return (
       <StatusMessage
-        title="ラジオを再生できません"
+        type="failure"
+        title={`${props.station.name} を再生できません`}
         message={error()!}
-        hint="前の画面に戻って別の局を試してください。radiko と書かれた局はまだ未対応です。"
+        hint="1番で戻って別の局を試してください。「radiko」と書かれた局はまだ未対応です。"
       />
     );
   }

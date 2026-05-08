@@ -29,7 +29,7 @@ export default function FivechBoardList(props: FivechBoardListProps) {
       props.speech.speak(`${boards.length}個の板名を表示しました。ただし現在、スレッド一覧とレス取得は未対応です。`);
     } catch (err) {
       console.error('Failed to load boards:', err);
-      props.speech.speak('板の読み込みに失敗しました');
+      props.speech.speak('5ちゃんねるの板名一覧を取得できませんでした。外部サービスへの接続に失敗しました。1番で戻るか、4番でもう一度試せます。');
     } finally {
       setLoading(false);
     }
@@ -74,13 +74,13 @@ export default function FivechBoardList(props: FivechBoardListProps) {
         setLoading(true);
         fetch5chBoards()
           .then((boards) => { store.set5chBoards(boards); props.speech.speak(`${boards.length}個の板を再読み込みしました`); })
-          .catch(() => { props.speech.speak('再読み込みに失敗しました'); })
+          .catch(() => { props.speech.speak('5ちゃんねるの板名一覧を再取得できませんでした。外部サービスへの接続に失敗しました。1番で戻ってください。'); })
           .finally(() => setLoading(false));
       },
     },
     {
       label: loading()
-        ? '取得中'
+        ? '5ちゃんねる\n板名取得中…'
         : store.getCurrentBoard()
           ? `${store.getCurrentBoard()!.title}\n${previewText(store.getCurrentBoard()!.category, 58)}`
           : '板なし',
