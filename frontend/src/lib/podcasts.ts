@@ -33,7 +33,7 @@ export const POPULAR_PODCASTS: Podcast[] = [
     id: 'backspace',
     title: 'backspace.fm',
     description: 'ドリキンとゲストによるテクノロジー、ガジェット、カルチャー系トークPodcast',
-    feedUrl: 'https://backspace.fm/feed.xml',
+    feedUrl: 'https://feeds.feedburner.com/backspacefm',
     category: 'テクノロジー',
   },
   {
@@ -54,7 +54,7 @@ export const POPULAR_PODCASTS: Podcast[] = [
     id: 'soussune',
     title: 'そうっすね',
     description: 'デザイン、フロントエンド、ものづくりについてのトークPodcast',
-    feedUrl: 'https://feeds.soussune.com/soussune',
+    feedUrl: 'https://soussune.com/feed/',
     category: 'デザイン',
   },
   {
@@ -68,14 +68,14 @@ export const POPULAR_PODCASTS: Podcast[] = [
     id: 'yatteiki',
     title: 'Yatteiki.fm',
     description: 'プログラミングやギークカルチャーについてのPodcast',
-    feedUrl: 'https://yatteiki.fm/rss',
+    feedUrl: 'https://yatteiki.fm/feed.xml',
     category: 'ギークカルチャー',
   },
   {
     id: 'misreading',
     title: 'Misreading Chat',
     description: 'コンピュータサイエンスや技術書の読み違いについて語るPodcast',
-    feedUrl: 'https://misreading.chat/feed.xml',
+    feedUrl: 'https://misreading.chat/feed/',
     category: 'コンピュータサイエンス',
   },
 ];
