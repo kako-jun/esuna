@@ -51,6 +51,7 @@ export default function RadioPlayer(props: RadioPlayerProps) {
   });
 
   onCleanup(() => {
+    props.speech.stop();
     if (audioRef) { audioRef.pause(); audioRef.src = ''; audioRef = null; }
   });
 
