@@ -1,9 +1,10 @@
 import { createSignal, onMount, onCleanup } from 'solid-js';
+import Hls from 'hls.js';
 import { RadioStation, getStreamUrl } from '../lib/radio';
 import { SpeechManager } from '../lib/speech';
 import GridSystem, { GridAction } from './GridSystem';
 import StatusMessage from './StatusMessage';
-import { FORMAL_SERVICE_NAMES, loadingMessage } from '../lib/service-copy';
+import { loadingMessage } from '../lib/service-copy';
 import { createGuideAction } from '../lib/grid-guide';
 
 interface RadioPlayerProps {
@@ -18,16 +19,53 @@ export default function RadioPlayer(props: RadioPlayerProps) {
   const [error, setError] = createSignal<string | null>(null);
   const [volume, setVolume] = createSignal(1.0);
   let audioRef: HTMLAudioElement | null = null;
+  let hlsRef: Hls | null = null;
+  let mounted = true;
 
   onMount(async () => {
     try {
       setIsLoading(true); setError(null);
       const streamUrl = await getStreamUrl(props.station.id);
-      const audio = new Audio(streamUrl);
+      if (!mounted) return;
+      const audio = new Audio();
       audio.volume = volume();
       audioRef = audio;
 
+      let isHls = false;
+      try {
+        isHls = new URL(streamUrl).pathname.endsWith('.m3u8');
+      } catch {
+        isHls = streamUrl.includes('.m3u8');
+      }
+
+      if (isHls && Hls.isSupported()) {
+        // Chrome / Firefox / Edge: hls.js で再生（MSE ベース）
+        const hls = new Hls();
+        hlsRef = hls;
+        hls.loadSource(streamUrl);
+        hls.attachMedia(audio);
+        let mediaErrorRecovered = false;
+        hls.on(Hls.Events.ERROR, (_event, data) => {
+          if (!data.fatal) return;
+          if (!mediaErrorRecovered && data.type === Hls.ErrorTypes.MEDIA_ERROR) {
+            // MEDIA_ERROR は一度だけ回復を試みる
+            mediaErrorRecovered = true;
+            hls.recoverMediaError();
+            return;
+          }
+          setIsLoading(false);
+          setError('HLS ストリーミングの読み込みに失敗しました。この局は現在利用できないか、ネットワークの問題かもしれません。');
+          props.speech.speak('ストリーミングの読み込みに失敗しました。1番で戻って別の局を試してください。');
+        });
+      } else {
+        // Safari（ネイティブ HLS: canPlayType 'application/vnd.apple.mpegurl'）または非 HLS URL
+        audio.src = streamUrl;
+      }
+
+      let playStarted = false;
       audio.addEventListener('canplay', () => {
+        if (playStarted) return;
+        playStarted = true;
         setIsLoading(false);
         props.speech.speak(`${props.station.name} の再生を開始します`);
         audio.play().then(() => { setIsPlaying(true); }).catch((err) => {
@@ -51,7 +89,9 @@ export default function RadioPlayer(props: RadioPlayerProps) {
   });
 
   onCleanup(() => {
+    mounted = false;
     props.speech.stop();
+    if (hlsRef) { hlsRef.destroy(); hlsRef = null; }
     if (audioRef) { audioRef.pause(); audioRef.src = ''; audioRef = null; }
   });
 
