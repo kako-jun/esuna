@@ -75,12 +75,35 @@ export default function HatenaEntryReader(props: HatenaEntryReaderProps) {
   });
 
   const actions = () => {
+    const pageName = props.type === 'hot' ? 'はてなブックマーク 人気エントリー' : 'はてなブックマーク 新着エントリー';
     const actionList = [
     {
       label: '戻る',
       action: () => {
         props.speech.stop();
         props.onBack();
+      },
+    },
+    {
+      label: '前のエントリー',
+      action: () => {
+        if (store.state.currentEntryIndex > 0) {
+          store.prevEntry();
+          setTimeout(speakEntry, 100);
+        } else {
+          props.speech.speak('最初のエントリーです');
+        }
+      },
+    },
+    {
+      label: '次のエントリー',
+      action: () => {
+        if (store.state.currentEntryIndex < store.state.hatenaEntries.length - 1) {
+          store.nextEntry();
+          setTimeout(speakEntry, 100);
+        } else {
+          props.speech.speak('最後のエントリーです');
+        }
       },
     },
     {
@@ -100,42 +123,12 @@ export default function HatenaEntryReader(props: HatenaEntryReaderProps) {
       },
     },
     {
-      label: '未実装',
-      action: () => props.speech.speak('この枠の機能はまだありません'),
-    },
-    {
-      label: '前のエントリー',
-      action: () => {
-        if (store.state.currentEntryIndex > 0) {
-          store.prevEntry();
-          setTimeout(speakEntry, 100);
-        } else {
-          props.speech.speak('最初のエントリーです');
-        }
-      },
-    },
-    {
       label: loading()
         ? '取得中'
         : store.getCurrentEntry()
           ? `${store.getCurrentEntry()!.title}\n${previewText(store.getCurrentEntry()!.description, 56)}`
           : 'エントリーなし',
       action: speakEntry,
-    },
-    {
-      label: '次のエントリー',
-      action: () => {
-        if (store.state.currentEntryIndex < store.state.hatenaEntries.length - 1) {
-          store.nextEntry();
-          setTimeout(speakEntry, 100);
-        } else {
-          props.speech.speak('最後のエントリーです');
-        }
-      },
-    },
-    {
-      label: `${store.state.currentEntryIndex + 1}/${store.state.hatenaEntries.length}`,
-      action: () => props.speech.speak(`${store.state.hatenaEntries.length}件中、${store.state.currentEntryIndex + 1}件目です`),
     },
     {
       label: 'コメント表示',
@@ -150,12 +143,16 @@ export default function HatenaEntryReader(props: HatenaEntryReaderProps) {
       },
     },
     {
+      label: `${store.state.currentEntryIndex + 1}/${store.state.hatenaEntries.length}`,
+      action: () => props.speech.speak(`${store.state.hatenaEntries.length}件中、${store.state.currentEntryIndex + 1}件目です`),
+    },
+    {
       label: '停止',
       action: () => props.speech.stop(),
     },
+    createGuideAction(pageName, props.speech, () => actionList),
     ];
 
-    actionList[8] = createGuideAction('はてなブックマーク人気エントリー', props.speech, () => actionList);
     return actionList;
   };
 
