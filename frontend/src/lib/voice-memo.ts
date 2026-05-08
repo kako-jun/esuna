@@ -25,7 +25,7 @@ export interface VoiceMemo {
 }
 
 export type SaveMemoResult =
-  | { ok: true }
+  | { ok: true; memo: VoiceMemo }
   | { ok: false; reason: 'quota_exceeded' }
   | { ok: false; reason: 'unknown' }
 
@@ -34,24 +34,29 @@ export type SaveMemoResult =
 // ---------------------------------------------------------------------------
 
 let migrationDone = false
+let migrationPromise: Promise<void> | null = null
 
 async function ensureMigrated(): Promise<void> {
   if (migrationDone) return
-  try {
-    await migrateFromLocalStorage(
+  // 並行呼び出し時に migrateFromLocalStorage が複数回走らないよう Promise をキャッシュする
+  if (!migrationPromise) {
+    migrationPromise = migrateFromLocalStorage(
       () => {
         const stored = getSubKey('voiceMemos')
         if (!stored || !Array.isArray(stored)) return []
         return stored as VoiceMemo[]
       },
       () => removeSubKey('voiceMemos'),
-    )
-    // 成功してからフラグを立てる（失敗時は次回再試行される）
-    migrationDone = true
-  } catch (e) {
-    console.warn('Migration from LocalStorage failed:', e)
-    // migrationDone は false のまま → 次回再試行
+    ).then(() => {
+      migrationDone = true
+    }).catch((e) => {
+      console.warn('Migration from LocalStorage failed:', e)
+      // migrationDone は false のまま → 次回再試行
+    }).finally(() => {
+      migrationPromise = null
+    })
   }
+  await migrationPromise
 }
 
 // ---------------------------------------------------------------------------
@@ -65,17 +70,17 @@ export async function getAllMemos(): Promise<VoiceMemo[]> {
 
 export async function saveMemo(
   memo: Omit<VoiceMemo, 'id' | 'createdAt'>,
-): Promise<{ memo?: VoiceMemo; result: SaveMemoResult }> {
+): Promise<SaveMemoResult> {
   await ensureMigrated()
   try {
     const newMemo = await idbSaveMemo(memo)
-    return { memo: newMemo, result: { ok: true } }
+    return { ok: true, memo: newMemo }
   } catch (e) {
     console.error('Failed to save voice memo:', e)
     const isQuota =
       e instanceof DOMException && e.name === 'QuotaExceededError'
     return {
-      result: { ok: false, reason: isQuota ? 'quota_exceeded' : 'unknown' },
+      ok: false, reason: isQuota ? 'quota_exceeded' : 'unknown',
     }
   }
 }

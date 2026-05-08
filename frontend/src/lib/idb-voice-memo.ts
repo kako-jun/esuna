@@ -101,7 +101,7 @@ export async function idbGetAllMemos(): Promise<VoiceMemo[]> {
     tx.onerror = () => reject(tx.error)
     tx.onabort = () => reject(new Error('Transaction aborted'))
   })
-  records.sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+  records.sort((a, b) => (a.createdAt > b.createdAt ? -1 : a.createdAt < b.createdAt ? 1 : 0))
   return Promise.all(records.map(recordToMemo))
 }
 
@@ -178,7 +178,8 @@ export async function idbClearAllMemos(): Promise<void> {
   await new Promise<void>((resolve, reject) => {
     const tx = db.transaction(STORE_NAME, 'readwrite')
     const store = tx.objectStore(STORE_NAME)
-    store.clear()
+    const req = store.clear()
+    req.onerror = () => reject(req.error)
     tx.oncomplete = () => resolve()
     tx.onerror = () => reject(tx.error)
     tx.onabort = () => reject(new Error('Transaction aborted'))
@@ -204,6 +205,7 @@ export async function migrateFromLocalStorage(
 
   const lsMemos = getLsData()
   if (lsMemos.length === 0) {
+    // 新規ユーザー（LS にデータなし）は移行不要。毎回 LS を確認するオーバーヘッドを避けるためフラグを立てる
     localStorage.setItem(MIGRATION_FLAG_KEY, '1')
     return
   }

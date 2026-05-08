@@ -28,7 +28,15 @@ import type { Favorite } from './lib/favorites';
 import type { Progress } from './lib/progress';
 import type { RadioStation } from './lib/radio';
 import type { AutoplayItem } from './lib/autoplay';
-import { FORMAL_SERVICE_NAMES, getFeatureStatusSummary } from './lib/service-copy';
+import { FORMAL_SERVICE_NAMES, getFeatureStatusSummary } from './lib/service-copy'
+
+const SPEED_PRESETS = [
+  { rate: 0.5, label: '0.5倍（非常に遅い）' },
+  { rate: 0.7, label: '0.7倍（遅い）' },
+  { rate: 1.0, label: '1.0倍（標準）' },
+  { rate: 1.5, label: '1.5倍（速い）' },
+  { rate: 2.0, label: '2.0倍（非常に速い）' },
+] as const;
 
 type Page = 'main' | 'news' | 'sns' | 'settings' | 'settings-speech' | 'help' | 'tools' | 'audio' |
             'hatena-comments' | '5ch-boards' | '5ch-threads' | '5ch-posts' |
@@ -135,15 +143,14 @@ export default function App() {
     { label: '停止', action: () => { speechManager()?.stop(); } },
     { label: '', action: () => {} },
     { label: '', action: () => {} },
-    { label: '', action: () => {} },
-    { label: '', action: () => {} },
+    { label: '読み上げ', action: () => { speechManager()?.speak('読み上げ速度設定です。0.5倍から2.0倍の5段階から選択してください。1番で設定に戻れます'); } },
   ];
 
   const settingsActions = () => [
     { label: '戻る', action: () => { navigateTo('main'); speechManager()?.speak('メインメニューに戻りました'); } },
     { label: '速度設定', action: () => { navigateTo('settings-speech'); speechManager()?.speak('読み上げ速度設定に移動しました'); } },
     { label: '音量：標準', action: () => { updateSetting('speech', { volume: 1.0 }); speechManager()?.setDefaults({ volume: 1.0 }); speechManager()?.speak('音量を標準にしました。設定を保存しました'); } },
-    { label: '音量：小', action: () => { updateSetting('speech', { volume: 0.5 }); speechManager()?.setDefaults({ volume: 0.5 }); speechManager()?.speak('音量を小さくしました。設定を保存しました', { volume: 0.5 }); } },
+    { label: '音量：小', action: () => { updateSetting('speech', { volume: 0.5 }); speechManager()?.setDefaults({ volume: 0.5 }); speechManager()?.speak('音量を小さくしました。設定を保存しました'); } },
     { label: 'ピッチ：低', action: () => { updateSetting('speech', { pitch: 0.7 }); speechManager()?.setDefaults({ pitch: 0.7 }); speechManager()?.speak('ピッチを低くしました。設定を保存しました', { pitch: 0.7 }); } },
     { label: 'ピッチ：標準', action: () => { updateSetting('speech', { pitch: 1.0 }); speechManager()?.setDefaults({ pitch: 1.0 }); speechManager()?.speak('ピッチを標準にしました。設定を保存しました', { pitch: 1.0 }); } },
     { label: 'ピッチ：高', action: () => { updateSetting('speech', { pitch: 1.5 }); speechManager()?.setDefaults({ pitch: 1.5 }); speechManager()?.speak('ピッチを高くしました。設定を保存しました', { pitch: 1.5 }); } },
@@ -158,14 +165,6 @@ export default function App() {
       },
     },
   ];
-
-  const SPEED_PRESETS = [
-    { rate: 0.5, label: '0.5倍（非常に遅い）' },
-    { rate: 0.7, label: '0.7倍（遅い）' },
-    { rate: 1.0, label: '1.0倍（標準）' },
-    { rate: 1.5, label: '1.5倍（速い）' },
-    { rate: 2.0, label: '2.0倍（非常に速い）' },
-  ] as const;
 
   const speechSettingsActions = () => [
     { label: '戻る', action: () => { navigateTo('settings'); speechManager()?.speak('設定に戻りました'); } },

@@ -64,7 +64,7 @@ export default function VoiceMemoRecorder(props: VoiceMemoRecorderProps) {
         const base64Data = await blobToBase64(audioBlob);
         const finalDuration = recordingTimeRef;
         const now = new Date();
-        const { result } = await saveMemo({ title: `音声メモ ${now.toLocaleString('ja-JP')}`, audioData: base64Data, duration: finalDuration, tags: [] });
+        const result = await saveMemo({ title: `音声メモ ${now.toLocaleString('ja-JP')}`, audioData: base64Data, duration: finalDuration, tags: [] });
         if (result.ok) {
           props.speech.speak(`音声メモを保存しました。長さは${finalDuration}秒です`);
         } else if (result.reason === 'quota_exceeded') {
