@@ -60,12 +60,12 @@ export default function RadioPlayer(props: RadioPlayerProps) {
   const actions = () => {
     const actionList = [
       { label: '戻る', action: () => { if (audioRef) { audioRef.pause(); } props.speech.stop(); props.onBack(); } },
-      { label: isPlaying() ? '一時停止' : '再生', action: togglePlay },
-      { label: '音量：大', action: () => changeVolume(1.0) },
-      { label: '音量：中', action: () => changeVolume(0.7) },
-      { label: '音量：小', action: () => changeVolume(0.4) },
-      { label: '音量：最小', action: () => changeVolume(0.1) },
+      { label: '音量：小', action: () => changeVolume(Math.max(0, volume() - 0.3)) },
+      { label: '音量：大', action: () => changeVolume(Math.min(1.0, volume() + 0.3)) },
       { label: '局情報', action: () => { props.speech.speak(`現在再生中：${props.station.name}。${props.station.description}。状態：${isPlaying() ? '再生中' : '一時停止中'}。音量：${Math.round(volume() * 100)}パーセント`); } },
+      { label: `${props.station.name}\n${isPlaying() ? '再生中' : '一時停止中'}`, action: () => { props.speech.speak(`${props.station.name}。${isPlaying() ? '再生中' : '一時停止中'}`); } },
+      { label: isPlaying() ? '一時停止' : '再生', action: togglePlay },
+      { label: `音量：${Math.round(volume() * 100)}%`, action: () => { props.speech.speak(`音量：${Math.round(volume() * 100)}パーセント`); } },
       { label: '停止', action: () => { props.speech.stop(); } },
       createGuideAction('ラジオ再生画面', props.speech, () => actionList),
     ];
