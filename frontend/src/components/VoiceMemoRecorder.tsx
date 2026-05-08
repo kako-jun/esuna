@@ -23,7 +23,7 @@ export default function VoiceMemoRecorder(props: VoiceMemoRecorderProps) {
   let recordingTimeRef = 0;
   let currentAudioUrlRef: string | null = null;
 
-  onMount(() => { loadMemos(); });
+  onMount(() => { void loadMemos(); });
 
   onCleanup(() => {
     if (recordingTimerRef) { clearInterval(recordingTimerRef); }
@@ -31,8 +31,8 @@ export default function VoiceMemoRecorder(props: VoiceMemoRecorderProps) {
     if (currentAudioUrlRef) { URL.revokeObjectURL(currentAudioUrlRef); currentAudioUrlRef = null; }
   });
 
-  const loadMemos = () => {
-    const allMemos = getAllMemos();
+  const loadMemos = async () => {
+    const allMemos = await getAllMemos();
     setMemos(allMemos);
     setTimeout(() => {
       if (allMemos.length === 0) { props.speech.speak('音声メモはまだ録音されていません。録音ボタンで録音を開始できます'); }
@@ -64,15 +64,15 @@ export default function VoiceMemoRecorder(props: VoiceMemoRecorderProps) {
         const base64Data = await blobToBase64(audioBlob);
         const finalDuration = recordingTimeRef;
         const now = new Date();
-        const { result } = saveMemo({ title: `音声メモ ${now.toLocaleString('ja-JP')}`, audioData: base64Data, duration: finalDuration, tags: [] });
+        const { result } = await saveMemo({ title: `音声メモ ${now.toLocaleString('ja-JP')}`, audioData: base64Data, duration: finalDuration, tags: [] });
         if (result.ok) {
           props.speech.speak(`音声メモを保存しました。長さは${finalDuration}秒です`);
         } else if (result.reason === 'quota_exceeded') {
-          props.speech.speak(`音声メモを保存しましたが、容量が超過したため古いメモを一部削除しました。長さは${finalDuration}秒です。不要なメモは削除してください。`);
+          props.speech.speak(`音声メモの保存に失敗しました。ストレージ容量が不足しています。不要なメモを削除してから再試行してください。`);
         } else {
           props.speech.speak('音声メモの保存に失敗しました。1番で戻るか、4番でもう一度試せます。');
         }
-        loadMemos();
+        await loadMemos();
         stream.getTracks().forEach((track) => track.stop());
       };
 
@@ -120,12 +120,12 @@ export default function VoiceMemoRecorder(props: VoiceMemoRecorderProps) {
     }
   };
 
-  const deleteCurrent = () => {
+  const deleteCurrent = async () => {
     const memo = memos()[currentIndex()];
     if (!memo) { props.speech.speak('削除するメモがありません'); return; }
-    deleteMemo(memo.id);
+    await deleteMemo(memo.id);
     props.speech.speak('メモを削除しました');
-    const updated = getAllMemos();
+    const updated = await getAllMemos();
     setMemos(updated);
     if (currentIndex() >= updated.length && updated.length > 0) { setCurrentIndex(updated.length - 1); }
     else if (updated.length === 0) { setCurrentIndex(0); }
