@@ -1,4 +1,6 @@
-# Esunaプロジェクト概要
+# Esuna（エスナ）— 開発ガイド
+
+## コンセプト
 
 失明が怖い。失明した後で、これまでできていた趣味を諦めるのはつらい。
 見えないもどかしさや、補助の人がいない時に、何もできないつらさもあるだろう。
@@ -20,14 +22,6 @@ YahooやLINEのようなポータルアプリという発想である。
 そのようなアプリをWebアプリとして作っていく。
 アプリ名はEsunaである。ファイナルファンタジーの回復魔法が由来。
 
-## 技術スタック
-
-- **フロントエンド**: Vite + SolidJS + TypeScript（`frontend/`）
-- **バックエンド**: Hono on Cloudflare Workers（`backend/`）
-- **デプロイ**: フロントエンド → CF Pages（push to main = auto deploy）、バックエンド → `wrangler deploy`
-- **CI**: `.github/workflows/ci.yml` - push/PR to main triggers frontend (tsc + vite build) and backend (tsc)
-- **Pre-commit**: Husky + lint-staged at repo root (prettier for frontend)
-
 ---
 
 操作は統一されたルールが必要。ユーザーはタップする場所を細かく認識できないため、画面を9分割した矩形ごとに機能を割り当てる。
@@ -45,6 +39,43 @@ Esunaはなるべくブラウザ内だけで完結するのが良く、サーバ
 そのためには拡張が容易な設計が必要。ほかのサイトに飛んでしまってはEsunaの操作の法則が途切れてしまう。
 アップデートのたびに上書きインストールの必要がないというメリットのため、Webアプリなのである。
 
+## 技術スタック
+
+- **フロントエンド**: Vite + SolidJS + TypeScript（`frontend/`）
+- **バックエンド**: Hono on Cloudflare Workers（`backend/`）
+- **デプロイ**: フロントエンド → CF Pages（push to main = auto deploy）、バックエンド → `wrangler deploy`
+- **CI**: `.github/workflows/ci.yml` - push/PR to main で tsc + vite build
+- **Pre-commit**: Husky + lint-staged at repo root（prettier for frontend）
+
+## デプロイ先
+
+- フロントエンド: https://esuna.llll-ll.com
+- バックエンド: https://esuna-api.kako-jun.workers.dev
+
+## ローカル起動
+
+```bash
+# フロントエンド
+cd frontend && npm install && npm run dev
+# → http://localhost:5173
+
+# バックエンド
+cd backend && npm install && npm run dev
+# → http://localhost:8787
+```
+
+## 9マスUIの規約
+
+docs/grid-layout.md を参照。UIの生成・修正時は必ず従うこと。
+
 ## デザインシステム
 
-UIの生成・修正時は `DESIGN.md` に定義されたデザインシステムに従うこと。定義外の色・フォント・スペーシングを勝手に使わない。
+DESIGN.md を参照。定義外の色・フォント・スペーシングを勝手に使わない。
+
+## 機能の成立状況
+
+docs/status-matrix.md を参照。未成立機能に新しい UI を追加しない。
+
+## 禁止事項
+
+- Co-Authored-By をコミットメッセージに付けない
