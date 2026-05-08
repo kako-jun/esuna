@@ -34,7 +34,9 @@ body {
   background: var(--ff-bg);
   font-family: 'BIZ UDGothic', 'Hiragino Sans', 'Yu Gothic', sans-serif;
   font-weight: 700;
-  font-size: 14px;
+  /* ベースサイズを 16px に引き上げ（弱視対応）。
+     1rem がここに依存するので clamp 全体が底上げされる。 */
+  font-size: 16px;
   margin: 0;
   padding: 0;
   overflow: hidden;
@@ -88,7 +90,11 @@ body {
 
   font-family: 'BIZ UDGothic', 'Hiragino Sans', 'Yu Gothic', sans-serif;
   font-weight: 700;
-  font-size: clamp(1rem, 2.1vw, 1.5rem);
+  /* clamp(最小, ビューポート比, 最大)
+     スマホ縦(360px幅): ~2.1vw=7.6px → 下限 1.15rem=18.4px が効く
+     タブレット(768px): ~2.5vw=19.2px → 中間域
+     PC(1440px):        ~2.5vw=36px   → 上限 1.8rem=28.8px が効く */
+  font-size: clamp(1.15rem, 2.5vw, 1.8rem);
   line-height: 1.45;
   white-space: pre-wrap;
   word-break: break-word;
@@ -214,13 +220,13 @@ body {
 
 .status-message__title {
   margin-bottom: 16px;
-  font-size: clamp(1rem, 2vw, 1.4rem);
+  font-size: clamp(1.2rem, 2.4vw, 1.7rem);
   line-height: 1.6;
 }
 
 .status-message__body,
 .status-message__hint {
-  font-size: clamp(0.75rem, 1.6vw, 1rem);
+  font-size: clamp(0.9rem, 1.8vw, 1.2rem);
   line-height: 1.9;
   white-space: pre-wrap;
 }
@@ -233,7 +239,7 @@ body {
 /* 状態種別ラベル（弱視・介助者向けの視覚ヒント） */
 .status-message__type-label {
   margin-bottom: 8px;
-  font-size: clamp(0.65rem, 1.3vw, 0.85rem);
+  font-size: clamp(0.75rem, 1.5vw, 1rem);
   font-weight: bold;
   text-transform: uppercase;
   letter-spacing: 0.08em;
