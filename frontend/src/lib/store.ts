@@ -27,6 +27,10 @@ interface AppState {
   currentEntryIndex: number;
   hatenaComments: HatenaComment[];
   currentCommentIndex: number;
+  // どのエントリーのコメントを保持しているかを示す URL。
+  // CommentReader が「同じエントリーなら再取得しない / 違うエントリーなら再取得する」
+  // を判断するための識別子。
+  hatenaCommentsSourceUrl: string | null;
 
   // 5ch
   fivechBoards: FivechBoard[];
@@ -66,6 +70,7 @@ const initialState: AppState = {
   currentEntryIndex: 0,
   hatenaComments: [],
   currentCommentIndex: 0,
+  hatenaCommentsSourceUrl: null,
 
   fivechBoards: [],
   currentBoardIndex: 0,
@@ -125,8 +130,8 @@ function createAppStore() {
       return state.hatenaEntries[state.currentEntryIndex] || null;
     },
 
-    setHatenaComments(comments: HatenaComment[]) {
-      setState({ hatenaComments: comments, currentCommentIndex: 0 });
+    setHatenaComments(comments: HatenaComment[], sourceUrl: string | null = null) {
+      setState({ hatenaComments: comments, currentCommentIndex: 0, hatenaCommentsSourceUrl: sourceUrl });
     },
     setCurrentCommentIndex(index: number) {
       setState('currentCommentIndex', index);
