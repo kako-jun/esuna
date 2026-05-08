@@ -1,78 +1,104 @@
-import { createSignal, onMount } from 'solid-js';
-import { useAppStore } from '../lib/store';
-import { fetchSNSPosts } from '../lib/api-client';
-import { SpeechManager } from '../lib/speech';
-import { useAutoNavigation } from '../lib/useAutoNavigation';
-import GridSystem, { GridAction } from './GridSystem';
-import { FORMAL_SERVICE_NAMES, previewText } from '../lib/service-copy';
-import { createGuideAction } from '../lib/grid-guide';
+import { createSignal, onMount } from 'solid-js'
+import { useAppStore } from '../lib/store'
+import { fetchSNSPosts } from '../lib/api-client'
+import { SpeechManager } from '../lib/speech'
+import { useAutoNavigation } from '../lib/useAutoNavigation'
+import GridSystem, { GridAction } from './GridSystem'
+import { FORMAL_SERVICE_NAMES, previewText } from '../lib/service-copy'
+import { createGuideAction } from '../lib/grid-guide'
 
 interface SNSPostReaderProps {
-  speech: SpeechManager;
-  onBack: () => void;
+  speech: SpeechManager
+  onBack: () => void
 }
 
 export default function SNSPostReader(props: SNSPostReaderProps) {
-  const store = useAppStore();
-  const [loading, setLoading] = createSignal(false);
-  const [platform, setPlatform] = createSignal<'mastodon' | 'bluesky'>('mastodon');
+  const store = useAppStore()
+  const [loading, setLoading] = createSignal(false)
+  const [platform, setPlatform] = createSignal<'mastodon' | 'bluesky'>('mastodon')
 
   onMount(() => {
     if (store.state.snsPosts.length === 0) {
-      loadPosts();
+      loadPosts()
     }
-  });
+  })
 
   const loadPosts = async () => {
-    setLoading(true);
+    setLoading(true)
     try {
-      const posts = await fetchSNSPosts(platform(), undefined, 20);
-      store.setSNSPosts(posts);
-      props.speech.speak(`${platform() === 'mastodon' ? 'Mastodon' : 'Bluesky'} の投稿を${posts.length}件読み込みました。`);
+      const posts = await fetchSNSPosts(platform(), undefined, 20)
+      store.setSNSPosts(posts)
+      props.speech.speak(
+        `${platform() === 'mastodon' ? 'Mastodon' : 'Bluesky'} の投稿を${posts.length}件読み込みました。`,
+      )
     } catch (err) {
-      console.error('Failed to load posts:', err);
-      props.speech.speak(`${platform() === 'mastodon' ? 'Mastodon' : 'Bluesky'} の投稿を取得できませんでした。現在この機能は整備中です。1番で戻るか、4番でもう一度試せます。`);
+      console.error('Failed to load posts:', err)
+      props.speech.speak(
+        `${platform() === 'mastodon' ? 'Mastodon' : 'Bluesky'} の投稿を取得できませんでした。現在この機能は整備中です。1番で戻るか、4番でもう一度試せます。`,
+      )
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
   const speakPost = () => {
-    const currentPost = store.getCurrentSNSPost();
-    if (!currentPost) return;
-    props.speech.speakQueue([`${currentPost.author}さん`, currentPost.text]);
-  };
+    const currentPost = store.getCurrentSNSPost()
+    if (!currentPost) return
+    props.speech.speakQueue([`${currentPost.author}さん`, currentPost.text])
+  }
 
   useAutoNavigation({
-    get enabled() { return store.state.autoNavigationEnabled; },
+    get enabled() {
+      return store.state.autoNavigationEnabled
+    },
     speech: props.speech,
     onNext: () => {
-      if (store.state.currentSNSPostIndex < store.state.snsPosts.length - 1) { store.nextSNSPost(); speakPost(); }
-      else { props.speech.speak('最後の投稿です'); }
+      if (store.state.currentSNSPostIndex < store.state.snsPosts.length - 1) {
+        store.nextSNSPost()
+        speakPost()
+      } else {
+        props.speech.speak('最後の投稿です')
+      }
     },
     delay: 3000,
-  });
+  })
 
   const actions = () => {
     const actionList: GridAction[] = [
-      { label: '戻る', action: () => { props.speech.stop(); props.onBack(); } },
+      {
+        label: '戻る',
+        action: () => {
+          props.speech.stop()
+          props.onBack()
+        },
+      },
       {
         label: '前の投稿',
         action: () => {
-          if (store.state.currentSNSPostIndex > 0) { store.prevSNSPost(); speakPost(); }
-          else { props.speech.speak('最初の投稿です'); }
+          if (store.state.currentSNSPostIndex > 0) {
+            store.prevSNSPost()
+            speakPost()
+          } else {
+            props.speech.speak('最初の投稿です')
+          }
         },
       },
       {
         label: '次の投稿',
         action: () => {
-          if (store.state.currentSNSPostIndex < store.state.snsPosts.length - 1) { store.nextSNSPost(); speakPost(); }
-          else { props.speech.speak('最後の投稿です'); }
+          if (store.state.currentSNSPostIndex < store.state.snsPosts.length - 1) {
+            store.nextSNSPost()
+            speakPost()
+          } else {
+            props.speech.speak('最後の投稿です')
+          }
         },
       },
       {
         label: 'リロード',
-        action: () => { loadPosts(); },
+        action: () => {
+          loadPosts()
+        },
       },
       {
         label: loading()
@@ -85,28 +111,41 @@ export default function SNSPostReader(props: SNSPostReaderProps) {
       {
         label: '切替',
         action: () => {
-          const platforms: Array<'mastodon' | 'bluesky'> = ['mastodon', 'bluesky'];
-          const currentIndex = platforms.indexOf(platform());
-          const nextPlatform = platforms[(currentIndex + 1) % platforms.length];
-          setPlatform(nextPlatform);
-          props.speech.speak(`${nextPlatform === 'mastodon' ? 'Mastodon' : 'Bluesky'} に切り替えました。X には未対応です。`);
-          loadPosts();
+          const platforms: Array<'mastodon' | 'bluesky'> = ['mastodon', 'bluesky']
+          const currentIndex = platforms.indexOf(platform())
+          const nextPlatform = platforms[(currentIndex + 1) % platforms.length]
+          setPlatform(nextPlatform)
+          props.speech.speak(
+            `${nextPlatform === 'mastodon' ? 'Mastodon' : 'Bluesky'} に切り替えました。X には未対応です。`,
+          )
+          loadPosts()
         },
       },
-      { label: `${store.state.currentSNSPostIndex + 1}/${store.state.snsPosts.length}`, action: () => props.speech.speak(`${store.state.snsPosts.length}件中、${store.state.currentSNSPostIndex + 1}件目です`) },
+      {
+        label: '位置',
+        action: () =>
+          props.speech.speak(
+            `${store.state.snsPosts.length}件中、${store.state.currentSNSPostIndex + 1}件目です`,
+          ),
+      },
       { label: '停止', action: () => props.speech.stop() },
       createGuideAction('SNS投稿一覧', props.speech, () => actionList),
-    ];
+    ]
 
-    return actionList;
-  };
+    return actionList
+  }
 
   return (
     <div class="h-screen w-screen">
-      <GridSystem actions={actions()} speech={props.speech} onInit={() => {
-        props.speech.speak(`${FORMAL_SERVICE_NAMES.sns} の画面です。X には未対応です。`);
-        if (store.state.snsPosts.length > 0) props.speech.speak(`${store.state.snsPosts.length}件の投稿があります`);
-      }} />
+      <GridSystem
+        actions={actions()}
+        speech={props.speech}
+        onInit={() => {
+          props.speech.speak(`${FORMAL_SERVICE_NAMES.sns} の画面です。X には未対応です。`)
+          if (store.state.snsPosts.length > 0)
+            props.speech.speak(`${store.state.snsPosts.length}件の投稿があります`)
+        }}
+      />
     </div>
-  );
+  )
 }
