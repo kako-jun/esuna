@@ -46,7 +46,13 @@ export default function AutoplayPlayer(props: AutoplayPlayerProps) {
     }, 1000);
   });
 
-  onCleanup(() => { if (timerInterval) { clearInterval(timerInterval); } });
+  onCleanup(() => {
+    if (timerInterval) { clearInterval(timerInterval); }
+    // アンマウント時（戻る操作・ブラウザバック含む）に TTS を確実に停止する。
+    // 発話中のまま別コンポーネントへ遷移するとクラッシュや二重発話が起きる。
+    props.speech.stop();
+    setIsPlaying(false);
+  });
 
   const nextContent = () => {
     const idx = currentIndex();
