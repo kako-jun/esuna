@@ -1,33 +1,33 @@
-import { createSignal, onMount, onCleanup, Show, Switch, Match } from 'solid-js';
-import GridSystem, { GridAction } from './components/GridSystem';
-import HatenaEntryReader from './components/HatenaEntryReader';
-import HatenaCommentReader from './components/HatenaCommentReader';
-import SNSPostReader from './components/SNSPostReader';
-import FivechBoardList from './components/FivechBoardList';
-import FivechThreadList from './components/FivechThreadList';
-import FivechPostReader from './components/FivechPostReader';
-import NovelList from './components/NovelList';
-import NovelReader from './components/NovelReader';
-import PodcastList from './components/PodcastList';
-import PodcastPlayer from './components/PodcastPlayer';
-import RSSFeedList from './components/RSSFeedList';
-import RSSArticleReader from './components/RSSArticleReader';
-import FavoritesList from './components/FavoritesList';
-import ContinueReading from './components/ContinueReading';
-import VoiceMemoRecorder from './components/VoiceMemoRecorder';
-import TimerManager from './components/TimerManager';
-import RadioStationList from './components/RadioStationList';
-import RadioPlayer from './components/RadioPlayer';
-import AutoplaySettings from './components/AutoplaySettings';
-import AutoplayPlayer from './components/AutoplayPlayer';
-import { SpeechManager } from './lib/speech';
-import { useAppStore } from './lib/store';
-import { loadSettings, updateSetting } from './lib/storage';
-import { fetchWeather, getCurrentTimeText, getWeatherText, getGreeting } from './lib/weather';
-import type { Favorite } from './lib/favorites';
-import type { Progress } from './lib/progress';
-import type { RadioStation } from './lib/radio';
-import type { AutoplayItem } from './lib/autoplay';
+import { createSignal, onMount, onCleanup, Show, Switch, Match } from 'solid-js'
+import GridSystem, { GridAction } from './components/GridSystem'
+import HatenaEntryReader from './components/HatenaEntryReader'
+import HatenaCommentReader from './components/HatenaCommentReader'
+import SNSPostReader from './components/SNSPostReader'
+import FivechBoardList from './components/FivechBoardList'
+import FivechThreadList from './components/FivechThreadList'
+import FivechPostReader from './components/FivechPostReader'
+import NovelList from './components/NovelList'
+import NovelReader from './components/NovelReader'
+import PodcastList from './components/PodcastList'
+import PodcastPlayer from './components/PodcastPlayer'
+import RSSFeedList from './components/RSSFeedList'
+import RSSArticleReader from './components/RSSArticleReader'
+import FavoritesList from './components/FavoritesList'
+import ContinueReading from './components/ContinueReading'
+import VoiceMemoRecorder from './components/VoiceMemoRecorder'
+import TimerManager from './components/TimerManager'
+import RadioStationList from './components/RadioStationList'
+import RadioPlayer from './components/RadioPlayer'
+import AutoplaySettings from './components/AutoplaySettings'
+import AutoplayPlayer from './components/AutoplayPlayer'
+import { SpeechManager } from './lib/speech'
+import { useAppStore } from './lib/store'
+import { loadSettings, updateSetting } from './lib/storage'
+import { fetchWeather, getCurrentTimeText, getWeatherText, getGreeting } from './lib/weather'
+import type { Favorite } from './lib/favorites'
+import type { Progress } from './lib/progress'
+import type { RadioStation } from './lib/radio'
+import type { AutoplayItem } from './lib/autoplay'
 import { FORMAL_SERVICE_NAMES, getFeatureStatusSummary } from './lib/service-copy'
 
 const SPEED_PRESETS = [
@@ -36,317 +36,891 @@ const SPEED_PRESETS = [
   { rate: 1.0, label: '1.0倍（標準）' },
   { rate: 1.5, label: '1.5倍（速い）' },
   { rate: 2.0, label: '2.0倍（非常に速い）' },
-] as const;
+] as const
 
-type Page = 'main' | 'news' | 'sns' | 'settings' | 'settings-speech' | 'help' | 'tools' | 'audio' |
-            'hatena-comments' | '5ch-boards' | '5ch-threads' | '5ch-posts' |
-            'novel-list' | 'novel-content' | 'podcast-list' | 'podcast-episodes' |
-            'rss-feeds' | 'rss-articles' | 'favorites' | 'continue-reading' |
-            'voice-memo' | 'timer' | 'radio-stations' | 'radio-player' |
-            'autoplay-settings' | 'autoplay-player';
+type Page =
+  | 'main'
+  | 'news'
+  | 'sns'
+  | 'settings'
+  | 'settings-speech'
+  | 'help'
+  | 'tools'
+  | 'audio'
+  | 'hatena-comments'
+  | '5ch-boards'
+  | '5ch-threads'
+  | '5ch-posts'
+  | 'novel-list'
+  | 'novel-content'
+  | 'podcast-list'
+  | 'podcast-episodes'
+  | 'rss-feeds'
+  | 'rss-articles'
+  | 'favorites'
+  | 'continue-reading'
+  | 'voice-memo'
+  | 'timer'
+  | 'radio-stations'
+  | 'radio-player'
+  | 'autoplay-settings'
+  | 'autoplay-player'
 
 export default function App() {
-  const [speechManager, setSpeechManager] = createSignal<SpeechManager | null>(null);
-  const [currentPage, setCurrentPage] = createSignal<Page>('main');
-  const [selectedRadioStation, setSelectedRadioStation] = createSignal<RadioStation | null>(null);
-  const store = useAppStore();
+  const [speechManager, setSpeechManager] = createSignal<SpeechManager | null>(null)
+  const [currentPage, setCurrentPage] = createSignal<Page>('main')
+  const [selectedRadioStation, setSelectedRadioStation] = createSignal<RadioStation | null>(null)
+  const store = useAppStore()
 
   onMount(() => {
-    const manager = new SpeechManager();
+    const manager = new SpeechManager()
 
-    const settings = loadSettings();
+    const settings = loadSettings()
     if (settings.speech.voice) {
-      manager.setVoiceByName(settings.speech.voice);
+      manager.setVoiceByName(settings.speech.voice)
     }
     manager.setDefaults({
       rate: settings.speech.rate,
       pitch: settings.speech.pitch,
       volume: settings.speech.volume,
-    });
+    })
 
-    store.setAutoNavigation(settings.ui.autoNavigation);
-    store.setVibration(settings.ui.vibration);
-    setSpeechManager(manager);
+    store.setAutoNavigation(settings.ui.autoNavigation)
+    store.setVibration(settings.ui.vibration)
+    setSpeechManager(manager)
 
     setTimeout(async () => {
-      let message = getGreeting() + '。esuna へようこそ。';
+      let message = getGreeting() + '。esuna へようこそ。'
 
       if (settings.ui.speakTimeOnStart) {
-        message += getCurrentTimeText() + '。';
+        message += getCurrentTimeText() + '。'
       }
 
       if (settings.ui.speakWeatherOnStart && settings.weather.enabled) {
         try {
-          const weather = await fetchWeather(settings.weather.city);
-          message += getWeatherText(weather) + '。';
+          const weather = await fetchWeather(settings.weather.city)
+          message += getWeatherText(weather) + '。'
         } catch (error) {
-          console.error('Weather fetch error:', error);
+          console.error('Weather fetch error:', error)
         }
       }
 
       message +=
         `esuna では、${FORMAL_SERVICE_NAMES.hatena}、${FORMAL_SERVICE_NAMES.rss}、${FORMAL_SERVICE_NAMES.fivech}、` +
         `${FORMAL_SERVICE_NAMES.aozora}、${FORMAL_SERVICE_NAMES.podcast}、${FORMAL_SERVICE_NAMES.radio} を音声中心で利用できます。` +
-        'キーボードの任意のキーを押してキーボードモードに切り替えるか、画面をタップして操作してください。';
-      manager.speak(message);
-    }, 1000);
+        'キーボードの任意のキーを押してキーボードモードに切り替えるか、画面をタップして操作してください。'
+      manager.speak(message)
+    }, 1000)
 
     onCleanup(() => {
-      manager.stop();
-    });
-  });
+      manager.stop()
+    })
+  })
 
   const navigateTo = (page: Page) => {
-    setCurrentPage(page);
-    store.setPage(page as any);
-  };
+    setCurrentPage(page)
+    store.setPage(page as any)
+  }
 
   const mainMenuActions = (): GridAction[] => [
-    { label: 'はてな\nブックマーク', action: () => { navigateTo('news'); store.setContentType('hatena-hot'); speechManager()?.speak(`はてなブックマークへ移動しました。${getFeatureStatusSummary('hatena')}`); } },
-    { label: 'Mastodon /\nBluesky\n試験表示', action: () => { navigateTo('sns'); store.setContentType('sns'); speechManager()?.speak(`Mastodon と Bluesky の画面へ移動しました。${getFeatureStatusSummary('sns')}`); } },
-    { label: '5ちゃんねる\n未対応', status: 'unimplemented', action: () => { navigateTo('5ch-boards'); speechManager()?.speak(`5ちゃんねるへ移動しました。${getFeatureStatusSummary('fivech')}`); } },
-    { label: 'RSS\nニュース', action: () => { navigateTo('rss-feeds'); speechManager()?.speak(`RSSニュースへ移動しました。${getFeatureStatusSummary('rss')}`); } },
-    { label: '青空文庫\n不安定', action: () => { navigateTo('novel-list'); store.setContentType('novel'); speechManager()?.speak(`青空文庫へ移動しました。${getFeatureStatusSummary('aozora')}`); } },
-    { label: 'Podcast /\nラジオ', action: () => { navigateTo('audio'); speechManager()?.speak(`音声番組メニューへ移動しました。${getFeatureStatusSummary('podcast')} ${getFeatureStatusSummary('radio')}`); } },
-    { label: '保存 / 補助', action: () => { navigateTo('tools'); speechManager()?.speak('保存と補助のメニューへ移動しました。お気に入り、続きから再開、音声メモ、タイマー、おまかせモードを使えます。'); } },
-    { label: '設定', action: () => { navigateTo('settings'); speechManager()?.speak('設定ページに移動しました'); } },
-    { label: '停止', action: () => { speechManager()?.stop(); } },
-  ];
+    {
+      label: 'はてな\nブックマーク',
+      action: () => {
+        navigateTo('news')
+        store.setContentType('hatena-hot')
+        speechManager()?.speak(
+          `はてなブックマークへ移動しました。${getFeatureStatusSummary('hatena')}`,
+        )
+      },
+    },
+    {
+      label: 'Mastodon /\nBluesky\n試験表示',
+      action: () => {
+        navigateTo('sns')
+        store.setContentType('sns')
+        speechManager()?.speak(
+          `Mastodon と Bluesky の画面へ移動しました。${getFeatureStatusSummary('sns')}`,
+        )
+      },
+    },
+    {
+      label: '5ちゃんねる\n未対応',
+      status: 'unimplemented',
+      action: () => {
+        navigateTo('5ch-boards')
+        speechManager()?.speak(`5ちゃんねるへ移動しました。${getFeatureStatusSummary('fivech')}`)
+      },
+    },
+    {
+      label: 'RSS\nニュース',
+      action: () => {
+        navigateTo('rss-feeds')
+        speechManager()?.speak(`RSSニュースへ移動しました。${getFeatureStatusSummary('rss')}`)
+      },
+    },
+    {
+      label: '青空文庫',
+      action: () => {
+        navigateTo('novel-list')
+        store.setContentType('novel')
+        speechManager()?.speak(`青空文庫へ移動しました。${getFeatureStatusSummary('aozora')}`)
+      },
+    },
+    {
+      label: 'Podcast /\nラジオ',
+      action: () => {
+        navigateTo('audio')
+        speechManager()?.speak(
+          `音声番組メニューへ移動しました。${getFeatureStatusSummary('podcast')} ${getFeatureStatusSummary('radio')}`,
+        )
+      },
+    },
+    {
+      label: '保存 / 補助',
+      action: () => {
+        navigateTo('tools')
+        speechManager()?.speak(
+          '保存と補助のメニューへ移動しました。お気に入り、続きから再開、音声メモ、タイマー、おまかせモードを使えます。',
+        )
+      },
+    },
+    {
+      label: '設定',
+      action: () => {
+        navigateTo('settings')
+        speechManager()?.speak('設定ページに移動しました')
+      },
+    },
+    {
+      label: '停止',
+      action: () => {
+        speechManager()?.stop()
+      },
+    },
+  ]
 
   const toolsMenuActions = () => [
-    { label: '戻る', action: () => { navigateTo('main'); speechManager()?.speak('メインメニューに戻りました'); } },
-    { label: 'お気に入り', action: () => { navigateTo('favorites'); speechManager()?.speak('お気に入り一覧に移動しました'); } },
-    { label: '続きから', action: () => { navigateTo('continue-reading'); speechManager()?.speak('続きから再生に移動しました'); } },
-    { label: 'メモ', action: () => { navigateTo('voice-memo'); speechManager()?.speak('音声メモに移動しました'); } },
-    { label: 'タイマー', action: () => { navigateTo('timer'); speechManager()?.speak('タイマーに移動しました'); } },
-    { label: 'おまかせ', action: () => { navigateTo('autoplay-settings'); speechManager()?.speak('おまかせモード設定に移動しました'); } },
-    { label: 'ヘルプ', action: () => { navigateTo('help'); speechManager()?.speak('ヘルプページに移動しました'); } },
+    {
+      label: '戻る',
+      action: () => {
+        navigateTo('main')
+        speechManager()?.speak('メインメニューに戻りました')
+      },
+    },
+    {
+      label: 'お気に入り',
+      action: () => {
+        navigateTo('favorites')
+        speechManager()?.speak('お気に入り一覧に移動しました')
+      },
+    },
+    {
+      label: '続きから',
+      action: () => {
+        navigateTo('continue-reading')
+        speechManager()?.speak('続きから再生に移動しました')
+      },
+    },
+    {
+      label: 'メモ',
+      action: () => {
+        navigateTo('voice-memo')
+        speechManager()?.speak('音声メモに移動しました')
+      },
+    },
+    {
+      label: 'タイマー',
+      action: () => {
+        navigateTo('timer')
+        speechManager()?.speak('タイマーに移動しました')
+      },
+    },
+    {
+      label: 'おまかせ',
+      action: () => {
+        navigateTo('autoplay-settings')
+        speechManager()?.speak('おまかせモード設定に移動しました')
+      },
+    },
+    {
+      label: 'ヘルプ',
+      action: () => {
+        navigateTo('help')
+        speechManager()?.speak('ヘルプページに移動しました')
+      },
+    },
     {
       label: '情報',
       action: () => {
         speechManager()?.speak(
           'esuna バージョン 0.6.0。視覚障害者向けアクセシブルWebアプリケーション。' +
-          `${FORMAL_SERVICE_NAMES.hatena}、${FORMAL_SERVICE_NAMES.sns}、${FORMAL_SERVICE_NAMES.fivech}、` +
-          `${FORMAL_SERVICE_NAMES.rss}、${FORMAL_SERVICE_NAMES.aozora}、${FORMAL_SERVICE_NAMES.podcast}、` +
-          `${FORMAL_SERVICE_NAMES.radio}、お気に入り、続きから再開、音声メモ、タイマー、おまかせモードが利用できます。`
-        );
+            `${FORMAL_SERVICE_NAMES.hatena}、${FORMAL_SERVICE_NAMES.sns}、${FORMAL_SERVICE_NAMES.fivech}、` +
+            `${FORMAL_SERVICE_NAMES.rss}、${FORMAL_SERVICE_NAMES.aozora}、${FORMAL_SERVICE_NAMES.podcast}、` +
+            `${FORMAL_SERVICE_NAMES.radio}、お気に入り、続きから再開、音声メモ、タイマー、おまかせモードが利用できます。`,
+        )
       },
     },
-    { label: '読み上げ', action: () => { speechManager()?.speak('保存と補助のメニューです。お気に入り、続きから再開、音声メモ、タイマー、おまかせモード、ヘルプ、情報、読み上げ、停止が利用できます。'); } },
-    { label: '停止', action: () => { speechManager()?.stop(); } },
-  ];
+    {
+      label: '読み上げ',
+      action: () => {
+        speechManager()?.speak(
+          '保存と補助のメニューです。お気に入り、続きから再開、音声メモ、タイマー、おまかせモード、ヘルプ、情報、読み上げ、停止が利用できます。',
+        )
+      },
+    },
+    {
+      label: '停止',
+      action: () => {
+        speechManager()?.stop()
+      },
+    },
+  ]
 
   const audioMenuActions = () => [
-    { label: '戻る', action: () => { navigateTo('main'); speechManager()?.speak('メインメニューに戻りました'); } },
-    { label: 'Podcast', action: () => { navigateTo('podcast-list'); store.setContentType('podcast'); speechManager()?.speak(`Podcast 一覧へ移動しました。${getFeatureStatusSummary('podcast')}`); } },
-    { label: 'ラジオ', action: () => { navigateTo('radio-stations'); speechManager()?.speak(`ラジオ一覧へ移動しました。${getFeatureStatusSummary('radio')}`); } },
-    { label: '読み上げ', action: () => { speechManager()?.speak(`音声番組メニューです。Podcast とラジオを選べます。${getFeatureStatusSummary('radio')}`); } },
-    { label: '停止', action: () => { speechManager()?.stop(); } },
+    {
+      label: '戻る',
+      action: () => {
+        navigateTo('main')
+        speechManager()?.speak('メインメニューに戻りました')
+      },
+    },
+    {
+      label: 'Podcast',
+      action: () => {
+        navigateTo('podcast-list')
+        store.setContentType('podcast')
+        speechManager()?.speak(`Podcast 一覧へ移動しました。${getFeatureStatusSummary('podcast')}`)
+      },
+    },
+    {
+      label: 'ラジオ',
+      action: () => {
+        navigateTo('radio-stations')
+        speechManager()?.speak(`ラジオ一覧へ移動しました。${getFeatureStatusSummary('radio')}`)
+      },
+    },
+    {
+      label: '読み上げ',
+      action: () => {
+        speechManager()?.speak(
+          `音声番組メニューです。Podcast とラジオを選べます。${getFeatureStatusSummary('radio')}`,
+        )
+      },
+    },
+    {
+      label: '停止',
+      action: () => {
+        speechManager()?.stop()
+      },
+    },
     { label: '', action: () => {} },
     { label: '', action: () => {} },
-    { label: '読み上げ', action: () => { speechManager()?.speak('読み上げ速度設定です。0.5倍から2.0倍の5段階から選択してください。1番で設定に戻れます'); } },
-  ];
+    {
+      label: '読み上げ',
+      action: () => {
+        speechManager()?.speak(
+          '読み上げ速度設定です。0.5倍から2.0倍の5段階から選択してください。1番で設定に戻れます',
+        )
+      },
+    },
+  ]
 
   const settingsActions = () => [
-    { label: '戻る', action: () => { navigateTo('main'); speechManager()?.speak('メインメニューに戻りました'); } },
-    { label: '速度設定', action: () => { navigateTo('settings-speech'); speechManager()?.speak('読み上げ速度設定に移動しました'); } },
-    { label: '音量：標準', action: () => { updateSetting('speech', { volume: 1.0 }); speechManager()?.setDefaults({ volume: 1.0 }); speechManager()?.speak('音量を標準にしました。設定を保存しました'); } },
-    { label: '音量：小', action: () => { updateSetting('speech', { volume: 0.5 }); speechManager()?.setDefaults({ volume: 0.5 }); speechManager()?.speak('音量を小さくしました。設定を保存しました'); } },
-    { label: 'ピッチ：低', action: () => { updateSetting('speech', { pitch: 0.7 }); speechManager()?.setDefaults({ pitch: 0.7 }); speechManager()?.speak('ピッチを低くしました。設定を保存しました'); } },
-    { label: 'ピッチ：標準', action: () => { updateSetting('speech', { pitch: 1.0 }); speechManager()?.setDefaults({ pitch: 1.0 }); speechManager()?.speak('ピッチを標準にしました。設定を保存しました'); } },
-    { label: 'ピッチ：高', action: () => { updateSetting('speech', { pitch: 1.5 }); speechManager()?.setDefaults({ pitch: 1.5 }); speechManager()?.speak('ピッチを高くしました。設定を保存しました'); } },
+    {
+      label: '戻る',
+      action: () => {
+        navigateTo('main')
+        speechManager()?.speak('メインメニューに戻りました')
+      },
+    },
+    {
+      label: '速度設定',
+      action: () => {
+        navigateTo('settings-speech')
+        speechManager()?.speak('読み上げ速度設定に移動しました')
+      },
+    },
+    {
+      label: '音量：標準',
+      action: () => {
+        updateSetting('speech', { volume: 1.0 })
+        speechManager()?.setDefaults({ volume: 1.0 })
+        speechManager()?.speak('音量を標準にしました。設定を保存しました')
+      },
+    },
+    {
+      label: '音量：小',
+      action: () => {
+        updateSetting('speech', { volume: 0.5 })
+        speechManager()?.setDefaults({ volume: 0.5 })
+        speechManager()?.speak('音量を小さくしました。設定を保存しました')
+      },
+    },
+    {
+      label: 'ピッチ：低',
+      action: () => {
+        updateSetting('speech', { pitch: 0.7 })
+        speechManager()?.setDefaults({ pitch: 0.7 })
+        speechManager()?.speak('ピッチを低くしました。設定を保存しました')
+      },
+    },
+    {
+      label: 'ピッチ：標準',
+      action: () => {
+        updateSetting('speech', { pitch: 1.0 })
+        speechManager()?.setDefaults({ pitch: 1.0 })
+        speechManager()?.speak('ピッチを標準にしました。設定を保存しました')
+      },
+    },
+    {
+      label: 'ピッチ：高',
+      action: () => {
+        updateSetting('speech', { pitch: 1.5 })
+        speechManager()?.setDefaults({ pitch: 1.5 })
+        speechManager()?.speak('ピッチを高くしました。設定を保存しました')
+      },
+    },
     {
       label: store.state.vibrationEnabled ? '振動OFF' : '振動ON',
       action: () => {
-        const newValue = !store.state.vibrationEnabled;
-        store.setVibration(newValue);
-        updateSetting('ui', { vibration: newValue });
-        speechManager()?.speak(newValue ? 'タップ時の振動フィードバックを有効にしました' : 'タップ時の振動フィードバックを無効にしました');
+        const newValue = !store.state.vibrationEnabled
+        store.setVibration(newValue)
+        updateSetting('ui', { vibration: newValue })
+        speechManager()?.speak(
+          newValue
+            ? 'タップ時の振動フィードバックを有効にしました'
+            : 'タップ時の振動フィードバックを無効にしました',
+        )
       },
     },
     {
       label: store.state.autoNavigationEnabled ? '自動OFF' : '自動ON',
       action: () => {
-        const newValue = !store.state.autoNavigationEnabled;
-        store.setAutoNavigation(newValue);
-        updateSetting('ui', { autoNavigation: newValue });
-        speechManager()?.speak(newValue ? '自動ナビゲーションを有効にしました。音声読み上げ後、自動的に次のコンテンツに移動します' : '自動ナビゲーションを無効にしました');
+        const newValue = !store.state.autoNavigationEnabled
+        store.setAutoNavigation(newValue)
+        updateSetting('ui', { autoNavigation: newValue })
+        speechManager()?.speak(
+          newValue
+            ? '自動ナビゲーションを有効にしました。音声読み上げ後、自動的に次のコンテンツに移動します'
+            : '自動ナビゲーションを無効にしました',
+        )
       },
     },
-  ];
+  ]
 
   const speechSettingsActions = () => [
-    { label: '戻る', action: () => { navigateTo('settings'); speechManager()?.speak('設定に戻りました'); } },
+    {
+      label: '戻る',
+      action: () => {
+        navigateTo('settings')
+        speechManager()?.speak('設定に戻りました')
+      },
+    },
     ...SPEED_PRESETS.map(({ rate, label }) => ({
       label: `${rate}倍速`,
       action: () => {
-        updateSetting('speech', { rate });
-        speechManager()?.setDefaults({ rate });
-        speechManager()?.speak(`読み上げ速度を${label}に設定しました`, { rate });
+        updateSetting('speech', { rate })
+        speechManager()?.setDefaults({ rate })
+        speechManager()?.speak(`読み上げ速度を${label}に設定しました`, { rate })
       },
     })),
     { label: '', action: () => {} },
     { label: '', action: () => {} },
     { label: '', action: () => {} },
-  ];
+  ]
 
   const helpActions = () => [
-    { label: '戻る', action: () => { navigateTo('main'); speechManager()?.speak('メインメニューに戻りました'); } },
-    { label: '操作方法', action: () => { speechManager()?.speak('操作方法を説明します。画面は9つのエリアに分かれています。数字の1から9のキーで直接選択するか、矢印キーで移動してEnterキーで決定できます。Escapeキーで読み上げを停止できます。'); } },
-    { label: '機能説明', action: () => { speechManager()?.speak(`利用可能な機能を説明します。${FORMAL_SERVICE_NAMES.hatena}では人気エントリーとコメントを確認できます。${FORMAL_SERVICE_NAMES.sns} は現在試験表示で、X には未対応です。${FORMAL_SERVICE_NAMES.fivech} は現在未対応で、板名の確認までです。${FORMAL_SERVICE_NAMES.aozora}は現在取得に失敗する場合があります。`); } },
-    { label: 'キーボード', action: () => { speechManager()?.speak('キーボード操作を説明します。1から9キー：各エリアを直接選択。矢印キー：エリア間を移動。Enterキー：選択したエリアを実行。Escapeキー：読み上げ停止または前のページに戻る。'); } },
-    { label: 'タッチ', action: () => { speechManager()?.speak('タッチ操作を説明します。画面をタップ：そのエリアを選択して読み上げ。同じ場所をもう一度タップ：実行。対応端末では実行時に短く振動します。設定でオフにできます。'); } },
-    { label: '音声', action: () => { speechManager()?.speak('音声機能を説明します。すべての操作は音声でガイダンスされます。設定から読み上げ速度とピッチを調整できます。停止ボタンでいつでも読み上げを停止できます。'); } },
-    { label: '自動ナビゲーション', action: () => { speechManager()?.speak('自動ナビゲーション機能を説明します。設定で有効にすると、音声読み上げ完了後、自動的に次のコンテンツに移動します。ハンズフリーで連続閲覧ができます。'); } },
-    { label: 'バージョン', action: () => { speechManager()?.speak('esuna バージョン 0.6.0'); } },
-    { label: '停止', action: () => { speechManager()?.stop(); } },
-  ];
+    {
+      label: '戻る',
+      action: () => {
+        navigateTo('main')
+        speechManager()?.speak('メインメニューに戻りました')
+      },
+    },
+    {
+      label: '操作方法',
+      action: () => {
+        speechManager()?.speak(
+          '操作方法を説明します。画面は9つのエリアに分かれています。数字の1から9のキーで直接選択するか、矢印キーで移動してEnterキーで決定できます。Escapeキーで読み上げを停止できます。',
+        )
+      },
+    },
+    {
+      label: '機能説明',
+      action: () => {
+        speechManager()?.speak(
+          `利用可能な機能を説明します。${FORMAL_SERVICE_NAMES.hatena}では人気エントリーとコメントを確認できます。${FORMAL_SERVICE_NAMES.sns} は現在試験表示で、X には未対応です。${FORMAL_SERVICE_NAMES.fivech} は現在未対応で、板名の確認までです。${FORMAL_SERVICE_NAMES.aozora}は現在取得に失敗する場合があります。`,
+        )
+      },
+    },
+    {
+      label: 'キーボード',
+      action: () => {
+        speechManager()?.speak(
+          'キーボード操作を説明します。1から9キー：各エリアを直接選択。矢印キー：エリア間を移動。Enterキー：選択したエリアを実行。Escapeキー：読み上げ停止または前のページに戻る。',
+        )
+      },
+    },
+    {
+      label: 'タッチ',
+      action: () => {
+        speechManager()?.speak(
+          'タッチ操作を説明します。画面をタップ：そのエリアを選択して読み上げ。同じ場所をもう一度タップ：実行。対応端末では実行時に短く振動します。設定でオフにできます。',
+        )
+      },
+    },
+    {
+      label: '音声',
+      action: () => {
+        speechManager()?.speak(
+          '音声機能を説明します。すべての操作は音声でガイダンスされます。設定から読み上げ速度とピッチを調整できます。停止ボタンでいつでも読み上げを停止できます。',
+        )
+      },
+    },
+    {
+      label: '自動ナビゲーション',
+      action: () => {
+        speechManager()?.speak(
+          '自動ナビゲーション機能を説明します。設定で有効にすると、音声読み上げ完了後、自動的に次のコンテンツに移動します。ハンズフリーで連続閲覧ができます。',
+        )
+      },
+    },
+    {
+      label: 'バージョン',
+      action: () => {
+        speechManager()?.speak('esuna バージョン 0.6.0')
+      },
+    },
+    {
+      label: '停止',
+      action: () => {
+        speechManager()?.stop()
+      },
+    },
+  ]
 
   return (
-    <Show when={speechManager()} fallback={
-      <div class="grid-container" role="status" aria-live="polite">
-        <div class="grid-item" style={{ "grid-column": '1 / -1', "grid-row": '1 / -1' }}>読み込み中...</div>
-      </div>
-    }>
-      <Switch fallback={<main><GridSystem actions={mainMenuActions()} speech={speechManager()!} /></main>}>
+    <Show
+      when={speechManager()}
+      fallback={
+        <div class="grid-container" role="status" aria-live="polite">
+          <div class="grid-item" style={{ 'grid-column': '1 / -1', 'grid-row': '1 / -1' }}>
+            読み込み中...
+          </div>
+        </div>
+      }
+    >
+      <Switch
+        fallback={
+          <main>
+            <GridSystem actions={mainMenuActions()} speech={speechManager()!} />
+          </main>
+        }
+      >
         <Match when={currentPage() === 'news'}>
-          <main><HatenaEntryReader type="hot" speech={speechManager()!} onBack={() => { navigateTo('main'); speechManager()!.speak('メインメニューに戻りました'); }} onViewComments={() => { navigateTo('hatena-comments'); }} /></main>
+          <main>
+            <HatenaEntryReader
+              type="hot"
+              speech={speechManager()!}
+              onBack={() => {
+                navigateTo('main')
+                speechManager()!.speak('メインメニューに戻りました')
+              }}
+              onViewComments={() => {
+                navigateTo('hatena-comments')
+              }}
+            />
+          </main>
         </Match>
         <Match when={currentPage() === 'sns'}>
-          <main><SNSPostReader speech={speechManager()!} onBack={() => { navigateTo('main'); speechManager()!.speak('メインメニューに戻りました'); }} /></main>
+          <main>
+            <SNSPostReader
+              speech={speechManager()!}
+              onBack={() => {
+                navigateTo('main')
+                speechManager()!.speak('メインメニューに戻りました')
+              }}
+            />
+          </main>
         </Match>
         <Match when={currentPage() === 'hatena-comments'}>
-          <main><HatenaCommentReader speech={speechManager()!} onBack={() => { navigateTo('news'); speechManager()!.speak('はてなブックマークに戻りました'); }} /></main>
+          <main>
+            <HatenaCommentReader
+              speech={speechManager()!}
+              onBack={() => {
+                navigateTo('news')
+                speechManager()!.speak('はてなブックマークに戻りました')
+              }}
+            />
+          </main>
         </Match>
         <Match when={currentPage() === '5ch-boards'}>
-          <main><FivechBoardList speech={speechManager()!} onBack={() => { navigateTo('main'); speechManager()!.speak('メインメニューに戻りました'); }} onSelectBoard={() => { navigateTo('5ch-threads'); }} /></main>
+          <main>
+            <FivechBoardList
+              speech={speechManager()!}
+              onBack={() => {
+                navigateTo('main')
+                speechManager()!.speak('メインメニューに戻りました')
+              }}
+              onSelectBoard={() => {
+                navigateTo('5ch-threads')
+              }}
+            />
+          </main>
         </Match>
         <Match when={currentPage() === '5ch-threads'}>
-          <main><FivechThreadList speech={speechManager()!} onBack={() => { navigateTo('5ch-boards'); speechManager()!.speak('板一覧に戻りました'); }} onSelectThread={() => { navigateTo('5ch-posts'); }} /></main>
+          <main>
+            <FivechThreadList
+              speech={speechManager()!}
+              onBack={() => {
+                navigateTo('5ch-boards')
+                speechManager()!.speak('板一覧に戻りました')
+              }}
+              onSelectThread={() => {
+                navigateTo('5ch-posts')
+              }}
+            />
+          </main>
         </Match>
         <Match when={currentPage() === '5ch-posts'}>
-          <main><FivechPostReader speech={speechManager()!} onBack={() => { navigateTo('5ch-threads'); speechManager()!.speak('スレッド一覧に戻りました'); }} /></main>
+          <main>
+            <FivechPostReader
+              speech={speechManager()!}
+              onBack={() => {
+                navigateTo('5ch-threads')
+                speechManager()!.speak('スレッド一覧に戻りました')
+              }}
+            />
+          </main>
         </Match>
         <Match when={currentPage() === 'novel-list'}>
-          <main><NovelList speech={speechManager()!} onBack={() => { navigateTo('main'); speechManager()!.speak('メインメニューに戻りました'); }} onSelectNovel={() => { navigateTo('novel-content'); }} /></main>
+          <main>
+            <NovelList
+              speech={speechManager()!}
+              onBack={() => {
+                navigateTo('main')
+                speechManager()!.speak('メインメニューに戻りました')
+              }}
+              onSelectNovel={() => {
+                navigateTo('novel-content')
+              }}
+            />
+          </main>
         </Match>
         <Match when={currentPage() === 'novel-content'}>
-          <main><NovelReader speech={speechManager()!} onBack={() => { navigateTo('novel-list'); speechManager()!.speak('青空文庫の作品一覧に戻りました'); }} /></main>
+          <main>
+            <NovelReader
+              speech={speechManager()!}
+              onBack={() => {
+                navigateTo('novel-list')
+                speechManager()!.speak('青空文庫の作品一覧に戻りました')
+              }}
+            />
+          </main>
         </Match>
         <Match when={currentPage() === 'podcast-list'}>
-          <main><PodcastList speech={speechManager()!} onBack={() => { navigateTo('audio'); speechManager()!.speak('音声番組メニューに戻りました'); }} onSelectPodcast={() => { navigateTo('podcast-episodes'); }} /></main>
+          <main>
+            <PodcastList
+              speech={speechManager()!}
+              onBack={() => {
+                navigateTo('audio')
+                speechManager()!.speak('音声番組メニューに戻りました')
+              }}
+              onSelectPodcast={() => {
+                navigateTo('podcast-episodes')
+              }}
+            />
+          </main>
         </Match>
         <Match when={currentPage() === 'podcast-episodes'}>
-          <main><PodcastPlayer speech={speechManager()!} onBack={() => { navigateTo('podcast-list'); speechManager()!.speak('Podcast一覧に戻りました'); }} /></main>
+          <main>
+            <PodcastPlayer
+              speech={speechManager()!}
+              onBack={() => {
+                navigateTo('podcast-list')
+                speechManager()!.speak('Podcast一覧に戻りました')
+              }}
+            />
+          </main>
         </Match>
         <Match when={currentPage() === 'rss-feeds'}>
-          <main><RSSFeedList speech={speechManager()!} onBack={() => { navigateTo('main'); speechManager()!.speak('メインメニューに戻りました'); }} onSelectFeed={() => { navigateTo('rss-articles'); }} /></main>
+          <main>
+            <RSSFeedList
+              speech={speechManager()!}
+              onBack={() => {
+                navigateTo('main')
+                speechManager()!.speak('メインメニューに戻りました')
+              }}
+              onSelectFeed={() => {
+                navigateTo('rss-articles')
+              }}
+            />
+          </main>
         </Match>
         <Match when={currentPage() === 'rss-articles'}>
-          <main><RSSArticleReader speech={speechManager()!} onBack={() => { navigateTo('rss-feeds'); speechManager()!.speak('フィード一覧に戻りました'); }} /></main>
+          <main>
+            <RSSArticleReader
+              speech={speechManager()!}
+              onBack={() => {
+                navigateTo('rss-feeds')
+                speechManager()!.speak('フィード一覧に戻りました')
+              }}
+            />
+          </main>
         </Match>
         <Match when={currentPage() === 'favorites'}>
-          <main><FavoritesList speech={speechManager()!} onBack={() => { navigateTo('main'); speechManager()!.speak('メインメニューに戻りました'); }} onSelectFavorite={(favorite: Favorite) => {
-            switch (favorite.type) {
-              case 'podcast':
-                if (favorite.data?.feedUrl) { store.setSelectedPodcast(favorite.data); navigateTo('podcast-episodes'); speechManager()!.speak(`Podcast「${favorite.title}」を開きます`); }
-                else { navigateTo('podcast-list'); speechManager()!.speak('Podcast一覧に移動しました'); }
-                break;
-              case 'novel':
-                if (favorite.data?.authorId && favorite.data?.fileId) { store.setSelectedNovel(favorite.data); navigateTo('novel-content'); speechManager()!.speak(`青空文庫の「${favorite.title}」を開きます。現在は取得が不安定です`); }
-                else { navigateTo('novel-list'); speechManager()!.speak('青空文庫の作品一覧に移動しました'); }
-                break;
-              case 'rss-feed':
-                navigateTo('rss-articles'); speechManager()!.speak(`RSSフィード「${favorite.title}」を開きます`);
-                break;
-              case '5ch-board':
-                navigateTo('5ch-boards');
-                speechManager()!.speak(`5ちゃんねる板「${favorite.title}」へ移動しました。現在は板名の確認までで、スレッド一覧は未対応です`);
-                break;
-              case '5ch-thread':
-                navigateTo('5ch-boards');
-                speechManager()!.speak(`5ちゃんねるのスレッド「${favorite.title}」はまだ開けません。現在は板名の確認までです`);
-                break;
-              default:
-                speechManager()!.speak(`${favorite.title} を開けませんでした。対応していないコンテンツタイプです`);
-            }
-          }} /></main>
+          <main>
+            <FavoritesList
+              speech={speechManager()!}
+              onBack={() => {
+                navigateTo('main')
+                speechManager()!.speak('メインメニューに戻りました')
+              }}
+              onSelectFavorite={(favorite: Favorite) => {
+                switch (favorite.type) {
+                  case 'podcast':
+                    if (favorite.data?.feedUrl) {
+                      store.setSelectedPodcast(favorite.data)
+                      navigateTo('podcast-episodes')
+                      speechManager()!.speak(`Podcast「${favorite.title}」を開きます`)
+                    } else {
+                      navigateTo('podcast-list')
+                      speechManager()!.speak('Podcast一覧に移動しました')
+                    }
+                    break
+                  case 'novel':
+                    if (favorite.data?.authorId && favorite.data?.fileId) {
+                      store.setSelectedNovel(favorite.data)
+                      navigateTo('novel-content')
+                      speechManager()!.speak(`青空文庫の「${favorite.title}」を開きます`)
+                    } else {
+                      navigateTo('novel-list')
+                      speechManager()!.speak('青空文庫の作品一覧に移動しました')
+                    }
+                    break
+                  case 'rss-feed':
+                    navigateTo('rss-articles')
+                    speechManager()!.speak(`RSSフィード「${favorite.title}」を開きます`)
+                    break
+                  case '5ch-board':
+                    navigateTo('5ch-boards')
+                    speechManager()!.speak(
+                      `5ちゃんねる板「${favorite.title}」へ移動しました。現在は板名の確認までで、スレッド一覧は未対応です`,
+                    )
+                    break
+                  case '5ch-thread':
+                    navigateTo('5ch-boards')
+                    speechManager()!.speak(
+                      `5ちゃんねるのスレッド「${favorite.title}」はまだ開けません。現在は板名の確認までです`,
+                    )
+                    break
+                  default:
+                    speechManager()!.speak(
+                      `${favorite.title} を開けませんでした。対応していないコンテンツタイプです`,
+                    )
+                }
+              }}
+            />
+          </main>
         </Match>
         <Match when={currentPage() === 'continue-reading'}>
-          <main><ContinueReading speech={speechManager()!} onBack={() => { navigateTo('main'); speechManager()!.speak('メインメニューに戻りました'); }} onSelectProgress={(progress: Progress) => {
-            switch (progress.type) {
-              case 'novel':
-                if (progress.data?.authorId && progress.data?.fileId) {
-                  store.setSelectedNovel(progress.data);
-                  setTimeout(() => { store.setCurrentSectionIndex(progress.currentIndex); }, 100);
-                  navigateTo('novel-content');
-                  speechManager()!.speak(`青空文庫の「${progress.title}」を途中から開きます。${progress.currentIndex + 1}番目の区切りからです。現在は取得が不安定です`);
-                } else { navigateTo('novel-list'); speechManager()!.speak('青空文庫の作品一覧に移動しました'); }
-                break;
-              case 'podcast':
-                if (progress.data?.feedUrl) {
-                  store.setSelectedPodcast(progress.data);
-                  setTimeout(() => { store.setCurrentEpisodeIndex(progress.currentIndex); }, 100);
-                  navigateTo('podcast-episodes');
-                  speechManager()!.speak(`Podcast「${progress.title}」の続きから再生します。${progress.currentIndex + 1}番目のエピソードからです`);
-                } else { navigateTo('podcast-list'); speechManager()!.speak('Podcast一覧に移動しました'); }
-                break;
-              case 'rss-article':
-                navigateTo('rss-articles'); speechManager()!.speak(`RSSニュース「${progress.title}」の続きから再生します`);
-                break;
-              case '5ch-thread':
-                navigateTo('5ch-boards');
-                speechManager()!.speak(`5ちゃんねるの続きから再生は、現在未対応です。スレッド「${progress.title}」はまだ再開できません`);
-                break;
-              default:
-                speechManager()!.speak(`${progress.title} の続きから再生できませんでした。対応していないコンテンツタイプです`);
-            }
-          }} /></main>
+          <main>
+            <ContinueReading
+              speech={speechManager()!}
+              onBack={() => {
+                navigateTo('main')
+                speechManager()!.speak('メインメニューに戻りました')
+              }}
+              onSelectProgress={(progress: Progress) => {
+                switch (progress.type) {
+                  case 'novel':
+                    if (progress.data?.authorId && progress.data?.fileId) {
+                      store.setSelectedNovel(progress.data)
+                      setTimeout(() => {
+                        store.setCurrentSectionIndex(progress.currentIndex)
+                      }, 100)
+                      navigateTo('novel-content')
+                      speechManager()!.speak(
+                        `青空文庫の「${progress.title}」を途中から開きます。${progress.currentIndex + 1}番目の区切りからです`,
+                      )
+                    } else {
+                      navigateTo('novel-list')
+                      speechManager()!.speak('青空文庫の作品一覧に移動しました')
+                    }
+                    break
+                  case 'podcast':
+                    if (progress.data?.feedUrl) {
+                      store.setSelectedPodcast(progress.data)
+                      setTimeout(() => {
+                        store.setCurrentEpisodeIndex(progress.currentIndex)
+                      }, 100)
+                      navigateTo('podcast-episodes')
+                      speechManager()!.speak(
+                        `Podcast「${progress.title}」の続きから再生します。${progress.currentIndex + 1}番目のエピソードからです`,
+                      )
+                    } else {
+                      navigateTo('podcast-list')
+                      speechManager()!.speak('Podcast一覧に移動しました')
+                    }
+                    break
+                  case 'rss-article':
+                    navigateTo('rss-articles')
+                    speechManager()!.speak(`RSSニュース「${progress.title}」の続きから再生します`)
+                    break
+                  case '5ch-thread':
+                    navigateTo('5ch-boards')
+                    speechManager()!.speak(
+                      `5ちゃんねるの続きから再生は、現在未対応です。スレッド「${progress.title}」はまだ再開できません`,
+                    )
+                    break
+                  default:
+                    speechManager()!.speak(
+                      `${progress.title} の続きから再生できませんでした。対応していないコンテンツタイプです`,
+                    )
+                }
+              }}
+            />
+          </main>
         </Match>
         <Match when={currentPage() === 'voice-memo'}>
-          <main><VoiceMemoRecorder speech={speechManager()!} onBack={() => { navigateTo('main'); speechManager()!.speak('メインメニューに戻りました'); }} /></main>
+          <main>
+            <VoiceMemoRecorder
+              speech={speechManager()!}
+              onBack={() => {
+                navigateTo('main')
+                speechManager()!.speak('メインメニューに戻りました')
+              }}
+            />
+          </main>
         </Match>
         <Match when={currentPage() === 'timer'}>
-          <main><TimerManager speech={speechManager()!} onBack={() => { navigateTo('main'); speechManager()!.speak('メインメニューに戻りました'); }} /></main>
+          <main>
+            <TimerManager
+              speech={speechManager()!}
+              onBack={() => {
+                navigateTo('main')
+                speechManager()!.speak('メインメニューに戻りました')
+              }}
+            />
+          </main>
         </Match>
         <Match when={currentPage() === 'tools'}>
-          <main><GridSystem actions={toolsMenuActions()} speech={speechManager()!} /></main>
+          <main>
+            <GridSystem actions={toolsMenuActions()} speech={speechManager()!} />
+          </main>
         </Match>
         <Match when={currentPage() === 'audio'}>
-          <main><GridSystem actions={audioMenuActions()} speech={speechManager()!} /></main>
+          <main>
+            <GridSystem actions={audioMenuActions()} speech={speechManager()!} />
+          </main>
         </Match>
         <Match when={currentPage() === 'radio-stations'}>
-          <main><RadioStationList speech={speechManager()!} onBack={() => { navigateTo('audio'); speechManager()!.speak('音声番組メニューに戻りました'); }} onSelectStation={(station: RadioStation) => { setSelectedRadioStation(station); navigateTo('radio-player'); }} /></main>
+          <main>
+            <RadioStationList
+              speech={speechManager()!}
+              onBack={() => {
+                navigateTo('audio')
+                speechManager()!.speak('音声番組メニューに戻りました')
+              }}
+              onSelectStation={(station: RadioStation) => {
+                setSelectedRadioStation(station)
+                navigateTo('radio-player')
+              }}
+            />
+          </main>
         </Match>
         <Match when={currentPage() === 'radio-player'}>
           <Show when={selectedRadioStation()} fallback={null}>
-            <main><RadioPlayer station={selectedRadioStation()!} speech={speechManager()!} onBack={() => { navigateTo('radio-stations'); speechManager()!.speak('ラジオ局一覧に戻りました'); }} /></main>
+            <main>
+              <RadioPlayer
+                station={selectedRadioStation()!}
+                speech={speechManager()!}
+                onBack={() => {
+                  navigateTo('radio-stations')
+                  speechManager()!.speak('ラジオ局一覧に戻りました')
+                }}
+              />
+            </main>
           </Show>
         </Match>
         <Match when={currentPage() === 'autoplay-settings'}>
-          <main><AutoplaySettings speech={speechManager()!} onBack={() => { navigateTo('tools'); speechManager()!.speak('保存と補助のメニューに戻りました'); }} onStartAutoplay={() => { navigateTo('autoplay-player'); }} /></main>
+          <main>
+            <AutoplaySettings
+              speech={speechManager()!}
+              onBack={() => {
+                navigateTo('tools')
+                speechManager()!.speak('保存と補助のメニューに戻りました')
+              }}
+              onStartAutoplay={() => {
+                navigateTo('autoplay-player')
+              }}
+            />
+          </main>
         </Match>
         <Match when={currentPage() === 'autoplay-player'}>
-          <main><AutoplayPlayer speech={speechManager()!} onBack={() => { navigateTo('autoplay-settings'); speechManager()!.speak('おまかせ設定に戻りました'); }} onNavigateToContent={(item: AutoplayItem) => {
-            switch (item.type) {
-              case 'novel': navigateTo('novel-list'); break;
-              case 'podcast': navigateTo('podcast-list'); break;
-              case 'radio': setSelectedRadioStation(item.data); navigateTo('radio-player'); break;
-              case 'rss-news': navigateTo('rss-feeds'); break;
-              case 'hatena': navigateTo('news'); store.setContentType('hatena-hot'); break;
-            }
-          }} /></main>
+          <main>
+            <AutoplayPlayer
+              speech={speechManager()!}
+              onBack={() => {
+                navigateTo('autoplay-settings')
+                speechManager()!.speak('おまかせ設定に戻りました')
+              }}
+              onNavigateToContent={(item: AutoplayItem) => {
+                switch (item.type) {
+                  case 'novel':
+                    navigateTo('novel-list')
+                    break
+                  case 'podcast':
+                    navigateTo('podcast-list')
+                    break
+                  case 'radio':
+                    setSelectedRadioStation(item.data)
+                    navigateTo('radio-player')
+                    break
+                  case 'rss-news':
+                    navigateTo('rss-feeds')
+                    break
+                  case 'hatena':
+                    navigateTo('news')
+                    store.setContentType('hatena-hot')
+                    break
+                }
+              }}
+            />
+          </main>
         </Match>
         <Match when={currentPage() === 'settings'}>
-          <main><GridSystem actions={settingsActions()} speech={speechManager()!} onInit={() => speechManager()?.speak('設定画面です。速度設定、ピッチ、音量、振動フィードバック、自動ナビゲーションを変更できます')} /></main>
+          <main>
+            <GridSystem
+              actions={settingsActions()}
+              speech={speechManager()!}
+              onInit={() =>
+                speechManager()?.speak(
+                  '設定画面です。速度設定、ピッチ、音量、振動フィードバック、自動ナビゲーションを変更できます',
+                )
+              }
+            />
+          </main>
         </Match>
         <Match when={currentPage() === 'settings-speech'}>
-          <main><GridSystem actions={speechSettingsActions()} speech={speechManager()!} onInit={() => speechManager()?.speak('読み上げ速度設定です。0.5倍から2.0倍の5段階から選択してください')} /></main>
+          <main>
+            <GridSystem
+              actions={speechSettingsActions()}
+              speech={speechManager()!}
+              onInit={() =>
+                speechManager()?.speak(
+                  '読み上げ速度設定です。0.5倍から2.0倍の5段階から選択してください',
+                )
+              }
+            />
+          </main>
         </Match>
         <Match when={currentPage() === 'help'}>
-          <main><GridSystem actions={helpActions()} speech={speechManager()!} /></main>
+          <main>
+            <GridSystem actions={helpActions()} speech={speechManager()!} />
+          </main>
         </Match>
       </Switch>
     </Show>
-  );
+  )
 }
