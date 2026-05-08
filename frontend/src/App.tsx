@@ -69,7 +69,7 @@ export default function App() {
     setSpeechManager(manager);
 
     setTimeout(async () => {
-      let message = getGreeting() + '。Esuna へようこそ。';
+      let message = getGreeting() + '。esuna へようこそ。';
 
       if (settings.ui.speakTimeOnStart) {
         message += getCurrentTimeText() + '。';
@@ -85,7 +85,7 @@ export default function App() {
       }
 
       message +=
-        `Esuna では、${FORMAL_SERVICE_NAMES.hatena}、${FORMAL_SERVICE_NAMES.rss}、${FORMAL_SERVICE_NAMES.fivech}、` +
+        `esuna では、${FORMAL_SERVICE_NAMES.hatena}、${FORMAL_SERVICE_NAMES.rss}、${FORMAL_SERVICE_NAMES.fivech}、` +
         `${FORMAL_SERVICE_NAMES.aozora}、${FORMAL_SERVICE_NAMES.podcast}、${FORMAL_SERVICE_NAMES.radio} を音声中心で利用できます。` +
         'キーボードの任意のキーを押してキーボードモードに切り替えるか、画面をタップして操作してください。';
       manager.speak(message);
@@ -125,7 +125,7 @@ export default function App() {
       label: '情報',
       action: () => {
         speechManager()?.speak(
-          'Esuna バージョン 0.6.0。視覚障害者向けアクセシブルWebアプリケーション。' +
+          'esuna バージョン 0.6.0。視覚障害者向けアクセシブルWebアプリケーション。' +
           `${FORMAL_SERVICE_NAMES.hatena}、${FORMAL_SERVICE_NAMES.sns}、${FORMAL_SERVICE_NAMES.fivech}、` +
           `${FORMAL_SERVICE_NAMES.rss}、${FORMAL_SERVICE_NAMES.aozora}、${FORMAL_SERVICE_NAMES.podcast}、` +
           `${FORMAL_SERVICE_NAMES.radio}、お気に入り、続きから再開、音声メモ、タイマー、おまかせモードが利用できます。`
@@ -198,7 +198,7 @@ export default function App() {
     { label: 'タッチ', action: () => { speechManager()?.speak('タッチ操作を説明します。画面をタップ：そのエリアを選択して読み上げ。同じ場所をもう一度タップ：実行。対応端末では実行時に短く振動します。設定でオフにできます。'); } },
     { label: '音声', action: () => { speechManager()?.speak('音声機能を説明します。すべての操作は音声でガイダンスされます。設定から読み上げ速度とピッチを調整できます。停止ボタンでいつでも読み上げを停止できます。'); } },
     { label: '自動ナビゲーション', action: () => { speechManager()?.speak('自動ナビゲーション機能を説明します。設定で有効にすると、音声読み上げ完了後、自動的に次のコンテンツに移動します。ハンズフリーで連続閲覧ができます。'); } },
-    { label: 'バージョン', action: () => { speechManager()?.speak('Esuna バージョン 0.6.0'); } },
+    { label: 'バージョン', action: () => { speechManager()?.speak('esuna バージョン 0.6.0'); } },
     { label: '停止', action: () => { speechManager()?.stop(); } },
   ];
 

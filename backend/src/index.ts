@@ -1,5 +1,5 @@
 /**
- * Esuna Backend API
+ * esuna Backend API
  * 視覚障害者向けアクセシブルWebアプリケーションのバックエンド
  *
  * Hono on Cloudflare Workers
@@ -35,7 +35,7 @@ app.use("*", async (c, next) => {
 // ヘルスチェック
 app.get("/", (c) => {
   return c.json({
-    service: "Esuna API",
+    service: "esuna API",
     version: "0.6.0",
     status: "running",
   });

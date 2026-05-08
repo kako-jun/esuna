@@ -1,5 +1,5 @@
 /**
- * Esuna API 共通型定義
+ * esuna API 共通型定義
  */
 
 export interface HatenaEntry {
