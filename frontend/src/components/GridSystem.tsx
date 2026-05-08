@@ -127,14 +127,20 @@ export default function GridSystem(props: GridSystemProps) {
     }
   };
 
+  const exitKeyboardMode = () => {
+    setIsKeyboardMode(false);
+    setSelectedIndex(null);
+  };
+
   onMount(() => {
-    const handleTouchStart = () => {
-      setIsKeyboardMode(false);
-      setSelectedIndex(null);
+    const handlePointerDown = () => {
+      if (isKeyboardMode()) {
+        exitKeyboardMode();
+      }
     };
 
-    document.addEventListener('touchstart', handleTouchStart);
-    onCleanup(() => document.removeEventListener('touchstart', handleTouchStart));
+    document.addEventListener('pointerdown', handlePointerDown);
+    onCleanup(() => document.removeEventListener('pointerdown', handlePointerDown));
   });
 
   return (
