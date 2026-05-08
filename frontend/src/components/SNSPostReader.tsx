@@ -28,7 +28,7 @@ export default function SNSPostReader(props: SNSPostReaderProps) {
     try {
       const posts = await fetchSNSPosts(platform(), undefined, 20);
       store.setSNSPosts(posts);
-      props.speech.speak(`${platform() === 'mastodon' ? 'Mastodon' : 'Bluesky'} の投稿を${posts.length}件読み込みました。現在は試験表示です。`);
+      props.speech.speak(`${platform() === 'mastodon' ? 'Mastodon' : 'Bluesky'} の投稿を${posts.length}件読み込みました。`);
     } catch (err) {
       console.error('Failed to load posts:', err);
       props.speech.speak(`${platform() === 'mastodon' ? 'Mastodon' : 'Bluesky'} の投稿を取得できませんでした。現在この機能は整備中です。1番で戻るか、4番でもう一度試せます。`);
@@ -40,15 +40,14 @@ export default function SNSPostReader(props: SNSPostReaderProps) {
   const speakPost = () => {
     const currentPost = store.getCurrentSNSPost();
     if (!currentPost) return;
-    props.speech.speak(`${currentPost.author}さん`, { interrupt: true });
-    setTimeout(() => { props.speech.speak(currentPost.text); }, 1000);
+    props.speech.speakQueue([`${currentPost.author}さん`, currentPost.text]);
   };
 
   useAutoNavigation({
     get enabled() { return store.state.autoNavigationEnabled; },
     speech: props.speech,
     onNext: () => {
-      if (store.state.currentSNSPostIndex < store.state.snsPosts.length - 1) { store.nextSNSPost(); setTimeout(speakPost, 100); }
+      if (store.state.currentSNSPostIndex < store.state.snsPosts.length - 1) { store.nextSNSPost(); speakPost(); }
       else { props.speech.speak('最後の投稿です'); }
     },
     delay: 3000,
@@ -60,26 +59,20 @@ export default function SNSPostReader(props: SNSPostReaderProps) {
       {
         label: '前の投稿',
         action: () => {
-          if (store.state.currentSNSPostIndex > 0) { store.prevSNSPost(); setTimeout(speakPost, 100); }
+          if (store.state.currentSNSPostIndex > 0) { store.prevSNSPost(); speakPost(); }
           else { props.speech.speak('最初の投稿です'); }
         },
       },
       {
         label: '次の投稿',
         action: () => {
-          if (store.state.currentSNSPostIndex < store.state.snsPosts.length - 1) { store.nextSNSPost(); setTimeout(speakPost, 100); }
+          if (store.state.currentSNSPostIndex < store.state.snsPosts.length - 1) { store.nextSNSPost(); speakPost(); }
           else { props.speech.speak('最後の投稿です'); }
         },
       },
       {
         label: 'リロード',
-        action: () => {
-          setLoading(true);
-          fetchSNSPosts(platform(), undefined, 20)
-            .then((posts) => { store.setSNSPosts(posts); props.speech.speak(`${posts.length}件の投稿を再読み込みしました`); })
-            .catch(() => { props.speech.speak('SNSの投稿を再取得できませんでした。外部サービスへの接続に失敗しました。1番で戻ってください。'); })
-            .finally(() => setLoading(false));
-        },
+        action: () => { loadPosts(); },
       },
       {
         label: loading()
@@ -96,7 +89,8 @@ export default function SNSPostReader(props: SNSPostReaderProps) {
           const currentIndex = platforms.indexOf(platform());
           const nextPlatform = platforms[(currentIndex + 1) % platforms.length];
           setPlatform(nextPlatform);
-          props.speech.speak(`${nextPlatform === 'mastodon' ? 'Mastodon' : 'Bluesky'} に切り替えました。現在は試験表示です。X には未対応です。`);
+          props.speech.speak(`${nextPlatform === 'mastodon' ? 'Mastodon' : 'Bluesky'} に切り替えました。X には未対応です。`);
+          loadPosts();
         },
       },
       { label: `${store.state.currentSNSPostIndex + 1}/${store.state.snsPosts.length}`, action: () => props.speech.speak(`${store.state.snsPosts.length}件中、${store.state.currentSNSPostIndex + 1}件目です`) },
@@ -110,7 +104,7 @@ export default function SNSPostReader(props: SNSPostReaderProps) {
   return (
     <div class="h-screen w-screen">
       <GridSystem actions={actions()} speech={props.speech} onInit={() => {
-        props.speech.speak(`${FORMAL_SERVICE_NAMES.sns} の画面です。現在は試験表示です。X には未対応です。`);
+        props.speech.speak(`${FORMAL_SERVICE_NAMES.sns} の画面です。X には未対応です。`);
         if (store.state.snsPosts.length > 0) props.speech.speak(`${store.state.snsPosts.length}件の投稿があります`);
       }} />
     </div>

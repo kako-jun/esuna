@@ -10,7 +10,7 @@ import type { Env } from "./types";
 import { isUrlAllowed } from "./middleware/ssrf";
 import { fetchHatenaHot, fetchHatenaLatest, fetchHatenaComments } from "./scrapers/hatena";
 import { fetch5chBoards, fetch5chThreads, fetch5chPosts } from "./scrapers/fivech";
-import { fetchTwitterPosts, fetchMastodonPosts, fetchBlueskyPosts } from "./scrapers/sns";
+import { fetchMastodonPosts, fetchBlueskyPosts } from "./scrapers/sns";
 import { fetchNovelContent } from "./scrapers/aozora";
 import { fetchPodcastEpisodes } from "./scrapers/podcast";
 import { getStreamUrl, getNowPlaying } from "./scrapers/radio";
@@ -162,7 +162,7 @@ app.get("/api/5ch/posts", async (c) => {
 // =============================================================
 
 app.get("/api/sns/posts", async (c) => {
-  const platform = c.req.query("platform") || "twitter";
+  const platform = c.req.query("platform") || "mastodon";
   const username = c.req.query("username") || null;
   const limit = Math.min(
     Math.max(parseInt(c.req.query("limit") || "10", 10) || 10, 1),
@@ -171,8 +171,7 @@ app.get("/api/sns/posts", async (c) => {
 
   try {
     if (platform === "twitter") {
-      const posts = await fetchTwitterPosts(username, limit);
-      return c.json(posts);
+      return c.json({ error: "Twitter/X API は未対応です" }, 400);
     } else if (platform === "mastodon") {
       const instance = username || "mastodon.social";
       // SSRF防止: Mastodonインスタンスのドメインを検証

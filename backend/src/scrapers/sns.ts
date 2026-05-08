@@ -1,54 +1,10 @@
 /**
  * SNS（Twitter/X, Mastodon, Bluesky）のスクレイピング機能
  *
- * 注意: Twitter/X APIは現在有料のため、サンプルデータを返す実装。
- * Mastodonは公開APIを使用。Blueskyは将来実装予定。
+ * 注意: Twitter/X APIは現在有料のため未対応。
+ * Mastodon は公開 API を使用。Bluesky は public.api.bsky.app を使用。
  */
 import type { SnsPost } from "../types";
-
-/** サンプル投稿データ */
-const SAMPLE_POSTS: SnsPost[] = [
-  {
-    author: "技術太郎",
-    handle: "@tech_taro",
-    text: "新しいアクセシビリティ機能を実装してみた。音声読み上げとキーボード操作だけでWebアプリが使えるようになった。",
-    timestamp: "5分前",
-    likes: 42,
-    retweets: 8,
-  },
-  {
-    author: "開発花子",
-    handle: "@dev_hanako",
-    text: "FastAPIとNext.jsでモノレポ構成のアプリ作ってる。バックエンドでスクレイピング処理をやると、フロントエンドがシンプルになっていい感じ。",
-    timestamp: "15分前",
-    likes: 38,
-    retweets: 5,
-  },
-  {
-    author: "アクセシビリティ次郎",
-    handle: "@a11y_jiro",
-    text: "視覚障害者向けのWebアプリ開発で大事なのは、統一された操作体系。毎回違う場所にボタンがあると混乱する。",
-    timestamp: "30分前",
-    likes: 156,
-    retweets: 32,
-  },
-  {
-    author: "Web標準子",
-    handle: "@web_std",
-    text: "ARIAラベルとか、セマンティックHTMLとか、基本的なことをちゃんとやるだけでアクセシビリティは大幅に向上する。",
-    timestamp: "1時間前",
-    likes: 89,
-    retweets: 15,
-  },
-  {
-    author: "Python愛好家",
-    handle: "@python_lover",
-    text: "BeautifulSoup4でスクレイピングしてたけど、最近はhttpxの非同期クライアントと組み合わせるのが快適。FastAPIとの相性も抜群。",
-    timestamp: "2時間前",
-    likes: 67,
-    retweets: 12,
-  },
-];
 
 /**
  * タイムスタンプを相対時間に変換
@@ -89,7 +45,8 @@ function parseMastodonPosts(
     try {
       const content = (post.content as string) || "";
       // HTMLタグを簡易的に除去
-      const text = content.replace(/<[^>]+>/g, "");
+      const text = content.replace(/<[^>]+>/g, "").trim();
+      if (!text) continue;
 
       const account = post.account as Record<string, unknown>;
       const displayName =
@@ -116,46 +73,96 @@ function parseMastodonPosts(
 }
 
 /**
- * Twitter/Xの投稿を取得（現在はサンプルデータ）
+ * Bluesky APIのレスポンスをパース
  */
-export async function fetchTwitterPosts(
-  _username?: string | null,
-  limit: number = 10
-): Promise<SnsPost[]> {
-  return SAMPLE_POSTS.slice(0, limit);
+function parseBlueskyPosts(
+  feed: Array<Record<string, unknown>>
+): SnsPost[] {
+  const parsed: SnsPost[] = [];
+
+  for (const item of feed) {
+    try {
+      const post = item.post as Record<string, unknown>;
+      if (!post) continue;
+
+      const author = post.author as Record<string, unknown>;
+      const record = post.record as Record<string, unknown>;
+      const text = (record?.text as string) || "";
+      if (!text) continue;
+
+      const displayName = (author?.displayName as string) || (author?.handle as string) || "";
+      const handle = (author?.handle as string) || "";
+      const did = (author?.did as string) || "";
+      const indexedAt = (post.indexedAt as string) || "";
+      const likeCount = (post.likeCount as number) || 0;
+      const repostCount = (post.repostCount as number) || 0;
+      const rkey = ((post.uri as string) || "").split("/").pop() || "";
+      const url = did && rkey ? `https://bsky.app/profile/${did}/post/${rkey}` : "";
+
+      parsed.push({
+        author: displayName,
+        handle: `@${handle}`,
+        text,
+        timestamp: formatTimestamp(indexedAt),
+        likes: likeCount,
+        retweets: repostCount,
+        url,
+      });
+    } catch (e) {
+      console.warn("Error parsing Bluesky post:", e);
+    }
+  }
+
+  return parsed;
 }
 
 /**
- * Mastodonの公開タイムラインを取得
+ * Twitter/X の投稿取得（API 有料のため未対応）
+ */
+export async function fetchTwitterPosts(
+  _username?: string | null,
+  _limit: number = 10
+): Promise<SnsPost[]> {
+  throw new Error("Twitter/X API は未対応です");
+}
+
+/**
+ * Mastodon の公開タイムラインを取得
  */
 export async function fetchMastodonPosts(
   instance: string = "mastodon.social",
   limit: number = 10
 ): Promise<SnsPost[]> {
-  try {
-    const url = `https://${instance}/api/v1/timelines/public?limit=${limit}`;
-    const response = await fetch(url, {
-      signal: AbortSignal.timeout(30_000),
-    });
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}`);
-    }
-    const posts = (await response.json()) as Array<Record<string, unknown>>;
-    return parseMastodonPosts(posts);
-  } catch (e) {
-    console.error(`Error fetching Mastodon posts from ${instance}:`, e);
-    // エラー時はサンプルデータを返す
-    return SAMPLE_POSTS.slice(0, limit);
+  const url = `https://${instance}/api/v1/timelines/public?limit=${limit}`;
+  const response = await fetch(url, {
+    signal: AbortSignal.timeout(30_000),
+  });
+  if (!response.ok) {
+    throw new Error(`Mastodon API HTTP ${response.status}`);
   }
+  const posts = (await response.json()) as Array<Record<string, unknown>>;
+  return parseMastodonPosts(posts);
 }
 
 /**
- * Blueskyの投稿を取得（将来実装予定）
+ * Bluesky の公開フィードを取得（認証不要）
+ * What's Hot フィード: at://did:plc:z72i7hdynmk6r22z27h6tvur/app.bsky.graph.list/3ld7brljmcs2b
  */
 export async function fetchBlueskyPosts(
   _handle?: string | null,
   limit: number = 10
 ): Promise<SnsPost[]> {
-  // TODO: Bluesky AT Protocol実装
-  return SAMPLE_POSTS.slice(0, limit);
+  // What's Hot（公開フィード、認証不要）
+  const feed = "at://did:plc:z72i7hdynmk6r22z27h6tvur/app.bsky.graph.list/3ld7brljmcs2b";
+  const url = `https://public.api.bsky.app/xrpc/app.bsky.feed.getFeed?feed=${encodeURIComponent(feed)}&limit=${limit}`;
+  const response = await fetch(url, {
+    headers: { "Accept": "application/json" },
+    signal: AbortSignal.timeout(30_000),
+  });
+  if (!response.ok) {
+    throw new Error(`Bluesky API HTTP ${response.status}`);
+  }
+  const data = (await response.json()) as Record<string, unknown>;
+  const feedItems = (data.feed as Array<Record<string, unknown>>) || [];
+  return parseBlueskyPosts(feedItems);
 }
